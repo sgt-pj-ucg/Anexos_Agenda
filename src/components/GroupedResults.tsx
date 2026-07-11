@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { FichaTribunal, Persona } from '../types'
 import { PersonCard } from './PersonCard'
 import { TribunalFichaCard } from './TribunalFichaCard'
+import { GroupEmailButton } from './GroupEmailButton'
 
 export interface Group {
   key: string
@@ -31,7 +32,7 @@ export function GroupedResults({ groups, collapsible }: { groups: Group[]; colla
         const isCollapsed = collapsible && collapsed.has(g.key)
         return (
           <section key={g.key} className="animate-fade-in">
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               {collapsible ? (
                 <button
                   onClick={() => toggle(g.key)}
@@ -51,6 +52,7 @@ export function GroupedResults({ groups, collapsible }: { groups: Group[]; colla
               <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 <Users size={11} /> {g.people.length}
               </span>
+              <GroupEmailButton people={g.people} />
             </div>
             {g.ficha && (
               <div className="mb-3">

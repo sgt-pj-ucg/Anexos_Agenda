@@ -1,11 +1,15 @@
 import { ArrowRight } from 'lucide-react'
 import { SECTION_META, SECTION_ORDER, type SeccionKey } from '../lib/sections'
+import { GroupEmailButton } from './GroupEmailButton'
+import type { Persona } from '../types'
 
 export function SectionOverview({
   counts,
+  peopleBySection,
   onSelect,
 }: {
   counts: Record<string, number>
+  peopleBySection: Partial<Record<SeccionKey, Persona[]>>
   onSelect: (s: SeccionKey) => void
 }) {
   const items = SECTION_ORDER.filter((k) => k !== 'todos')
@@ -14,11 +18,17 @@ export function SectionOverview({
       {items.map((key) => {
         const meta = SECTION_META[key]
         const Icon = meta.icon
+        const groupPeople = peopleBySection[key]
         return (
-          <button
+          <div
             key={key}
+            role="button"
+            tabIndex={0}
             onClick={() => onSelect(key)}
-            className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') onSelect(key)
+            }}
+            className="group flex cursor-pointer flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800"
           >
             <div className="flex w-full items-center justify-between">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
@@ -32,10 +42,15 @@ export function SectionOverview({
               <p className="font-semibold text-slate-900 dark:text-white">{meta.label}</p>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{meta.description}</p>
             </div>
+            {groupPeople && (
+              <div onClick={(e) => e.stopPropagation()}>
+                <GroupEmailButton people={groupPeople} />
+              </div>
+            )}
             <span className="mt-auto flex items-center gap-1 text-sm font-medium text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100 dark:text-indigo-400">
               Explorar <ArrowRight size={14} />
             </span>
-          </button>
+          </div>
         )
       })}
     </div>

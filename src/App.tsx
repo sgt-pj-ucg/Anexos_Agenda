@@ -50,6 +50,15 @@ export default function App() {
 
   const birthdayPeople = useMemo(() => directorio.people.filter((p) => isToday(p.cumpleanos)), [])
 
+  const peopleBySection = useMemo(() => {
+    const map: Partial<Record<SeccionKey, Persona[]>> = {}
+    for (const p of directorio.people) {
+      if (p.seccion === 'tribunal') continue
+      ;(map[p.seccion] ??= []).push(p)
+    }
+    return map
+  }, [])
+
   const trimmedQuery = query.trim()
 
   const baseResults: Persona[] = useMemo(() => {
@@ -106,7 +115,11 @@ export default function App() {
         {birthdayPeople.length > 0 && !trimmedQuery && <BirthdayBanner people={birthdayPeople} />}
 
         {showOverview ? (
-          <SectionOverview counts={sectionCounts} onSelect={handleSelectSection} />
+          <SectionOverview
+            counts={sectionCounts}
+            peopleBySection={peopleBySection}
+            onSelect={handleSelectSection}
+          />
         ) : (
           <>
             <p className="text-sm text-slate-500 dark:text-slate-400">
