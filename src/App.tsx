@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { directorio } from './data'
 import { useTheme } from './hooks/useTheme'
-import { buildSearchIndex } from './lib/search'
-import { normalize } from './lib/normalize'
+import { buildSearchIndex, searchPeople } from './lib/search'
 import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { buildGroups } from './lib/groups'
@@ -27,7 +26,7 @@ export default function App() {
   const [section, setSection] = useState<SeccionKey>('todos')
   const [comuna, setComuna] = useState<string | null>(null)
 
-  const fuse = useMemo(() => buildSearchIndex(directorio.people), [])
+  const searchIndex = useMemo(() => buildSearchIndex(directorio.people), [])
 
   const sectionCounts = useMemo(() => {
     const counts: Record<string, number> = { todos: directorio.people.length }
@@ -63,9 +62,8 @@ export default function App() {
 
   const baseResults: Persona[] = useMemo(() => {
     if (!trimmedQuery) return directorio.people
-    const q = normalize(trimmedQuery)
-    return fuse.search(q, { limit: 300 }).map((r) => r.item)
-  }, [trimmedQuery, fuse])
+    return searchPeople(searchIndex, trimmedQuery)
+  }, [trimmedQuery, searchIndex])
 
   const filteredResults = useMemo(() => {
     let results = baseResults

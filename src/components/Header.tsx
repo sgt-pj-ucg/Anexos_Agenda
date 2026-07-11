@@ -1,4 +1,5 @@
-import { Moon, Scale, Sun } from 'lucide-react'
+import { LogOut, Moon, Scale, Sun } from 'lucide-react'
+import { lock } from '../lib/auth'
 
 export function Header({
   theme,
@@ -41,6 +42,16 @@ export function Header({
           title="Cambiar tema"
         >
           {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+        </button>
+        <button
+          onClick={() => {
+            lock()
+            window.location.reload()
+          }}
+          className="shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-rose-200 hover:text-rose-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-rose-900 dark:hover:text-rose-400"
+          title="Cerrar sesión (útil en computadores compartidos)"
+        >
+          <LogOut size={17} />
         </button>
       </div>
     </header>

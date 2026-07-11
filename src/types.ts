@@ -27,7 +27,6 @@ export interface Persona {
   correos: string[]
   anexo: string | null
   cumpleanos: string | null
-  rut: string | null
   grado: string | null
   calidadJuridica: string | null
   esGenerico: boolean

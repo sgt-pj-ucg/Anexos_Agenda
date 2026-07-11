@@ -178,8 +178,8 @@ for r in range(3, 88):
         "seccion": seccion,
     }
     anexos_rows.append(row)
-    if correos:
-        anexos_por_correo[correos[0]] = row
+    for e in correos:
+        anexos_por_correo.setdefault(e, row)
 
 # ---------------------------------------------------------------------------
 # 2) Pestaña "Dotación": planta oficial (RUT, grado, calidad jurídica, cargo)
@@ -475,6 +475,21 @@ for p in people:
     else:
         p["comuna"] = extraer_comuna(p["unidad"]) if p.get("unidad") else None
 
+# ---------------------------------------------------------------------------
+# Protección de datos personales: la plataforma es de uso interno, por lo que
+# no se publica el RUT (identificador legal sensible, sin uso en la UI) ni
+# correos personales (Gmail/Hotmail/etc.) — solo direcciones institucionales
+# @pjud.cl.
+# ---------------------------------------------------------------------------
+DOMINIOS_INSTITUCIONALES = ("@pjud.cl", "@poderjudicial.cl")
+personas_sin_correo = 0
+for p in people:
+    p.pop("rut", None)
+    institucionales = [e for e in p["correos"] if e.endswith(DOMINIOS_INSTITUCIONALES)]
+    p["correos"] = institucionales
+    if not institucionales:
+        personas_sin_correo += 1
+
 data = {
     "generatedAt": "2026-07-10",
     "totalPersonas": len(people),
@@ -492,3 +507,4 @@ from collections import Counter
 print(Counter(p["seccion"] for p in people))
 print("Tribunales con ficha:", len(tribunales_list))
 print("Correo general por sección especial:", correo_general_seccion)
+print("Personas sin correo institucional tras el filtro de privacidad:", personas_sin_correo)
