@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { Lock, Scale } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { checkPassword, getRole, setRole, type Role } from '../lib/auth'
 import { RoleContext } from '../context/RoleContext'
 
@@ -39,8 +39,12 @@ export function PasswordGate({ children }: { children: ReactNode }) {
         className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="mb-4 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white">
-            <Scale size={24} />
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 p-2.5">
+            <img
+              src="/escudo-poder-judicial.png"
+              alt="Escudo del Poder Judicial de Chile"
+              className="h-full w-full object-contain"
+            />
           </div>
           <h1 className="text-lg font-bold text-slate-900 dark:text-white">
             Directorio Judicial · La Serena
