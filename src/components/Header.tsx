@@ -1,4 +1,4 @@
-import { Download, LogOut, Moon, RotateCcw, Scale, ShieldCheck, Sun } from 'lucide-react'
+import { Download, LogOut, Moon, RotateCcw, ShieldCheck, Sun } from 'lucide-react'
 import { lock } from '../lib/auth'
 import { useIsAdmin } from '../context/RoleContext'
 
@@ -24,8 +24,12 @@ export function Header({
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
-          <Scale size={22} />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 p-2 shadow-sm">
+          <img
+            src="/escudo-poder-judicial.png"
+            alt="Escudo del Poder Judicial de Chile"
+            className="h-full w-full object-contain"
+          />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
