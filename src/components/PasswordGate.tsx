@@ -1,27 +1,28 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Lock, Scale } from 'lucide-react'
-import { checkPassword, isUnlocked, unlock } from '../lib/auth'
+import { checkPassword, getRole, setRole, type Role } from '../lib/auth'
+import { RoleContext } from '../context/RoleContext'
 
 export function PasswordGate({ children }: { children: ReactNode }) {
-  const [unlocked, setUnlocked] = useState(false)
+  const [role, setRoleState] = useState<Role | null>(null)
   const [checked, setChecked] = useState(false)
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [checking, setChecking] = useState(false)
 
   useEffect(() => {
-    setUnlocked(isUnlocked())
+    setRoleState(getRole())
     setChecked(true)
   }, [])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setChecking(true)
-    const ok = await checkPassword(value)
+    const matched = await checkPassword(value)
     setChecking(false)
-    if (ok) {
-      unlock()
-      setUnlocked(true)
+    if (matched) {
+      setRole(matched)
+      setRoleState(matched)
     } else {
       setError(true)
       setValue('')
@@ -29,7 +30,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
   }
 
   if (!checked) return null
-  if (unlocked) return <>{children}</>
+  if (role) return <RoleContext.Provider value={role}>{children}</RoleContext.Provider>
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">

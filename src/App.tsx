@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
-import { directorio } from './data'
 import { useTheme } from './hooks/useTheme'
+import { useDirectorioData } from './hooks/useDirectorioData'
 import { buildSearchIndex, searchPeople } from './lib/search'
 import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { buildGroups } from './lib/groups'
 import { SECTION_META, type SeccionKey } from './lib/sections'
 import type { Persona } from './types'
+import type { Group } from './components/GroupedResults'
+import type { PersonFormValues } from './components/PersonEditModal'
 
 import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
@@ -19,51 +21,68 @@ import { GroupedResults } from './components/GroupedResults'
 import { FlatResults } from './components/FlatResults'
 import { EmptyState } from './components/EmptyState'
 import { Footer } from './components/Footer'
+import { PersonEditModal } from './components/PersonEditModal'
+
+type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 
 export default function App() {
   const { theme, toggle } = useTheme()
+  const {
+    people,
+    tribunales,
+    correoGeneralSeccion,
+    generatedAt,
+    updatePerson,
+    createPerson,
+    deletePerson,
+    exportData,
+    resetChanges,
+    hasChanges,
+  } = useDirectorioData()
+
   const [query, setQuery] = useState('')
   const [section, setSection] = useState<SeccionKey>('todos')
   const [comuna, setComuna] = useState<string | null>(null)
+  const [modal, setModal] = useState<ModalState>(null)
 
-  const searchIndex = useMemo(() => buildSearchIndex(directorio.people), [])
+  const searchIndex = useMemo(() => buildSearchIndex(people), [people])
 
   const sectionCounts = useMemo(() => {
-    const counts: Record<string, number> = { todos: directorio.people.length }
-    for (const p of directorio.people) counts[p.seccion] = (counts[p.seccion] ?? 0) + 1
+    const counts: Record<string, number> = { todos: people.length }
+    for (const p of people) counts[p.seccion] = (counts[p.seccion] ?? 0) + 1
     return counts
-  }, [])
+  }, [people])
 
   const comunaCounts = useMemo(() => {
     const counts: Record<string, number> = {}
-    for (const p of directorio.people) {
+    for (const p of people) {
       if (p.seccion === 'tribunal' && p.comuna) counts[p.comuna] = (counts[p.comuna] ?? 0) + 1
     }
     return counts
-  }, [])
+  }, [people])
 
   const comunasDisponibles = useMemo(
     () => COMUNA_ORDER.filter((c) => comunaCounts[c] > 0),
     [comunaCounts],
   )
 
-  const birthdayPeople = useMemo(() => directorio.people.filter((p) => isToday(p.cumpleanos)), [])
+  const birthdayPeople = useMemo(() => people.filter((p) => isToday(p.cumpleanos)), [people])
 
   const peopleBySection = useMemo(() => {
     const map: Partial<Record<SeccionKey, Persona[]>> = {}
-    for (const p of directorio.people) {
+    for (const p of people) {
       if (p.seccion === 'tribunal') continue
       ;(map[p.seccion] ??= []).push(p)
     }
     return map
-  }, [])
+  }, [people])
 
   const trimmedQuery = query.trim()
 
   const baseResults: Persona[] = useMemo(() => {
-    if (!trimmedQuery) return directorio.people
+    if (!trimmedQuery) return people
     return searchPeople(searchIndex, trimmedQuery)
-  }, [trimmedQuery, searchIndex])
+  }, [trimmedQuery, searchIndex, people])
 
   const filteredResults = useMemo(() => {
     let results = baseResults
@@ -75,7 +94,7 @@ export default function App() {
   const showOverview = section === 'todos' && !trimmedQuery
   const showComunaChips = section === 'tribunal' && comunasDisponibles.length > 1
 
-  const generalEmail = section !== 'todos' ? directorio.correoGeneralSeccion[section] : undefined
+  const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
 
   const groups = useMemo(() => {
     if (showOverview || trimmedQuery) return []
@@ -87,13 +106,53 @@ export default function App() {
     setComuna(null)
   }
 
+  const handleDelete = (p: Persona) => {
+    if (window.confirm(`¿Eliminar a ${p.nombre} del directorio?`)) deletePerson(p.id)
+  }
+
+  const handleSubmitModal = (values: PersonFormValues) => {
+    const correos = values.correos
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    const cargo = values.cargo.trim() || null
+    const anexo = values.anexo.trim() || null
+    const cumpleanos = values.cumpleanos.trim() || null
+    const calidadJuridica = values.calidadJuridica.trim() || null
+
+    if (modal?.mode === 'edit') {
+      updatePerson({ nombre: values.nombre.trim(), cargo, correos, anexo, cumpleanos, calidadJuridica }, modal.person.id)
+    } else if (modal?.mode === 'add') {
+      const sample = modal.group.people[0]
+      createPerson({
+        nombre: values.nombre.trim(),
+        cargo,
+        unidad: modal.group.label,
+        seccion: sample?.seccion ?? 'corte',
+        tribunal: sample?.tribunal ?? null,
+        correos,
+        anexo,
+        cumpleanos,
+        grado: null,
+        calidadJuridica,
+        esGenerico: false,
+        comuna: sample?.comuna ?? null,
+        fichaTribunal: modal.group.ficha,
+      })
+    }
+    setModal(null)
+  }
+
   return (
     <div className="min-h-screen">
       <Header
         theme={theme}
         onToggleTheme={toggle}
-        totalPersonas={directorio.totalPersonas}
-        totalTribunales={directorio.tribunales.length}
+        totalPersonas={people.length}
+        totalTribunales={tribunales.length}
+        hasChanges={hasChanges}
+        onExport={exportData}
+        onReset={resetChanges}
       />
 
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-6">
@@ -131,15 +190,35 @@ export default function App() {
             {filteredResults.length === 0 ? (
               <EmptyState query={trimmedQuery} />
             ) : trimmedQuery ? (
-              <FlatResults people={filteredResults} />
+              <FlatResults
+                people={filteredResults}
+                onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                onDeletePerson={handleDelete}
+              />
             ) : (
-              <GroupedResults groups={groups} collapsible={section === 'tribunal'} />
+              <GroupedResults
+                groups={groups}
+                collapsible={section === 'tribunal'}
+                onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                onDeletePerson={handleDelete}
+                onAddPerson={(g) => setModal({ mode: 'add', group: g })}
+              />
             )}
           </>
         )}
       </main>
 
-      <Footer generatedAt={directorio.generatedAt} />
+      <Footer generatedAt={generatedAt} />
+
+      {modal && (
+        <PersonEditModal
+          title={modal.mode === 'edit' ? 'Editar contacto' : 'Agregar contacto'}
+          unidad={modal.mode === 'edit' ? modal.person.unidad : modal.group.label}
+          initial={modal.mode === 'edit' ? modal.person : undefined}
+          onCancel={() => setModal(null)}
+          onSubmit={handleSubmitModal}
+        />
+      )}
     </div>
   )
 }

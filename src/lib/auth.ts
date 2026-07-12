@@ -4,9 +4,14 @@
 // cualquiera que llegue al enlace o que quede indexada en buscadores.
 const STORAGE_KEY = 'pj-la-serena-directorio-auth'
 
-// SHA-256 de la clave de acceso interna. Generado con:
+export type Role = 'viewer' | 'admin'
+
+// SHA-256 de cada clave de acceso. Generadas con:
 //   node -e "crypto.subtle.digest('SHA-256', new TextEncoder().encode('CLAVE')).then(b=>console.log(Buffer.from(b).toString('hex')))"
-export const PASSWORD_HASH = '1bee1763b075b1b81fcaa6890ff684a29dc3ed892d630076f8e23acc73a0257c'
+const HASHES: Record<Role, string> = {
+  viewer: '1bee1763b075b1b81fcaa6890ff684a29dc3ed892d630076f8e23acc73a0257c', // Corte1849
+  admin: 'bbc0da8fc88d3442496a2f02e2769ea11cf7300c6b816f3071cbe8862582ef7b', // Admin1849
+}
 
 async function sha256Hex(text: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
@@ -15,17 +20,21 @@ async function sha256Hex(text: string): Promise<string> {
     .join('')
 }
 
-export async function checkPassword(input: string): Promise<boolean> {
+export async function checkPassword(input: string): Promise<Role | null> {
   const hash = await sha256Hex(input.trim())
-  return hash === PASSWORD_HASH
+  for (const role of Object.keys(HASHES) as Role[]) {
+    if (HASHES[role] === hash) return role
+  }
+  return null
 }
 
-export function isUnlocked(): boolean {
-  return localStorage.getItem(STORAGE_KEY) === PASSWORD_HASH
+export function getRole(): Role | null {
+  const v = localStorage.getItem(STORAGE_KEY)
+  return v === 'viewer' || v === 'admin' ? v : null
 }
 
-export function unlock(): void {
-  localStorage.setItem(STORAGE_KEY, PASSWORD_HASH)
+export function setRole(role: Role): void {
+  localStorage.setItem(STORAGE_KEY, role)
 }
 
 export function lock(): void {

@@ -1,9 +1,10 @@
-import { ChevronDown, ChevronRight, Users } from 'lucide-react'
+import { ChevronDown, ChevronRight, UserPlus, Users } from 'lucide-react'
 import { useState } from 'react'
 import type { FichaTribunal, Persona } from '../types'
 import { PersonCard } from './PersonCard'
 import { TribunalFichaCard } from './TribunalFichaCard'
 import { GroupEmailButton } from './GroupEmailButton'
+import { useIsAdmin } from '../context/RoleContext'
 
 export interface Group {
   key: string
@@ -12,7 +13,16 @@ export interface Group {
   ficha: FichaTribunal | null
 }
 
-export function GroupedResults({ groups, collapsible }: { groups: Group[]; collapsible: boolean }) {
+interface Props {
+  groups: Group[]
+  collapsible: boolean
+  onEditPerson?: (p: Persona) => void
+  onDeletePerson?: (p: Persona) => void
+  onAddPerson?: (group: Group) => void
+}
+
+export function GroupedResults({ groups, collapsible, onEditPerson, onDeletePerson, onAddPerson }: Props) {
+  const isAdmin = useIsAdmin()
   const [collapsed, setCollapsed] = useState<Set<string>>(
     () => new Set(collapsible ? groups.filter((g) => g.people.length > 8).map((g) => g.key) : []),
   )
@@ -53,6 +63,15 @@ export function GroupedResults({ groups, collapsible }: { groups: Group[]; colla
                 <Users size={11} /> {g.people.length}
               </span>
               <GroupEmailButton people={g.people} />
+              {isAdmin && onAddPerson && (
+                <button
+                  onClick={() => onAddPerson(g)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                >
+                  <UserPlus size={12} />
+                  Agregar contacto
+                </button>
+              )}
             </div>
             {g.ficha && (
               <div className="mb-3">
@@ -62,7 +81,12 @@ export function GroupedResults({ groups, collapsible }: { groups: Group[]; colla
             {!isCollapsed && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {g.people.map((p) => (
-                  <PersonCard key={p.id} p={p} />
+                  <PersonCard
+                    key={p.id}
+                    p={p}
+                    onEdit={onEditPerson ? () => onEditPerson(p) : undefined}
+                    onDelete={onDeletePerson ? () => onDeletePerson(p) : undefined}
+                  />
                 ))}
               </div>
             )}

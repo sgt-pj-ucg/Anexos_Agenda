@@ -10,7 +10,7 @@ export function SectionTabs({
   counts: Record<string, number>
 }) {
   return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex flex-wrap gap-2">
       {SECTION_ORDER.map((key) => {
         const meta = SECTION_META[key]
         const Icon = meta.icon
