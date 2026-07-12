@@ -26,7 +26,7 @@ export function Header({
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 p-2 shadow-sm">
           <img
-            src="/escudo-poder-judicial.png"
+            src={`${import.meta.env.BASE_URL}escudo-poder-judicial.png`}
             alt="Escudo del Poder Judicial de Chile"
             className="h-full w-full object-contain"
           />

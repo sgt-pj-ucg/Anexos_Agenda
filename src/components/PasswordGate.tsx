@@ -41,7 +41,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
         <div className="mb-4 flex flex-col items-center text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 p-2.5">
             <img
-              src="/escudo-poder-judicial.png"
+              src={`${import.meta.env.BASE_URL}escudo-poder-judicial.png`}
               alt="Escudo del Poder Judicial de Chile"
               className="h-full w-full object-contain"
             />
