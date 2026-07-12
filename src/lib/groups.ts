@@ -1,9 +1,15 @@
-import type { Persona } from '../types'
+import type { FichaTribunal, Persona } from '../types'
 import type { SeccionKey } from './sections'
 import { comunaRank } from './comunas'
+import { normalize } from './normalize'
 import type { Group } from '../components/GroupedResults'
 
-export function buildGroups(section: SeccionKey, people: Persona[]): Group[] {
+export function buildGroups(
+  section: SeccionKey,
+  people: Persona[],
+  tribunales: FichaTribunal[] = [],
+): Group[] {
+  const fichaByNombre = new Map(tribunales.map((t) => [normalize(t.nombre), t]))
   const map = new Map<string, Group>()
   for (const p of people) {
     const key = p.unidad
@@ -12,7 +18,7 @@ export function buildGroups(section: SeccionKey, people: Persona[]): Group[] {
         key,
         label: p.unidad,
         people: [],
-        ficha: section === 'tribunal' ? p.fichaTribunal : null,
+        ficha: section === 'tribunal' ? (fichaByNombre.get(normalize(p.unidad)) ?? null) : null,
       })
     }
     map.get(key)!.people.push(p)

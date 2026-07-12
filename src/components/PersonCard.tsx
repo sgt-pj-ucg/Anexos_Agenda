@@ -65,6 +65,16 @@ export function PersonCard({ p, contextTag, onEdit, onDelete }: Props) {
             />
           </div>
         )}
+        {isAdmin && onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="mt-3 flex items-center gap-1.5 rounded-full border border-rose-300 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
+          >
+            <Pencil size={12} />
+            Incorporar funcionario
+          </button>
+        )}
       </div>
     )
   }

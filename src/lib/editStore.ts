@@ -1,4 +1,4 @@
-import type { Persona } from '../types'
+import type { FichaTribunal, Persona } from '../types'
 
 const STORAGE_KEY = 'pj-la-serena-directorio-overlay'
 
@@ -6,10 +6,11 @@ export interface Overlay {
   edited: Record<string, Partial<Persona>>
   added: Persona[]
   deleted: string[]
+  fichaEdited: Record<string, Partial<FichaTribunal>>
 }
 
 function emptyOverlay(): Overlay {
-  return { edited: {}, added: [], deleted: [] }
+  return { edited: {}, added: [], deleted: [], fichaEdited: {} }
 }
 
 export function loadOverlay(): Overlay {
@@ -21,6 +22,7 @@ export function loadOverlay(): Overlay {
       edited: parsed.edited ?? {},
       added: parsed.added ?? [],
       deleted: parsed.deleted ?? [],
+      fichaEdited: parsed.fichaEdited ?? {},
     }
   } catch {
     return emptyOverlay()
@@ -33,7 +35,10 @@ function saveOverlay(overlay: Overlay): void {
 
 export function hasChanges(overlay: Overlay): boolean {
   return (
-    Object.keys(overlay.edited).length > 0 || overlay.added.length > 0 || overlay.deleted.length > 0
+    Object.keys(overlay.edited).length > 0 ||
+    overlay.added.length > 0 ||
+    overlay.deleted.length > 0 ||
+    Object.keys(overlay.fichaEdited).length > 0
   )
 }
 
@@ -59,6 +64,12 @@ export function deletePerson(overlay: Overlay, id: string): Overlay {
   return next
 }
 
+export function editFicha(overlay: Overlay, id: string, patch: Partial<FichaTribunal>): Overlay {
+  const next: Overlay = { ...overlay, fichaEdited: { ...overlay.fichaEdited, [id]: patch } }
+  saveOverlay(next)
+  return next
+}
+
 export function resetOverlay(): Overlay {
   const next = emptyOverlay()
   saveOverlay(next)
@@ -77,4 +88,11 @@ export function applyOverlay(basePeople: Persona[], overlay: Overlay): Persona[]
     if (!deleted.has(p.id)) result.push(p)
   }
   return result
+}
+
+export function applyFichaOverlay(baseTribunales: FichaTribunal[], overlay: Overlay): FichaTribunal[] {
+  return baseTribunales.map((t) => {
+    const patch = overlay.fichaEdited[t.id]
+    return patch ? { ...t, ...patch } : t
+  })
 }

@@ -1,44 +1,33 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { X } from 'lucide-react'
-import type { Persona } from '../types'
+import type { FichaTribunal } from '../types'
 
-export interface PersonFormValues {
-  nombre: string
-  cargo: string
-  correos: string
-  anexo: string
-  cumpleanos: string
-  calidadJuridica: string
-}
-
-function toFormValues(p?: Persona): PersonFormValues {
-  return {
-    nombre: p && !p.vacante ? p.nombre : '',
-    cargo: p?.cargo ?? '',
-    correos: p?.correos.join(', ') ?? '',
-    anexo: p?.anexo ?? '',
-    cumpleanos: p?.cumpleanos ?? '',
-    calidadJuridica: p?.calidadJuridica ?? '',
-  }
+export interface TribunalFormValues {
+  ministroVisitador: string
+  correo: string
+  telefono: string
+  competencias: string
 }
 
 interface Props {
-  title: string
-  unidad: string
-  initial?: Persona
+  ficha: FichaTribunal
   onCancel: () => void
-  onSubmit: (values: PersonFormValues) => void
+  onSubmit: (values: TribunalFormValues) => void
 }
 
-export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: Props) {
-  const [values, setValues] = useState<PersonFormValues>(() => toFormValues(initial))
+export function TribunalEditModal({ ficha, onCancel, onSubmit }: Props) {
+  const [values, setValues] = useState<TribunalFormValues>({
+    ministroVisitador: ficha.ministroVisitador ?? '',
+    correo: ficha.correo ?? '',
+    telefono: ficha.telefono ?? '',
+    competencias: ficha.competencias.join(', '),
+  })
 
-  const set = <K extends keyof PersonFormValues>(key: K, value: PersonFormValues[K]) =>
+  const set = <K extends keyof TribunalFormValues>(key: K, value: TribunalFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }))
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!values.nombre.trim()) return
     onSubmit(values)
   }
 
@@ -50,8 +39,8 @@ export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: 
       >
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h2 className="font-semibold text-slate-900 dark:text-white">{title}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{unidad}</p>
+            <h2 className="font-semibold text-slate-900 dark:text-white">Editar ficha del tribunal</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{ficha.nombre}</p>
           </div>
           <button
             type="button"
@@ -63,45 +52,33 @@ export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: 
         </div>
 
         <div className="space-y-3">
-          <Field label="Nombre *">
+          <Field label="Ministro(a) visitador(a)">
             <input
               autoFocus
-              required
-              value={values.nombre}
-              onChange={(e) => set('nombre', e.target.value)}
-              placeholder="Nombre completo"
+              value={values.ministroVisitador}
+              onChange={(e) => set('ministroVisitador', e.target.value)}
               className={inputClass}
             />
           </Field>
-          <Field label="Cargo">
-            <input value={values.cargo} onChange={(e) => set('cargo', e.target.value)} className={inputClass} />
-          </Field>
-          <Field label="Correo(s) institucional(es) — separados por coma">
+          <Field label="Correo general del tribunal">
             <input
-              value={values.correos}
-              onChange={(e) => set('correos', e.target.value)}
-              placeholder="nombre@pjud.cl"
+              value={values.correo}
+              onChange={(e) => set('correo', e.target.value)}
               className={inputClass}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Anexo / teléfono">
-              <input value={values.anexo} onChange={(e) => set('anexo', e.target.value)} className={inputClass} />
-            </Field>
-            <Field label="Cumpleaños">
-              <input
-                value={values.cumpleanos}
-                onChange={(e) => set('cumpleanos', e.target.value)}
-                placeholder="15 de octubre"
-                className={inputClass}
-              />
-            </Field>
-          </div>
-          <Field label="Calidad jurídica">
+          <Field label="Teléfono">
             <input
-              value={values.calidadJuridica}
-              onChange={(e) => set('calidadJuridica', e.target.value)}
-              placeholder="Titular, Contrata, Suplente…"
+              value={values.telefono}
+              onChange={(e) => set('telefono', e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Competencias — separadas por coma">
+            <input
+              value={values.competencias}
+              onChange={(e) => set('competencias', e.target.value)}
+              placeholder="Civil, Laboral, Familia…"
               className={inputClass}
             />
           </Field>

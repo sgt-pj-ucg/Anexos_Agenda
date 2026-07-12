@@ -6,9 +6,10 @@ import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { buildGroups } from './lib/groups'
 import { SECTION_META, type SeccionKey } from './lib/sections'
-import type { Persona } from './types'
+import type { FichaTribunal, Persona } from './types'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
+import type { TribunalFormValues } from './components/TribunalEditModal'
 
 import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
@@ -22,6 +23,7 @@ import { FlatResults } from './components/FlatResults'
 import { EmptyState } from './components/EmptyState'
 import { Footer } from './components/Footer'
 import { PersonEditModal } from './components/PersonEditModal'
+import { TribunalEditModal } from './components/TribunalEditModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 
@@ -35,6 +37,7 @@ export default function App() {
     updatePerson,
     createPerson,
     deletePerson,
+    updateFicha,
     exportData,
     resetChanges,
     hasChanges,
@@ -44,6 +47,7 @@ export default function App() {
   const [section, setSection] = useState<SeccionKey>('todos')
   const [comuna, setComuna] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
+  const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
 
   const searchIndex = useMemo(() => buildSearchIndex(people), [people])
 
@@ -98,8 +102,8 @@ export default function App() {
 
   const groups = useMemo(() => {
     if (showOverview || trimmedQuery) return []
-    return buildGroups(section, filteredResults)
-  }, [showOverview, trimmedQuery, section, filteredResults])
+    return buildGroups(section, filteredResults, tribunales)
+  }, [showOverview, trimmedQuery, section, filteredResults, tribunales])
 
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
@@ -121,7 +125,17 @@ export default function App() {
     const calidadJuridica = values.calidadJuridica.trim() || null
 
     if (modal?.mode === 'edit') {
-      updatePerson({ nombre: values.nombre.trim(), cargo, correos, anexo, cumpleanos, calidadJuridica }, modal.person.id)
+      const patch: Partial<Persona> = {
+        nombre: values.nombre.trim(),
+        cargo,
+        correos,
+        anexo,
+        cumpleanos,
+        calidadJuridica,
+      }
+      // Al completar el nombre de un cargo vacante, se considera ocupado.
+      if (modal.person.vacante) patch.vacante = false
+      updatePerson(patch, modal.person.id)
     } else if (modal?.mode === 'add') {
       const sample = modal.group.people[0]
       createPerson({
@@ -141,6 +155,20 @@ export default function App() {
       })
     }
     setModal(null)
+  }
+
+  const handleSubmitFicha = (values: TribunalFormValues) => {
+    if (!fichaModal) return
+    updateFicha(fichaModal.id, {
+      ministroVisitador: values.ministroVisitador.trim() || null,
+      correo: values.correo.trim() || null,
+      telefono: values.telefono.trim() || null,
+      competencias: values.competencias
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    })
+    setFichaModal(null)
   }
 
   return (
@@ -202,6 +230,7 @@ export default function App() {
                 onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
                 onDeletePerson={handleDelete}
                 onAddPerson={(g) => setModal({ mode: 'add', group: g })}
+                onEditFicha={setFichaModal}
               />
             )}
           </>
@@ -217,6 +246,14 @@ export default function App() {
           initial={modal.mode === 'edit' ? modal.person : undefined}
           onCancel={() => setModal(null)}
           onSubmit={handleSubmitModal}
+        />
+      )}
+
+      {fichaModal && (
+        <TribunalEditModal
+          ficha={fichaModal}
+          onCancel={() => setFichaModal(null)}
+          onSubmit={handleSubmitFicha}
         />
       )}
     </div>

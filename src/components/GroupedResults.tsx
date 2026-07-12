@@ -19,16 +19,24 @@ interface Props {
   onEditPerson?: (p: Persona) => void
   onDeletePerson?: (p: Persona) => void
   onAddPerson?: (group: Group) => void
+  onEditFicha?: (ficha: FichaTribunal) => void
 }
 
-export function GroupedResults({ groups, collapsible, onEditPerson, onDeletePerson, onAddPerson }: Props) {
+export function GroupedResults({
+  groups,
+  collapsible,
+  onEditPerson,
+  onDeletePerson,
+  onAddPerson,
+  onEditFicha,
+}: Props) {
   const isAdmin = useIsAdmin()
-  const [collapsed, setCollapsed] = useState<Set<string>>(
-    () => new Set(collapsible ? groups.filter((g) => g.people.length > 8).map((g) => g.key) : []),
-  )
+  // Los grupos colapsables (tribunales) empiezan siempre contraídos; solo se
+  // registran aquí las excepciones que el usuario expandió a mano.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const toggle = (key: string) => {
-    setCollapsed((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -39,22 +47,29 @@ export function GroupedResults({ groups, collapsible, onEditPerson, onDeletePers
   return (
     <div className="space-y-6">
       {groups.map((g) => {
-        const isCollapsed = collapsible && collapsed.has(g.key)
+        const isCollapsed = collapsible && !expanded.has(g.key)
         return (
           <section key={g.key} className="animate-fade-in">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {collapsible ? (
                 <button
                   onClick={() => toggle(g.key)}
-                  className="flex items-center gap-1.5 text-left"
+                  className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                    isCollapsed
+                      ? 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800 dark:hover:bg-indigo-500/10'
+                      : 'border-indigo-200 bg-indigo-50 dark:border-indigo-900/50 dark:bg-indigo-500/10'
+                  }`}
                   title={isCollapsed ? 'Mostrar personal' : 'Ocultar personal'}
                 >
                   {isCollapsed ? (
-                    <ChevronRight size={16} className="shrink-0 text-slate-400" />
+                    <ChevronRight size={16} className="shrink-0 text-indigo-500" />
                   ) : (
-                    <ChevronDown size={16} className="shrink-0 text-slate-400" />
+                    <ChevronDown size={16} className="shrink-0 text-indigo-500" />
                   )}
                   <h3 className="font-semibold text-slate-800 dark:text-slate-100">{g.label}</h3>
+                  <span className="ml-1 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                    {isCollapsed ? 'Ver funcionarios' : 'Ocultar'}
+                  </span>
                 </button>
               ) : (
                 <h3 className="font-semibold text-slate-800 dark:text-slate-100">{g.label}</h3>
@@ -75,7 +90,10 @@ export function GroupedResults({ groups, collapsible, onEditPerson, onDeletePers
             </div>
             {g.ficha && (
               <div className="mb-3">
-                <TribunalFichaCard ficha={g.ficha} />
+                <TribunalFichaCard
+                  ficha={g.ficha}
+                  onEdit={onEditFicha ? () => onEditFicha(g.ficha!) : undefined}
+                />
               </div>
             )}
             {!isCollapsed && (

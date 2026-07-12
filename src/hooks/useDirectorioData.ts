@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { directorio } from '../data'
-import type { Persona } from '../types'
+import type { FichaTribunal, Persona } from '../types'
 import {
   addPerson,
+  applyFichaOverlay,
   applyOverlay,
   deletePerson,
+  editFicha,
   editPerson,
   hasChanges,
   loadOverlay,
@@ -26,8 +28,10 @@ function uniqueId(base: string, existing: Set<string>): string {
 export function useDirectorioData() {
   const [overlay, setOverlay] = useState<Overlay>(() => loadOverlay())
 
-  const people = useMemo(
-    () => applyOverlay(directorio.people, overlay),
+  const people = useMemo(() => applyOverlay(directorio.people, overlay), [overlay])
+
+  const tribunales = useMemo(
+    () => applyFichaOverlay(directorio.tribunales, overlay),
     [overlay],
   )
 
@@ -41,6 +45,9 @@ export function useDirectorioData() {
 
   const remove = (id: string) => setOverlay(deletePerson(overlay, id))
 
+  const updateFicha = (id: string, patch: Partial<FichaTribunal>) =>
+    setOverlay(editFicha(overlay, id, patch))
+
   const reset = () => setOverlay(resetOverlay())
 
   const exportData = () => {
@@ -48,6 +55,7 @@ export function useDirectorioData() {
       ...directorio,
       totalPersonas: people.length,
       people,
+      tribunales,
     }
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -60,16 +68,20 @@ export function useDirectorioData() {
 
   return {
     people,
-    tribunales: directorio.tribunales,
+    tribunales,
     correoGeneralSeccion: directorio.correoGeneralSeccion,
     generatedAt: directorio.generatedAt,
     updatePerson: update,
     createPerson: create,
     deletePerson: remove,
+    updateFicha,
     resetChanges: reset,
     exportData,
     hasChanges: hasChanges(overlay),
     changeCount:
-      Object.keys(overlay.edited).length + overlay.added.length + overlay.deleted.length,
+      Object.keys(overlay.edited).length +
+      overlay.added.length +
+      overlay.deleted.length +
+      Object.keys(overlay.fichaEdited).length,
   }
 }
