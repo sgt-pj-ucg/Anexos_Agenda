@@ -46,6 +46,18 @@ export interface Cambio {
   detalle: string | null
 }
 
+export type ReporteEstado = 'pendiente' | 'resuelto'
+
+export interface Reporte {
+  id: number
+  createdAt: string
+  entidad: string
+  contexto: string | null
+  descripcion: string
+  estado: ReporteEstado
+  resolvedAt: string | null
+}
+
 export interface Directorio {
   generatedAt: string
   totalPersonas: number

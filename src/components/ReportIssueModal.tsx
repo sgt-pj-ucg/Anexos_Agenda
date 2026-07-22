@@ -1,21 +1,30 @@
 import { useState, type FormEvent } from 'react'
 import { Flag, X } from 'lucide-react'
-import { buildReportMailto } from '../lib/report'
 
 interface Props {
   subject: string
   contexto: string[]
+  onSubmit: (descripcion: string) => Promise<void>
   onCancel: () => void
 }
 
-export function ReportIssueModal({ subject, contexto, onCancel }: Props) {
+export function ReportIssueModal({ subject, contexto, onSubmit, onCancel }: Props) {
   const [descripcion, setDescripcion] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!descripcion.trim()) return
-    window.location.href = buildReportMailto(subject, contexto, descripcion.trim())
-    onCancel()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await onSubmit(descripcion.trim())
+      onCancel()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo enviar el reporte.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -56,8 +65,9 @@ export function ReportIssueModal({ subject, contexto, onCancel }: Props) {
           />
         </label>
         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-          Se abrirá tu cliente de correo con el mensaje ya redactado hacia la coordinación.
+          {contexto.filter(Boolean).join(' · ')}
         </p>
+        {error && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
 
         <div className="mt-5 flex justify-end gap-2">
           <button
@@ -69,9 +79,10 @@ export function ReportIssueModal({ subject, contexto, onCancel }: Props) {
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
+            disabled={submitting}
+            className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
           >
-            Enviar reporte
+            {submitting ? 'Enviando…' : 'Enviar reporte'}
           </button>
         </div>
       </form>

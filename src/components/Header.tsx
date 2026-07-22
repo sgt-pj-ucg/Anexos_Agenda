@@ -1,4 +1,4 @@
-import { Bell, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
+import { Bell, Flag, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { lock } from '../lib/auth'
 import { useIsAdmin } from '../context/RoleContext'
 
@@ -9,6 +9,8 @@ export function Header({
   totalTribunales,
   novedadesCount,
   onOpenNovedades,
+  reportesCount,
+  onOpenReportes,
 }: {
   theme: 'light' | 'dark'
   onToggleTheme: () => void
@@ -16,6 +18,8 @@ export function Header({
   totalTribunales: number
   novedadesCount: number
   onOpenNovedades: () => void
+  reportesCount: number
+  onOpenReportes: () => void
 }) {
   const isAdmin = useIsAdmin()
 
@@ -54,6 +58,20 @@ export function Header({
             <p>tribunales</p>
           </div>
         </div>
+        {isAdmin && (
+          <button
+            onClick={onOpenReportes}
+            className="relative shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-rose-200 hover:text-rose-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-rose-900 dark:hover:text-rose-400"
+            title="Ver reportes de datos incorrectos"
+          >
+            <Flag size={17} />
+            {reportesCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white">
+                {reportesCount > 9 ? '9+' : reportesCount}
+              </span>
+            )}
+          </button>
+        )}
         <button
           onClick={onOpenNovedades}
           className="relative shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-indigo-900 dark:hover:text-indigo-400"

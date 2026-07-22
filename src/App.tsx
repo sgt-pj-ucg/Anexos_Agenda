@@ -33,6 +33,7 @@ import { PersonEditModal } from './components/PersonEditModal'
 import { TribunalEditModal } from './components/TribunalEditModal'
 import { ReportIssueModal } from './components/ReportIssueModal'
 import { NovedadesPanel } from './components/NovedadesPanel'
+import { ReportesPanel } from './components/ReportesPanel'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ReportTarget = { subject: string; contexto: string[] } | null
@@ -43,6 +44,7 @@ export default function App() {
     people,
     tribunales,
     cambios,
+    reportes,
     correoGeneralSeccion,
     generatedAt,
     loading,
@@ -51,6 +53,8 @@ export default function App() {
     createPerson,
     deletePerson,
     updateFicha,
+    submitReport,
+    setReporteEstado,
   } = useDirectorioData()
   const { favorites, toggle: toggleFavorite } = useFavorites()
 
@@ -63,6 +67,7 @@ export default function App() {
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
   const [novedadesOpen, setNovedadesOpen] = useState(false)
+  const [reportesOpen, setReportesOpen] = useState(false)
   const [lastSeen, setLastSeen] = useState<string | null>(() => getLastSeen())
 
   const searchIndex = useMemo(() => buildSearchIndex(people), [people])
@@ -136,6 +141,11 @@ export default function App() {
     return cambios.filter((c) => c.createdAt > lastSeen).length
   }, [cambios, lastSeen])
 
+  const reportesCount = useMemo(
+    () => reportes.filter((r) => r.estado === 'pendiente').length,
+    [reportes],
+  )
+
   const filteredResults = useMemo(() => {
     let results = baseResults
     if (section !== 'todos') results = results.filter((p) => p.seccion === section)
@@ -176,6 +186,19 @@ export default function App() {
   }
 
   const openReport = (subject: string, contexto: string[]) => setReportTarget({ subject, contexto })
+
+  const handleReportSubmit = async (descripcion: string) => {
+    if (!reportTarget) return
+    await submitReport(reportTarget.subject, reportTarget.contexto.filter(Boolean).join(' · '), descripcion)
+  }
+
+  const handleSetReporteEstado = async (id: number, estado: 'pendiente' | 'resuelto') => {
+    try {
+      await setReporteEstado(id, estado)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo actualizar el reporte.')
+    }
+  }
 
   const openNovedades = () => {
     setNovedadesOpen(true)
@@ -268,6 +291,8 @@ export default function App() {
         totalTribunales={tribunales.length}
         novedadesCount={novedadesCount}
         onOpenNovedades={openNovedades}
+        reportesCount={reportesCount}
+        onOpenReportes={() => setReportesOpen(true)}
       />
 
       {error && (
@@ -420,12 +445,21 @@ export default function App() {
         <ReportIssueModal
           subject={reportTarget.subject}
           contexto={reportTarget.contexto}
+          onSubmit={handleReportSubmit}
           onCancel={() => setReportTarget(null)}
         />
       )}
 
       {novedadesOpen && (
         <NovedadesPanel cambios={cambios} onClose={() => setNovedadesOpen(false)} />
+      )}
+
+      {reportesOpen && (
+        <ReportesPanel
+          reportes={reportes}
+          onSetEstado={handleSetReporteEstado}
+          onClose={() => setReportesOpen(false)}
+        />
       )}
     </div>
   )

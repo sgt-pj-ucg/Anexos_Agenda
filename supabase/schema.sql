@@ -63,6 +63,18 @@ create table if not exists cambios (
   detalle text
 );
 
+-- Avisos de "dato incorrecto" que cualquier usuario puede crear; solo el
+-- administrador puede marcarlos como resueltos (o reabrirlos).
+create table if not exists reportes (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  entidad text not null,
+  contexto text,
+  descripcion text not null,
+  estado text not null default 'pendiente',
+  resolved_at timestamptz
+);
+
 -- ---------------------------------------------------------------------
 -- Seguridad: lectura pública, escritura solo vía funciones con clave
 -- ---------------------------------------------------------------------
@@ -70,6 +82,7 @@ alter table personas enable row level security;
 alter table tribunales enable row level security;
 alter table app_config enable row level security;
 alter table cambios enable row level security;
+alter table reportes enable row level security;
 
 drop policy if exists "lectura publica personas" on personas;
 create policy "lectura publica personas" on personas for select using (true);
@@ -80,12 +93,23 @@ create policy "lectura publica tribunales" on tribunales for select using (true)
 drop policy if exists "lectura publica cambios" on cambios;
 create policy "lectura publica cambios" on cambios for select using (true);
 
+drop policy if exists "lectura publica reportes" on reportes;
+create policy "lectura publica reportes" on reportes for select using (true);
+
+-- Cualquier usuario puede crear un reporte (no requiere clave de
+-- administrador), pero siempre en estado "pendiente"; solo la función
+-- admin_set_reporte_estado (que sí valida la clave) puede resolverlo.
+drop policy if exists "crear reporte publico" on reportes;
+create policy "crear reporte publico" on reportes for insert
+  with check (estado = 'pendiente' and resolved_at is null);
+
 -- app_config no tiene políticas -> RLS deniega todo acceso directo
 -- (ni siquiera lectura), solo accesible desde las funciones SECURITY DEFINER.
 
 revoke insert, update, delete on personas from anon, authenticated;
 revoke insert, update, delete on tribunales from anon, authenticated;
 revoke insert, update, delete on cambios from anon, authenticated;
+revoke update, delete on reportes from anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- Funciones de escritura (verifican la clave de administrador)
@@ -211,9 +235,28 @@ begin
 end;
 $$;
 
+create or replace function admin_set_reporte_estado(admin_password text, reporte_id bigint, nuevo_estado text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not verify_admin(admin_password) then
+    raise exception 'Clave de administrador incorrecta';
+  end if;
+
+  update reportes set
+    estado = nuevo_estado,
+    resolved_at = case when nuevo_estado = 'resuelto' then now() else null end
+  where id = reporte_id;
+end;
+$$;
+
 grant execute on function admin_upsert_persona(text, jsonb) to anon, authenticated;
 grant execute on function admin_delete_persona(text, text) to anon, authenticated;
 grant execute on function admin_update_ficha(text, text, jsonb) to anon, authenticated;
+grant execute on function admin_set_reporte_estado(text, bigint, text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- Tiempo real: para que los cambios se vean al instante en todas las
@@ -222,3 +265,4 @@ grant execute on function admin_update_ficha(text, text, jsonb) to anon, authent
 alter publication supabase_realtime add table personas;
 alter publication supabase_realtime add table tribunales;
 alter publication supabase_realtime add table cambios;
+alter publication supabase_realtime add table reportes;

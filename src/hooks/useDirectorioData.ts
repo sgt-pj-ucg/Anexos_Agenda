@@ -3,7 +3,8 @@ import { directorio } from '../data'
 import { supabase } from '../lib/supabaseClient'
 import { getAdminPassword } from '../lib/auth'
 import { slugify } from '../lib/normalize'
-import type { Cambio, FichaTribunal, Persona, Seccion } from '../types'
+import { useIsAdmin } from '../context/RoleContext'
+import type { Cambio, FichaTribunal, Persona, Reporte, ReporteEstado, Seccion } from '../types'
 
 interface PersonaRow {
   id: string
@@ -42,6 +43,16 @@ interface CambioRow {
   tipo: Cambio['tipo']
   entidad: string
   detalle: string | null
+}
+
+interface ReporteRow {
+  id: number
+  created_at: string
+  entidad: string
+  contexto: string | null
+  descripcion: string
+  estado: ReporteEstado
+  resolved_at: string | null
 }
 
 function rowToPersona(row: PersonaRow): Persona {
@@ -86,6 +97,18 @@ function rowToCambio(row: CambioRow): Cambio {
   }
 }
 
+function rowToReporte(row: ReporteRow): Reporte {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    entidad: row.entidad,
+    contexto: row.contexto,
+    descripcion: row.descripcion,
+    estado: row.estado,
+    resolvedAt: row.resolved_at,
+  }
+}
+
 function uniqueId(base: string, existing: Set<string>): string {
   let id = slugify(base) || 'contacto'
   let n = 1
@@ -110,9 +133,11 @@ function friendlyMessage(raw: string): string {
 }
 
 export function useDirectorioData() {
+  const isAdmin = useIsAdmin()
   const [people, setPeople] = useState<Persona[]>([])
   const [tribunales, setTribunales] = useState<FichaTribunal[]>([])
   const [cambios, setCambios] = useState<Cambio[]>([])
+  const [reportes, setReportes] = useState<Reporte[]>([])
   const [generatedAt, setGeneratedAt] = useState(directorio.generatedAt)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -160,21 +185,36 @@ export function useDirectorioData() {
     setCambios(((data ?? []) as CambioRow[]).map(rowToCambio))
   }, [])
 
+  const loadReportes = useCallback(async () => {
+    // Igual que "cambios": si la tabla aún no existe (no se ha corrido la
+    // migración de reportes), se deja la lista vacía sin romper la app.
+    const { data, error: reportesError } = await supabase
+      .from('reportes')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (reportesError) return
+    setReportes(((data ?? []) as ReporteRow[]).map(rowToReporte))
+  }, [])
+
   useEffect(() => {
     load()
     loadCambios()
+    if (isAdmin) loadReportes()
 
     const channel = supabase
       .channel('directorio-cambios')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'personas' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tribunales' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cambios' }, () => loadCambios())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reportes' }, () => {
+        if (isAdmin) loadReportes()
+      })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [load, loadCambios])
+  }, [load, loadCambios, loadReportes, isAdmin])
 
   const writePersona = async (persona: Persona) => {
     const admin_password = requireAdminPassword()
@@ -219,10 +259,33 @@ export function useDirectorioData() {
     await load()
   }
 
+  const submitReport = async (entidad: string, contexto: string, descripcion: string) => {
+    const { error: insertError } = await supabase
+      .from('reportes')
+      .insert({ entidad, contexto, descripcion })
+    if (insertError) throw new Error(friendlyMessage(insertError.message))
+    // Refresco inmediato para quien reporta si además es administrador (ya
+    // ve la bandeja de reportes); el resto de sesiones se actualiza sola
+    // por tiempo real cuando llegue el evento de Postgres.
+    if (isAdmin) await loadReportes()
+  }
+
+  const setReporteEstado = async (id: number, estado: ReporteEstado) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_set_reporte_estado', {
+      admin_password,
+      reporte_id: id,
+      nuevo_estado: estado,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadReportes()
+  }
+
   return {
     people,
     tribunales,
     cambios,
+    reportes,
     correoGeneralSeccion: directorio.correoGeneralSeccion,
     generatedAt,
     loading,
@@ -231,5 +294,7 @@ export function useDirectorioData() {
     createPerson,
     deletePerson,
     updateFicha,
+    submitReport,
+    setReporteEstado,
   }
 }
