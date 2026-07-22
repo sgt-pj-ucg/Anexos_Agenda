@@ -4,6 +4,8 @@ import { useDirectorioData } from './hooks/useDirectorioData'
 import { buildSearchIndex, searchPeople } from './lib/search'
 import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
+import { MATERIA_ORDER } from './lib/materias'
+import { normalize } from './lib/normalize'
 import { buildGroups } from './lib/groups'
 import { SECTION_META, type SeccionKey } from './lib/sections'
 import type { FichaTribunal, Persona } from './types'
@@ -15,6 +17,8 @@ import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
 import { SectionTabs } from './components/SectionTabs'
 import { ComunaChips } from './components/ComunaChips'
+import { MateriaChips } from './components/MateriaChips'
+import { MateriaEmailBanner } from './components/MateriaEmailBanner'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -45,6 +49,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [section, setSection] = useState<SeccionKey>('todos')
   const [comuna, setComuna] = useState<string | null>(null)
+  const [materia, setMateria] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
 
@@ -69,6 +74,24 @@ export default function App() {
     [comunaCounts],
   )
 
+  const fichaByUnidad = useMemo(
+    () => new Map(tribunales.map((t) => [normalize(t.nombre), t])),
+    [tribunales],
+  )
+
+  const materiaCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const t of tribunales) {
+      for (const c of t.competencias) counts[c] = (counts[c] ?? 0) + 1
+    }
+    return counts
+  }, [tribunales])
+
+  const materiasDisponibles = useMemo(
+    () => MATERIA_ORDER.filter((m) => materiaCounts[m] > 0),
+    [materiaCounts],
+  )
+
   const birthdayPeople = useMemo(() => people.filter((p) => isToday(p.cumpleanos)), [people])
 
   const peopleBySection = useMemo(() => {
@@ -91,11 +114,15 @@ export default function App() {
     let results = baseResults
     if (section !== 'todos') results = results.filter((p) => p.seccion === section)
     if (section === 'tribunal' && comuna) results = results.filter((p) => p.comuna === comuna)
+    if (section === 'tribunal' && materia) {
+      results = results.filter((p) => fichaByUnidad.get(normalize(p.unidad))?.competencias.includes(materia))
+    }
     return results
-  }, [baseResults, section, comuna])
+  }, [baseResults, section, comuna, materia, fichaByUnidad])
 
   const showOverview = section === 'todos' && !trimmedQuery
   const showComunaChips = section === 'tribunal' && comunasDisponibles.length > 1
+  const showMateriaChips = section === 'tribunal' && materiasDisponibles.length > 1
 
   const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
 
@@ -104,9 +131,19 @@ export default function App() {
     return buildGroups(section, filteredResults, tribunales)
   }, [showOverview, trimmedQuery, section, filteredResults, tribunales])
 
+  const materiaEmails = useMemo(() => {
+    if (section !== 'tribunal' || !materia) return []
+    const emails = new Set<string>()
+    for (const g of groups) {
+      if (g.ficha?.correo) emails.add(g.ficha.correo)
+    }
+    return Array.from(emails)
+  }, [section, materia, groups])
+
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
     setComuna(null)
+    setMateria(null)
   }
 
   const handleDelete = async (p: Persona) => {
@@ -219,6 +256,15 @@ export default function App() {
               />
             )}
 
+            {showMateriaChips && (
+              <MateriaChips
+                materias={materiasDisponibles}
+                active={materia}
+                onChange={setMateria}
+                counts={materiaCounts}
+              />
+            )}
+
             {birthdayPeople.length > 0 && !trimmedQuery && (
               <BirthdayBanner people={birthdayPeople} />
             )}
@@ -236,9 +282,14 @@ export default function App() {
                   {filteredResults.length === 1 ? 'resultado' : 'resultados'}
                   {section !== 'todos' && <> en {SECTION_META[section].label}</>}
                   {comuna && <> · {comuna}</>}
+                  {materia && <> · {materia}</>}
                 </p>
 
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
+
+                {materia && !trimmedQuery && (
+                  <MateriaEmailBanner materia={materia} correos={materiaEmails} />
+                )}
 
                 {filteredResults.length === 0 ? (
                   <EmptyState query={trimmedQuery} />

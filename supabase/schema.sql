@@ -79,7 +79,7 @@ create or replace function verify_admin(admin_password text)
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   stored text;
