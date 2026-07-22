@@ -1,4 +1,4 @@
-import { Download, LogOut, Moon, RotateCcw, ShieldCheck, Sun } from 'lucide-react'
+import { LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { lock } from '../lib/auth'
 import { useIsAdmin } from '../context/RoleContext'
 
@@ -7,17 +7,11 @@ export function Header({
   onToggleTheme,
   totalPersonas,
   totalTribunales,
-  hasChanges,
-  onExport,
-  onReset,
 }: {
   theme: 'light' | 'dark'
   onToggleTheme: () => void
   totalPersonas: number
   totalTribunales: number
-  hasChanges: boolean
-  onExport: () => void
-  onReset: () => void
 }) {
   const isAdmin = useIsAdmin()
 
@@ -56,27 +50,6 @@ export function Header({
             <p>tribunales</p>
           </div>
         </div>
-        {isAdmin && hasChanges && (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              onClick={onExport}
-              title="Descargar directorio.json con tus cambios para subirlo a GitHub"
-              className="flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
-            >
-              <Download size={14} />
-              Exportar cambios
-            </button>
-            <button
-              onClick={() => {
-                if (window.confirm('¿Descartar todos los cambios sin exportar?')) onReset()
-              }}
-              title="Descartar todos los cambios locales"
-              className="rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-rose-200 hover:text-rose-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-rose-900 dark:hover:text-rose-400"
-            >
-              <RotateCcw size={15} />
-            </button>
-          </div>
-        )}
         <button
           onClick={onToggleTheme}
           className="shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-indigo-900 dark:hover:text-indigo-400"

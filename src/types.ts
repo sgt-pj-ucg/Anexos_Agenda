@@ -34,7 +34,6 @@ export interface Persona {
   suplente?: string | null
   comuna: string | null
   fuente?: string
-  fichaTribunal: FichaTribunal | null
 }
 
 export interface Directorio {

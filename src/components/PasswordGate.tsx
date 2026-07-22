@@ -21,7 +21,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
     const matched = await checkPassword(value)
     setChecking(false)
     if (matched) {
-      setRole(matched)
+      setRole(matched, value)
       setRoleState(matched)
     } else {
       setError(true)

@@ -34,13 +34,12 @@ export default function App() {
     tribunales,
     correoGeneralSeccion,
     generatedAt,
+    loading,
+    error,
     updatePerson,
     createPerson,
     deletePerson,
     updateFicha,
-    exportData,
-    resetChanges,
-    hasChanges,
   } = useDirectorioData()
 
   const [query, setQuery] = useState('')
@@ -110,11 +109,16 @@ export default function App() {
     setComuna(null)
   }
 
-  const handleDelete = (p: Persona) => {
-    if (window.confirm(`¿Eliminar a ${p.nombre} del directorio?`)) deletePerson(p.id)
+  const handleDelete = async (p: Persona) => {
+    if (!window.confirm(`¿Eliminar a ${p.nombre} del directorio?`)) return
+    try {
+      await deletePerson(p.id)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el contacto.')
+    }
   }
 
-  const handleSubmitModal = (values: PersonFormValues) => {
+  const handleSubmitModal = async (values: PersonFormValues) => {
     const correos = values.correos
       .split(',')
       .map((s) => s.trim())
@@ -124,51 +128,58 @@ export default function App() {
     const cumpleanos = values.cumpleanos.trim() || null
     const calidadJuridica = values.calidadJuridica.trim() || null
 
-    if (modal?.mode === 'edit') {
-      const patch: Partial<Persona> = {
-        nombre: values.nombre.trim(),
-        cargo,
-        correos,
-        anexo,
-        cumpleanos,
-        calidadJuridica,
+    try {
+      if (modal?.mode === 'edit') {
+        const patch: Partial<Persona> = {
+          nombre: values.nombre.trim(),
+          cargo,
+          correos,
+          anexo,
+          cumpleanos,
+          calidadJuridica,
+        }
+        // Al completar el nombre de un cargo vacante, se considera ocupado.
+        if (modal.person.vacante) patch.vacante = false
+        await updatePerson(patch, modal.person.id)
+      } else if (modal?.mode === 'add') {
+        const sample = modal.group.people[0]
+        await createPerson({
+          nombre: values.nombre.trim(),
+          cargo,
+          unidad: modal.group.label,
+          seccion: sample?.seccion ?? 'corte',
+          tribunal: sample?.tribunal ?? null,
+          correos,
+          anexo,
+          cumpleanos,
+          grado: null,
+          calidadJuridica,
+          esGenerico: false,
+          comuna: sample?.comuna ?? null,
+        })
       }
-      // Al completar el nombre de un cargo vacante, se considera ocupado.
-      if (modal.person.vacante) patch.vacante = false
-      updatePerson(patch, modal.person.id)
-    } else if (modal?.mode === 'add') {
-      const sample = modal.group.people[0]
-      createPerson({
-        nombre: values.nombre.trim(),
-        cargo,
-        unidad: modal.group.label,
-        seccion: sample?.seccion ?? 'corte',
-        tribunal: sample?.tribunal ?? null,
-        correos,
-        anexo,
-        cumpleanos,
-        grado: null,
-        calidadJuridica,
-        esGenerico: false,
-        comuna: sample?.comuna ?? null,
-        fichaTribunal: modal.group.ficha,
-      })
+      setModal(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo guardar el contacto.')
     }
-    setModal(null)
   }
 
-  const handleSubmitFicha = (values: TribunalFormValues) => {
+  const handleSubmitFicha = async (values: TribunalFormValues) => {
     if (!fichaModal) return
-    updateFicha(fichaModal.id, {
-      ministroVisitador: values.ministroVisitador.trim() || null,
-      correo: values.correo.trim() || null,
-      telefono: values.telefono.trim() || null,
-      competencias: values.competencias
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    })
-    setFichaModal(null)
+    try {
+      await updateFicha(fichaModal.id, {
+        ministroVisitador: values.ministroVisitador.trim() || null,
+        correo: values.correo.trim() || null,
+        telefono: values.telefono.trim() || null,
+        competencias: values.competencias
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      })
+      setFichaModal(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo guardar la ficha del tribunal.')
+    }
   }
 
   return (
@@ -178,60 +189,76 @@ export default function App() {
         onToggleTheme={toggle}
         totalPersonas={people.length}
         totalTribunales={tribunales.length}
-        hasChanges={hasChanges}
-        onExport={exportData}
-        onReset={resetChanges}
       />
 
+      {error && (
+        <div className="mx-auto mt-4 max-w-6xl px-4">
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-500/10 dark:text-rose-400">
+            {error}
+          </p>
+        </div>
+      )}
+
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-6">
-        <SearchBar value={query} onChange={setQuery} />
-
-        <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
-
-        {showComunaChips && (
-          <ComunaChips
-            comunas={comunasDisponibles}
-            active={comuna}
-            onChange={setComuna}
-            counts={comunaCounts}
-          />
-        )}
-
-        {birthdayPeople.length > 0 && !trimmedQuery && <BirthdayBanner people={birthdayPeople} />}
-
-        {showOverview ? (
-          <SectionOverview
-            counts={sectionCounts}
-            peopleBySection={peopleBySection}
-            onSelect={handleSelectSection}
-          />
+        {loading ? (
+          <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+            Cargando directorio…
+          </p>
         ) : (
           <>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {filteredResults.length} {filteredResults.length === 1 ? 'resultado' : 'resultados'}
-              {section !== 'todos' && <> en {SECTION_META[section].label}</>}
-              {comuna && <> · {comuna}</>}
-            </p>
+            <SearchBar value={query} onChange={setQuery} />
 
-            {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
+            <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
 
-            {filteredResults.length === 0 ? (
-              <EmptyState query={trimmedQuery} />
-            ) : trimmedQuery ? (
-              <FlatResults
-                people={filteredResults}
-                onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                onDeletePerson={handleDelete}
+            {showComunaChips && (
+              <ComunaChips
+                comunas={comunasDisponibles}
+                active={comuna}
+                onChange={setComuna}
+                counts={comunaCounts}
+              />
+            )}
+
+            {birthdayPeople.length > 0 && !trimmedQuery && (
+              <BirthdayBanner people={birthdayPeople} />
+            )}
+
+            {showOverview ? (
+              <SectionOverview
+                counts={sectionCounts}
+                peopleBySection={peopleBySection}
+                onSelect={handleSelectSection}
               />
             ) : (
-              <GroupedResults
-                groups={groups}
-                collapsible={section === 'tribunal'}
-                onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                onDeletePerson={handleDelete}
-                onAddPerson={(g) => setModal({ mode: 'add', group: g })}
-                onEditFicha={setFichaModal}
-              />
+              <>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {filteredResults.length}{' '}
+                  {filteredResults.length === 1 ? 'resultado' : 'resultados'}
+                  {section !== 'todos' && <> en {SECTION_META[section].label}</>}
+                  {comuna && <> · {comuna}</>}
+                </p>
+
+                {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
+
+                {filteredResults.length === 0 ? (
+                  <EmptyState query={trimmedQuery} />
+                ) : trimmedQuery ? (
+                  <FlatResults
+                    people={filteredResults}
+                    onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                    onDeletePerson={handleDelete}
+                  />
+                ) : (
+                  <GroupedResults
+                    groups={groups}
+                    collapsible={section === 'tribunal'}
+                    onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                    onDeletePerson={handleDelete}
+                    onAddPerson={(g) => setModal({ mode: 'add', group: g })}
+                    onEditFicha={setFichaModal}
+                  />
+                )}
+              </>
             )}
           </>
         )}

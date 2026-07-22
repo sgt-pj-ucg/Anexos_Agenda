@@ -2,6 +2,13 @@
 // seguridad criptográfica robusta (la app es estática y se ejecuta en el
 // navegador del usuario), pero evita que la agenda sea navegable por
 // cualquiera que llegue al enlace o que quede indexada en buscadores.
+//
+// Las escrituras reales (agregar/editar/eliminar) están protegidas aparte,
+// del lado del servidor: cada llamada RPC a Supabase vuelve a validar la
+// clave de administrador antes de tocar la base de datos (ver
+// supabase/schema.sql). Por eso aquí se retiene la clave de administrador
+// en texto plano (solo en este navegador) — se necesita para acompañar
+// cada escritura.
 const STORAGE_KEY = 'pj-la-serena-directorio-auth'
 
 export type Role = 'viewer' | 'admin'
@@ -11,6 +18,11 @@ export type Role = 'viewer' | 'admin'
 const HASHES: Record<Role, string> = {
   viewer: '1bee1763b075b1b81fcaa6890ff684a29dc3ed892d630076f8e23acc73a0257c', // Corte1849
   admin: 'bbc0da8fc88d3442496a2f02e2769ea11cf7300c6b816f3071cbe8862582ef7b', // Admin1849
+}
+
+interface StoredAuth {
+  role: Role
+  password?: string
 }
 
 async function sha256Hex(text: string): Promise<string> {
@@ -28,13 +40,30 @@ export async function checkPassword(input: string): Promise<Role | null> {
   return null
 }
 
-export function getRole(): Role | null {
-  const v = localStorage.getItem(STORAGE_KEY)
-  return v === 'viewer' || v === 'admin' ? v : null
+function readStored(): StoredAuth | null {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed.role === 'viewer' || parsed.role === 'admin') return parsed
+    return null
+  } catch {
+    return null
+  }
 }
 
-export function setRole(role: Role): void {
-  localStorage.setItem(STORAGE_KEY, role)
+export function getRole(): Role | null {
+  return readStored()?.role ?? null
+}
+
+export function getAdminPassword(): string | null {
+  const stored = readStored()
+  return stored?.role === 'admin' ? (stored.password ?? null) : null
+}
+
+export function setRole(role: Role, password: string): void {
+  const stored: StoredAuth = role === 'admin' ? { role, password } : { role }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
 }
 
 export function lock(): void {
