@@ -173,7 +173,7 @@ export default function App() {
     for (const g of groups) {
       if (g.ficha?.correo) emails.add(g.ficha.correo)
     }
-    return Array.from(emails)
+    return Array.from(emails).sort((a, b) => a.localeCompare(b, 'es'))
   }, [section, groups])
 
   const tribunalesEmailSuffix = [materia, comuna].filter(Boolean).join(' · ')

@@ -2,7 +2,11 @@ export function initials(nombre: string): string {
   const parts = nombre.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  // Convención chilena: [nombre(s)] [apellido paterno] [apellido materno].
+  // El apellido por el que se identifica a la persona es el penúltimo,
+  // no el último (que es el apellido materno).
+  const apellidoIndex = parts.length >= 3 ? parts.length - 2 : parts.length - 1
+  return (parts[0][0] + parts[apellidoIndex][0]).toUpperCase()
 }
 
 export function anexoDigits(anexo: string | null): string | null {
