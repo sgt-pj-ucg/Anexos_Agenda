@@ -3,7 +3,7 @@ import { directorio } from '../data'
 import { supabase } from '../lib/supabaseClient'
 import { getAdminPassword } from '../lib/auth'
 import { slugify } from '../lib/normalize'
-import type { FichaTribunal, Persona, Seccion } from '../types'
+import type { Cambio, FichaTribunal, Persona, Seccion } from '../types'
 
 interface PersonaRow {
   id: string
@@ -34,6 +34,14 @@ interface TribunalRow {
   competencias: string[] | null
   comuna: string | null
   updated_at: string
+}
+
+interface CambioRow {
+  id: number
+  created_at: string
+  tipo: Cambio['tipo']
+  entidad: string
+  detalle: string | null
 }
 
 function rowToPersona(row: PersonaRow): Persona {
@@ -68,6 +76,16 @@ function rowToFicha(row: TribunalRow): FichaTribunal {
   }
 }
 
+function rowToCambio(row: CambioRow): Cambio {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    tipo: row.tipo,
+    entidad: row.entidad,
+    detalle: row.detalle,
+  }
+}
+
 function uniqueId(base: string, existing: Set<string>): string {
   let id = slugify(base) || 'contacto'
   let n = 1
@@ -94,6 +112,7 @@ function friendlyMessage(raw: string): string {
 export function useDirectorioData() {
   const [people, setPeople] = useState<Persona[]>([])
   const [tribunales, setTribunales] = useState<FichaTribunal[]>([])
+  const [cambios, setCambios] = useState<Cambio[]>([])
   const [generatedAt, setGeneratedAt] = useState(directorio.generatedAt)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -128,19 +147,34 @@ export function useDirectorioData() {
     setLoading(false)
   }, [])
 
+  const loadCambios = useCallback(async () => {
+    // No es un dato crítico: si la tabla "cambios" aún no existe (proyectos
+    // que no han corrido la migración del panel de novedades), simplemente
+    // se deja la lista vacía en lugar de romper el resto de la app.
+    const { data, error: cambiosError } = await supabase
+      .from('cambios')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (cambiosError) return
+    setCambios(((data ?? []) as CambioRow[]).map(rowToCambio))
+  }, [])
+
   useEffect(() => {
     load()
+    loadCambios()
 
     const channel = supabase
       .channel('directorio-cambios')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'personas' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tribunales' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cambios' }, () => loadCambios())
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [load])
+  }, [load, loadCambios])
 
   const writePersona = async (persona: Persona) => {
     const admin_password = requireAdminPassword()
@@ -188,6 +222,7 @@ export function useDirectorioData() {
   return {
     people,
     tribunales,
+    cambios,
     correoGeneralSeccion: directorio.correoGeneralSeccion,
     generatedAt,
     loading,

@@ -20,6 +20,10 @@ interface Props {
   onDeletePerson?: (p: Persona) => void
   onAddPerson?: (group: Group) => void
   onEditFicha?: (ficha: FichaTribunal) => void
+  onReportPerson?: (p: Persona) => void
+  onReportFicha?: (ficha: FichaTribunal) => void
+  isFavorite?: (id: string) => boolean
+  onToggleFavorite?: (id: string) => void
 }
 
 export function GroupedResults({
@@ -29,6 +33,10 @@ export function GroupedResults({
   onDeletePerson,
   onAddPerson,
   onEditFicha,
+  onReportPerson,
+  onReportFicha,
+  isFavorite,
+  onToggleFavorite,
 }: Props) {
   const isAdmin = useIsAdmin()
   // Los grupos colapsables (tribunales) empiezan siempre contraídos; solo se
@@ -93,6 +101,7 @@ export function GroupedResults({
                 <TribunalFichaCard
                   ficha={g.ficha}
                   onEdit={onEditFicha ? () => onEditFicha(g.ficha!) : undefined}
+                  onReport={onReportFicha ? () => onReportFicha(g.ficha!) : undefined}
                 />
               </div>
             )}
@@ -104,6 +113,9 @@ export function GroupedResults({
                     p={p}
                     onEdit={onEditPerson ? () => onEditPerson(p) : undefined}
                     onDelete={onDeletePerson ? () => onDeletePerson(p) : undefined}
+                    onReport={onReportPerson ? () => onReportPerson(p) : undefined}
+                    isFavorite={isFavorite?.(p.id)}
+                    onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(p.id) : undefined}
                   />
                 ))}
               </div>

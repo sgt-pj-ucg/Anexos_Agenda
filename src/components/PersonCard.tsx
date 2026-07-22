@@ -1,4 +1,4 @@
-import { Cake, Mail, Pencil, Phone, Trash2 } from 'lucide-react'
+import { Cake, Flag, Mail, Pencil, Phone, Star, Trash2 } from 'lucide-react'
 import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
@@ -10,33 +10,66 @@ interface Props {
   contextTag?: string
   onEdit?: () => void
   onDelete?: () => void
+  onReport?: () => void
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
 }
 
-export function PersonCard({ p, contextTag, onEdit, onDelete }: Props) {
+export function PersonCard({
+  p,
+  contextTag,
+  onEdit,
+  onDelete,
+  onReport,
+  isFavorite,
+  onToggleFavorite,
+}: Props) {
   const isAdmin = useIsAdmin()
   const cumpleHoy = isToday(p.cumpleanos)
   const cumpleParsed = parseCumple(p.cumpleanos)
 
-  const adminControls = isAdmin && (onEdit || onDelete) && (
-    <div className="absolute top-3 right-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-      {onEdit && (
+  const cornerControls = (onReport || onToggleFavorite || (isAdmin && (onEdit || onDelete))) && (
+    <div className="absolute top-3 right-3 flex items-center gap-1">
+      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {onReport && (
+          <button
+            type="button"
+            onClick={onReport}
+            title="Reportar dato incorrecto"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+          >
+            <Flag size={13} />
+          </button>
+        )}
+        {isAdmin && onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            title="Editar contacto"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+          >
+            <Pencil size={13} />
+          </button>
+        )}
+        {isAdmin && onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Eliminar contacto"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
+      {onToggleFavorite && (
         <button
           type="button"
-          onClick={onEdit}
-          title="Editar contacto"
-          className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+          onClick={onToggleFavorite}
+          title={isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+          className="rounded-full p-1.5 text-slate-300 hover:text-amber-400 dark:text-slate-600"
         >
-          <Pencil size={13} />
-        </button>
-      )}
-      {onDelete && (
-        <button
-          type="button"
-          onClick={onDelete}
-          title="Eliminar contacto"
-          className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
-        >
-          <Trash2 size={13} />
+          <Star size={15} className={isFavorite ? 'fill-amber-400 text-amber-500' : ''} />
         </button>
       )}
     </div>
@@ -81,7 +114,7 @@ export function PersonCard({ p, contextTag, onEdit, onDelete }: Props) {
 
   return (
     <div className="group relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-      {adminControls}
+      {cornerControls}
       <div className="flex items-start gap-3">
         <div
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarPalette(p.id)}`}

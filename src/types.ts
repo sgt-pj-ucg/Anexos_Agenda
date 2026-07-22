@@ -36,6 +36,16 @@ export interface Persona {
   fuente?: string
 }
 
+export type CambioTipo = 'persona_agregada' | 'persona_editada' | 'persona_eliminada' | 'ficha_editada'
+
+export interface Cambio {
+  id: number
+  createdAt: string
+  tipo: CambioTipo
+  entidad: string
+  detalle: string | null
+}
+
 export interface Directorio {
   generatedAt: string
   totalPersonas: number

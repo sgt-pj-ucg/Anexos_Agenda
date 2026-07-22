@@ -1,4 +1,4 @@
-import { Landmark, Mail, Pencil, Phone, User } from 'lucide-react'
+import { Flag, Landmark, Mail, Pencil, Phone, User } from 'lucide-react'
 import type { FichaTribunal } from '../types'
 import { CopyChip } from './CopyChip'
 import { useIsAdmin } from '../context/RoleContext'
@@ -6,9 +6,11 @@ import { useIsAdmin } from '../context/RoleContext'
 export function TribunalFichaCard({
   ficha,
   onEdit,
+  onReport,
 }: {
   ficha: FichaTribunal
   onEdit?: () => void
+  onReport?: () => void
 }) {
   const isAdmin = useIsAdmin()
 
@@ -30,6 +32,16 @@ export function TribunalFichaCard({
               <span className="text-slate-400 italic dark:text-slate-500">sin asignar</span>
             )}
           </span>
+          {onReport && (
+            <button
+              type="button"
+              onClick={onReport}
+              title="Reportar dato incorrecto de este tribunal"
+              className="rounded-full border border-white bg-white p-1.5 text-slate-400 hover:border-rose-300 hover:text-rose-600 dark:border-slate-900 dark:bg-slate-900 dark:text-slate-500"
+            >
+              <Flag size={12} />
+            </button>
+          )}
           {isAdmin && onEdit && (
             <button
               type="button"

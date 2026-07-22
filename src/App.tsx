@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
+import { useFavorites } from './hooks/useFavorites'
 import { buildSearchIndex, searchPeople } from './lib/search'
 import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { MATERIA_ORDER } from './lib/materias'
 import { normalize } from './lib/normalize'
 import { buildGroups } from './lib/groups'
+import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, type SeccionKey } from './lib/sections'
 import type { FichaTribunal, Persona } from './types'
 import type { Group } from './components/GroupedResults'
@@ -15,6 +17,7 @@ import type { TribunalFormValues } from './components/TribunalEditModal'
 
 import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
+import { FavoritesToggle } from './components/FavoritesToggle'
 import { SectionTabs } from './components/SectionTabs'
 import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
@@ -28,14 +31,18 @@ import { EmptyState } from './components/EmptyState'
 import { Footer } from './components/Footer'
 import { PersonEditModal } from './components/PersonEditModal'
 import { TribunalEditModal } from './components/TribunalEditModal'
+import { ReportIssueModal } from './components/ReportIssueModal'
+import { NovedadesPanel } from './components/NovedadesPanel'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
+type ReportTarget = { subject: string; contexto: string[] } | null
 
 export default function App() {
   const { theme, toggle } = useTheme()
   const {
     people,
     tribunales,
+    cambios,
     correoGeneralSeccion,
     generatedAt,
     loading,
@@ -45,13 +52,18 @@ export default function App() {
     deletePerson,
     updateFicha,
   } = useDirectorioData()
+  const { favorites, toggle: toggleFavorite } = useFavorites()
 
   const [query, setQuery] = useState('')
   const [section, setSection] = useState<SeccionKey>('todos')
   const [comuna, setComuna] = useState<string | null>(null)
   const [materia, setMateria] = useState<string | null>(null)
+  const [favoritesMode, setFavoritesMode] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
+  const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
+  const [novedadesOpen, setNovedadesOpen] = useState(false)
+  const [lastSeen, setLastSeen] = useState<string | null>(() => getLastSeen())
 
   const searchIndex = useMemo(() => buildSearchIndex(people), [people])
 
@@ -110,6 +122,20 @@ export default function App() {
     return searchPeople(searchIndex, trimmedQuery)
   }, [trimmedQuery, searchIndex, people])
 
+  const favoritePeople = useMemo(() => people.filter((p) => favorites.has(p.id)), [people, favorites])
+
+  const favoriteIndex = useMemo(() => buildSearchIndex(favoritePeople), [favoritePeople])
+
+  const favoriteResults = useMemo(() => {
+    if (!trimmedQuery) return favoritePeople
+    return searchPeople(favoriteIndex, trimmedQuery)
+  }, [trimmedQuery, favoriteIndex, favoritePeople])
+
+  const novedadesCount = useMemo(() => {
+    if (!lastSeen) return cambios.length
+    return cambios.filter((c) => c.createdAt > lastSeen).length
+  }, [cambios, lastSeen])
+
   const filteredResults = useMemo(() => {
     let results = baseResults
     if (section !== 'todos') results = results.filter((p) => p.seccion === section)
@@ -144,6 +170,18 @@ export default function App() {
     setSection(s)
     setComuna(null)
     setMateria(null)
+    setFavoritesMode(false)
+  }
+
+  const openReport = (subject: string, contexto: string[]) => setReportTarget({ subject, contexto })
+
+  const openNovedades = () => {
+    setNovedadesOpen(true)
+    const latest = cambios[0]?.createdAt
+    if (latest) {
+      markSeen(latest)
+      setLastSeen(latest)
+    }
   }
 
   const handleDelete = async (p: Persona) => {
@@ -226,6 +264,8 @@ export default function App() {
         onToggleTheme={toggle}
         totalPersonas={people.length}
         totalTribunales={tribunales.length}
+        novedadesCount={novedadesCount}
+        onOpenNovedades={openNovedades}
       />
 
       {error && (
@@ -243,11 +283,22 @@ export default function App() {
           </p>
         ) : (
           <>
-            <SearchBar value={query} onChange={setQuery} />
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-1">
+                <SearchBar value={query} onChange={setQuery} />
+              </div>
+              <FavoritesToggle
+                active={favoritesMode}
+                count={favorites.size}
+                onClick={() => setFavoritesMode((v) => !v)}
+              />
+            </div>
 
-            <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
+            {!favoritesMode && (
+              <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
+            )}
 
-            {showComunaChips && (
+            {!favoritesMode && showComunaChips && (
               <ComunaChips
                 comunas={comunasDisponibles}
                 active={comuna}
@@ -256,7 +307,7 @@ export default function App() {
               />
             )}
 
-            {showMateriaChips && (
+            {!favoritesMode && showMateriaChips && (
               <MateriaChips
                 materias={materiasDisponibles}
                 active={materia}
@@ -265,11 +316,32 @@ export default function App() {
               />
             )}
 
-            {birthdayPeople.length > 0 && !trimmedQuery && (
+            {!favoritesMode && birthdayPeople.length > 0 && !trimmedQuery && (
               <BirthdayBanner people={birthdayPeople} />
             )}
 
-            {showOverview ? (
+            {favoritesMode ? (
+              <>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {favoriteResults.length}{' '}
+                  {favoriteResults.length === 1 ? 'favorito' : 'favoritos'}
+                </p>
+                {favoriteResults.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
+                    Aún no tienes favoritos. Marca la estrella de un contacto para agregarlo aquí.
+                  </p>
+                ) : (
+                  <FlatResults
+                    people={favoriteResults}
+                    onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                    onDeletePerson={handleDelete}
+                    onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
+                    isFavorite={(id) => favorites.has(id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                )}
+              </>
+            ) : showOverview ? (
               <SectionOverview
                 counts={sectionCounts}
                 peopleBySection={peopleBySection}
@@ -298,6 +370,9 @@ export default function App() {
                     people={filteredResults}
                     onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
                     onDeletePerson={handleDelete}
+                    onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
+                    isFavorite={(id) => favorites.has(id)}
+                    onToggleFavorite={toggleFavorite}
                   />
                 ) : (
                   <GroupedResults
@@ -307,6 +382,10 @@ export default function App() {
                     onDeletePerson={handleDelete}
                     onAddPerson={(g) => setModal({ mode: 'add', group: g })}
                     onEditFicha={setFichaModal}
+                    onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
+                    onReportFicha={(f) => openReport(f.nombre, ['Ficha de tribunal'])}
+                    isFavorite={(id) => favorites.has(id)}
+                    onToggleFavorite={toggleFavorite}
                   />
                 )}
               </>
@@ -333,6 +412,18 @@ export default function App() {
           onCancel={() => setFichaModal(null)}
           onSubmit={handleSubmitFicha}
         />
+      )}
+
+      {reportTarget && (
+        <ReportIssueModal
+          subject={reportTarget.subject}
+          contexto={reportTarget.contexto}
+          onCancel={() => setReportTarget(null)}
+        />
+      )}
+
+      {novedadesOpen && (
+        <NovedadesPanel cambios={cambios} onClose={() => setNovedadesOpen(false)} />
       )}
     </div>
   )
