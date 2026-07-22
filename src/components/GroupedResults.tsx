@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, UserPlus, Users } from 'lucide-react'
+import { UserPlus, Users } from 'lucide-react'
 import { useState } from 'react'
 import type { FichaTribunal, Persona } from '../types'
 import { PersonCard } from './PersonCard'
@@ -58,51 +58,34 @@ export function GroupedResults({
         const isCollapsed = collapsible && !expanded.has(g.key)
         return (
           <section key={g.key} className="animate-fade-in">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              {collapsible ? (
-                <button
-                  onClick={() => toggle(g.key)}
-                  className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
-                    isCollapsed
-                      ? 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800 dark:hover:bg-indigo-500/10'
-                      : 'border-indigo-200 bg-indigo-50 dark:border-indigo-900/50 dark:bg-indigo-500/10'
-                  }`}
-                  title={isCollapsed ? 'Mostrar personal' : 'Ocultar personal'}
-                >
-                  {isCollapsed ? (
-                    <ChevronRight size={16} className="shrink-0 text-indigo-500" />
-                  ) : (
-                    <ChevronDown size={16} className="shrink-0 text-indigo-500" />
-                  )}
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">{g.label}</h3>
-                  <span className="ml-1 text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                    {isCollapsed ? 'Ver funcionarios' : 'Ocultar'}
-                  </span>
-                </button>
-              ) : (
-                <h3 className="font-semibold text-slate-800 dark:text-slate-100">{g.label}</h3>
-              )}
-              <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                <Users size={11} /> {g.people.length}
-              </span>
-              <GroupEmailButton people={g.people} />
-              {isAdmin && onAddPerson && (
-                <button
-                  onClick={() => onAddPerson(g)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-                >
-                  <UserPlus size={12} />
-                  Agregar contacto
-                </button>
-              )}
-            </div>
-            {g.ficha && (
+            {g.ficha ? (
               <div className="mb-3">
                 <TribunalFichaCard
                   ficha={g.ficha}
+                  people={g.people}
+                  collapsed={isCollapsed}
+                  onToggleCollapse={() => toggle(g.key)}
                   onEdit={onEditFicha ? () => onEditFicha(g.ficha!) : undefined}
                   onReport={onReportFicha ? () => onReportFicha(g.ficha!) : undefined}
+                  onAddPerson={onAddPerson ? () => onAddPerson(g) : undefined}
                 />
+              </div>
+            ) : (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100">{g.label}</h3>
+                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <Users size={11} /> {g.people.length}
+                </span>
+                <GroupEmailButton people={g.people} />
+                {isAdmin && onAddPerson && (
+                  <button
+                    onClick={() => onAddPerson(g)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                  >
+                    <UserPlus size={12} />
+                    Agregar contacto
+                  </button>
+                )}
               </div>
             )}
             {!isCollapsed && (

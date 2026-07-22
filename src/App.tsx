@@ -21,7 +21,7 @@ import { FavoritesToggle } from './components/FavoritesToggle'
 import { SectionTabs } from './components/SectionTabs'
 import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
-import { MateriaEmailBanner } from './components/MateriaEmailBanner'
+import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -157,14 +157,16 @@ export default function App() {
     return buildGroups(section, filteredResults, tribunales)
   }, [showOverview, trimmedQuery, section, filteredResults, tribunales])
 
-  const materiaEmails = useMemo(() => {
-    if (section !== 'tribunal' || !materia) return []
+  const tribunalesEmails = useMemo(() => {
+    if (section !== 'tribunal') return []
     const emails = new Set<string>()
     for (const g of groups) {
       if (g.ficha?.correo) emails.add(g.ficha.correo)
     }
     return Array.from(emails)
-  }, [section, materia, groups])
+  }, [section, groups])
+
+  const tribunalesEmailSuffix = [materia, comuna].filter(Boolean).join(' · ')
 
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
@@ -359,8 +361,8 @@ export default function App() {
 
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
 
-                {materia && !trimmedQuery && (
-                  <MateriaEmailBanner materia={materia} correos={materiaEmails} />
+                {section === 'tribunal' && !trimmedQuery && (
+                  <TribunalesEmailBanner suffix={tribunalesEmailSuffix} correos={tribunalesEmails} />
                 )}
 
                 {filteredResults.length === 0 ? (
