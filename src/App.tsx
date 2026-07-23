@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { Network } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
+import { useIsAdmin } from './context/RoleContext'
 import { buildSearchIndex, searchPeople } from './lib/search'
 import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
@@ -34,6 +36,7 @@ import { TribunalEditModal } from './components/TribunalEditModal'
 import { ReportIssueModal } from './components/ReportIssueModal'
 import { NovedadesPanel } from './components/NovedadesPanel'
 import { ReportesPanel } from './components/ReportesPanel'
+import { OrganigramaBoard } from './components/OrganigramaBoard'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ReportTarget = { subject: string; contexto: string[] } | null
@@ -57,12 +60,14 @@ export default function App() {
     setReporteEstado,
   } = useDirectorioData()
   const { favorites, toggle: toggleFavorite } = useFavorites()
+  const isAdmin = useIsAdmin()
 
   const [query, setQuery] = useState('')
   const [section, setSection] = useState<SeccionKey>('todos')
   const [comuna, setComuna] = useState<string | null>(null)
   const [materia, setMateria] = useState<string | null>(null)
   const [favoritesMode, setFavoritesMode] = useState(false)
+  const [organigramaMode, setOrganigramaMode] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
@@ -178,11 +183,18 @@ export default function App() {
 
   const tribunalesEmailSuffix = [materia, comuna].filter(Boolean).join(' · ')
 
+  const cortePeople = useMemo(() => people.filter((p) => p.seccion === 'corte'), [people])
+
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
     setComuna(null)
     setMateria(null)
     setFavoritesMode(false)
+    setOrganigramaMode(false)
+  }
+
+  const handleMoveUnidad = async (personId: string, nuevaUnidad: string) => {
+    await updatePerson({ unidad: nuevaUnidad }, personId)
   }
 
   const openReport = (subject: string, contexto: string[]) => setReportTarget({ subject, contexto })
@@ -325,7 +337,22 @@ export default function App() {
               <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
             )}
 
-            {!favoritesMode && showComunaChips && (
+            {!favoritesMode && isAdmin && section === 'corte' && (
+              <button
+                type="button"
+                onClick={() => setOrganigramaMode((v) => !v)}
+                className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  organigramaMode
+                    ? 'border-indigo-400 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-300'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                }`}
+              >
+                <Network size={14} />
+                {organigramaMode ? 'Ver como lista' : 'Ver organigrama'}
+              </button>
+            )}
+
+            {!favoritesMode && !organigramaMode && showComunaChips && (
               <ComunaChips
                 comunas={comunasDisponibles}
                 active={comuna}
@@ -343,11 +370,19 @@ export default function App() {
               />
             )}
 
-            {!favoritesMode && birthdayPeople.length > 0 && !trimmedQuery && (
+            {!favoritesMode && !organigramaMode && birthdayPeople.length > 0 && !trimmedQuery && (
               <BirthdayBanner people={birthdayPeople} />
             )}
 
-            {favoritesMode ? (
+            {organigramaMode ? (
+              <>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {cortePeople.length} funcionarios de la Corte de Apelaciones
+                  {isAdmin && ' — arrastra una tarjeta a otra columna para reasignar de unidad.'}
+                </p>
+                <OrganigramaBoard people={cortePeople} isAdmin={isAdmin} onMove={handleMoveUnidad} />
+              </>
+            ) : favoritesMode ? (
               <>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {favoriteResults.length}{' '}
