@@ -40,6 +40,10 @@ create table if not exists tribunales (
   ministro_visitador text,
   competencias text[] not null default '{}',
   comuna text,
+  -- correo genérico ("correo") es fijo desde la carga inicial; estos dos
+  -- son actualizables por el administrador desde la ficha del tribunal.
+  correo_admin_secretario text,
+  correo_segundo_lider text,
   updated_at timestamptz not null default now()
 );
 
@@ -227,6 +231,8 @@ begin
     correo = patch->>'correo',
     telefono = patch->>'telefono',
     competencias = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'competencias', '[]'::jsonb)) x), '{}'),
+    correo_admin_secretario = patch->>'correoAdminSecretario',
+    correo_segundo_lider = patch->>'correoSegundoLider',
     updated_at = now()
   where id = ficha_id;
 

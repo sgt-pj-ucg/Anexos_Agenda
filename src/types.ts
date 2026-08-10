@@ -15,6 +15,8 @@ export interface FichaTribunal {
   ministroVisitador: string | null
   competencias: string[]
   comuna: string | null
+  correoAdminSecretario: string | null
+  correoSegundoLider: string | null
 }
 
 export interface Persona {

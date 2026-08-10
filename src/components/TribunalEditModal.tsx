@@ -4,9 +4,10 @@ import type { FichaTribunal } from '../types'
 
 export interface TribunalFormValues {
   ministroVisitador: string
-  correo: string
   telefono: string
   competencias: string
+  correoAdminSecretario: string
+  correoSegundoLider: string
 }
 
 interface Props {
@@ -18,9 +19,10 @@ interface Props {
 export function TribunalEditModal({ ficha, onCancel, onSubmit }: Props) {
   const [values, setValues] = useState<TribunalFormValues>({
     ministroVisitador: ficha.ministroVisitador ?? '',
-    correo: ficha.correo ?? '',
     telefono: ficha.telefono ?? '',
     competencias: ficha.competencias.join(', '),
+    correoAdminSecretario: ficha.correoAdminSecretario ?? '',
+    correoSegundoLider: ficha.correoSegundoLider ?? '',
   })
 
   const set = <K extends keyof TribunalFormValues>(key: K, value: TribunalFormValues[K]) =>
@@ -60,12 +62,10 @@ export function TribunalEditModal({ ficha, onCancel, onSubmit }: Props) {
               className={inputClass}
             />
           </Field>
-          <Field label="Correo general del tribunal">
-            <input
-              value={values.correo}
-              onChange={(e) => set('correo', e.target.value)}
-              className={inputClass}
-            />
+          <Field label="Correo general del tribunal (fijo, no editable)">
+            <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+              {ficha.correo ?? 'Sin correo general'}
+            </p>
           </Field>
           <Field label="Teléfono">
             <input
@@ -79,6 +79,22 @@ export function TribunalEditModal({ ficha, onCancel, onSubmit }: Props) {
               value={values.competencias}
               onChange={(e) => set('competencias', e.target.value)}
               placeholder="Civil, Laboral, Familia…"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Correo administrador(a) o secretario(a)">
+            <input
+              value={values.correoAdminSecretario}
+              onChange={(e) => set('correoAdminSecretario', e.target.value)}
+              placeholder="nombre@pjud.cl"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Correo del segundo responsable del tribunal">
+            <input
+              value={values.correoSegundoLider}
+              onChange={(e) => set('correoSegundoLider', e.target.value)}
+              placeholder="nombre@pjud.cl"
               className={inputClass}
             />
           </Field>

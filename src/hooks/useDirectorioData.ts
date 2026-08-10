@@ -34,6 +34,8 @@ interface TribunalRow {
   ministro_visitador: string | null
   competencias: string[] | null
   comuna: string | null
+  correo_admin_secretario: string | null
+  correo_segundo_lider: string | null
   updated_at: string
 }
 
@@ -84,6 +86,8 @@ function rowToFicha(row: TribunalRow): FichaTribunal {
     ministroVisitador: row.ministro_visitador,
     competencias: row.competencias ?? [],
     comuna: row.comuna,
+    correoAdminSecretario: row.correo_admin_secretario,
+    correoSegundoLider: row.correo_segundo_lider,
   }
 }
 

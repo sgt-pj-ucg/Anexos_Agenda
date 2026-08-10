@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Network } from 'lucide-react'
+import { UserCog, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
@@ -37,6 +37,7 @@ import { ReportIssueModal } from './components/ReportIssueModal'
 import { NovedadesPanel } from './components/NovedadesPanel'
 import { ReportesPanel } from './components/ReportesPanel'
 import { OrganigramaBoard } from './components/OrganigramaBoard'
+import { TribunalContactosView } from './components/TribunalContactosView'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ReportTarget = { subject: string; contexto: string[] } | null
@@ -68,6 +69,7 @@ export default function App() {
   const [materia, setMateria] = useState<string | null>(null)
   const [favoritesMode, setFavoritesMode] = useState(false)
   const [organigramaMode, setOrganigramaMode] = useState(false)
+  const [contactosMode, setContactosMode] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
@@ -191,6 +193,7 @@ export default function App() {
     setMateria(null)
     setFavoritesMode(false)
     setOrganigramaMode(false)
+    setContactosMode(false)
   }
 
   const handleMoveUnidad = async (personId: string, nuevaUnidad: string) => {
@@ -281,12 +284,14 @@ export default function App() {
     try {
       await updateFicha(fichaModal.id, {
         ministroVisitador: values.ministroVisitador.trim() || null,
-        correo: values.correo.trim() || null,
+        correo: fichaModal.correo,
         telefono: values.telefono.trim() || null,
         competencias: values.competencias
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean),
+        correoAdminSecretario: values.correoAdminSecretario.trim() || null,
+        correoSegundoLider: values.correoSegundoLider.trim() || null,
       })
       setFichaModal(null)
     } catch (err) {
@@ -337,22 +342,41 @@ export default function App() {
               <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
             )}
 
-            {!favoritesMode && isAdmin && section === 'corte' && (
+            {!favoritesMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setContactosMode((v) => !v)
+                  setOrganigramaMode(false)
+                }}
+                title="Correo genérico, administrador/secretario y segundo responsable de cada tribunal"
+                className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  contactosMode
+                    ? 'border-indigo-400 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-300'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                }`}
+              >
+                <UserCog size={14} />
+                {contactosMode ? 'Ver como lista' : 'Tribunales: Admin. y Secretarios'}
+              </button>
+            )}
+
+            {!favoritesMode && !contactosMode && isAdmin && section === 'corte' && (
               <button
                 type="button"
                 onClick={() => setOrganigramaMode((v) => !v)}
                 className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   organigramaMode
-                    ? 'border-indigo-400 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-300'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                    ? 'border-amber-400 bg-amber-100 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-amber-200 hover:text-amber-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
                 }`}
               >
-                <Network size={14} />
-                {organigramaMode ? 'Ver como lista' : 'Ver organigrama'}
+                <Workflow size={14} />
+                {organigramaMode ? 'Ver como lista' : 'Reorganizar unidades'}
               </button>
             )}
 
-            {!favoritesMode && !organigramaMode && showComunaChips && (
+            {!favoritesMode && !organigramaMode && !contactosMode && showComunaChips && (
               <ComunaChips
                 comunas={comunasDisponibles}
                 active={comuna}
@@ -361,7 +385,7 @@ export default function App() {
               />
             )}
 
-            {!favoritesMode && showMateriaChips && (
+            {!favoritesMode && !contactosMode && showMateriaChips && (
               <MateriaChips
                 materias={materiasDisponibles}
                 active={materia}
@@ -370,11 +394,13 @@ export default function App() {
               />
             )}
 
-            {!favoritesMode && !organigramaMode && birthdayPeople.length > 0 && !trimmedQuery && (
+            {!favoritesMode && !organigramaMode && !contactosMode && birthdayPeople.length > 0 && !trimmedQuery && (
               <BirthdayBanner people={birthdayPeople} />
             )}
 
-            {organigramaMode ? (
+            {contactosMode ? (
+              <TribunalContactosView tribunales={tribunales} onEditFicha={setFichaModal} />
+            ) : organigramaMode ? (
               <>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {cortePeople.length} funcionarios de la Corte de Apelaciones
