@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Gavel, Mail, Pencil, UserCog } from 'lucide-react'
-import type { FichaTribunal } from '../types'
+import type { FichaTribunal, Persona } from '../types'
 import { COMUNA_ORDER, comunaRank } from '../lib/comunas'
 import { MATERIA_ORDER } from '../lib/materias'
 import { ComunaChips } from './ComunaChips'
@@ -15,14 +15,22 @@ function uniqueEmails(values: (string | null)[]): string[] {
 
 export function TribunalContactosView({
   tribunales,
+  personas,
   onEditFicha,
 }: {
   tribunales: FichaTribunal[]
+  personas: Persona[]
   onEditFicha: (ficha: FichaTribunal) => void
 }) {
   const isAdmin = useIsAdmin()
   const [comuna, setComuna] = useState<string | null>(null)
   const [materia, setMateria] = useState<string | null>(null)
+
+  const nombrePorCorreo = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of personas) for (const correo of p.correos) if (!map.has(correo)) map.set(correo, p.nombre)
+    return map
+  }, [personas])
 
   const comunaCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -128,24 +136,38 @@ export function TribunalContactosView({
                 </td>
                 <td className="px-3 py-2.5 align-top">
                   {t.correoAdminSecretario ? (
-                    <CopyChip
-                      value={t.correoAdminSecretario}
-                      icon={<UserCog size={12} />}
-                      href={`mailto:${t.correoAdminSecretario}`}
-                      label="correo administrador o secretario"
-                    />
+                    <>
+                      <CopyChip
+                        value={t.correoAdminSecretario}
+                        icon={<UserCog size={12} />}
+                        href={`mailto:${t.correoAdminSecretario}`}
+                        label="correo administrador o secretario"
+                      />
+                      {nombrePorCorreo.get(t.correoAdminSecretario) && (
+                        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-400">
+                          {nombrePorCorreo.get(t.correoAdminSecretario)}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <span className="text-xs italic text-slate-300 dark:text-slate-600">Sin asignar</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 align-top">
                   {t.correoSegundoLider ? (
-                    <CopyChip
-                      value={t.correoSegundoLider}
-                      icon={<Gavel size={12} />}
-                      href={`mailto:${t.correoSegundoLider}`}
-                      label="correo del Juez Presidente o Juez"
-                    />
+                    <>
+                      <CopyChip
+                        value={t.correoSegundoLider}
+                        icon={<Gavel size={12} />}
+                        href={`mailto:${t.correoSegundoLider}`}
+                        label="correo del Juez Presidente o Juez"
+                      />
+                      {nombrePorCorreo.get(t.correoSegundoLider) && (
+                        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-400">
+                          {nombrePorCorreo.get(t.correoSegundoLider)}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <span className="text-xs italic text-slate-300 dark:text-slate-600">Sin asignar</span>
                   )}

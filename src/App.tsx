@@ -399,7 +399,7 @@ export default function App() {
             )}
 
             {contactosMode ? (
-              <TribunalContactosView tribunales={tribunales} onEditFicha={setFichaModal} />
+              <TribunalContactosView tribunales={tribunales} personas={people} onEditFicha={setFichaModal} />
             ) : organigramaMode ? (
               <>
                 <p className="text-sm text-slate-500 dark:text-slate-300">
