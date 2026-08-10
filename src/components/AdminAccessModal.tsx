@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
-import { Lock, X } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
+import { Lock, ShieldCheck, X } from 'lucide-react'
 import { checkAdminPassword, setAdmin } from '../lib/auth'
 
 export function AdminAccessModal({ onClose }: { onClose: () => void }) {
@@ -7,41 +8,58 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState(false)
   const [checking, setChecking] = useState(false)
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setChecking(true)
-    const ok = await checkAdminPassword(value)
-    if (ok) {
-      setAdmin(value)
-      window.location.reload()
-      return
+    try {
+      const ok = await checkAdminPassword(value)
+      if (ok) {
+        setAdmin(value)
+        window.location.reload()
+        return
+      }
+      setError(true)
+      setValue('')
+    } finally {
+      setChecking(false)
     }
-    setChecking(false)
-    setError(true)
-    setValue('')
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm"
-      onClick={onClose}
+      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm"
+      onMouseDown={onClose}
     >
       <form
         onSubmit={handleSubmit}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+        onMouseDown={(e) => e.stopPropagation()}
+        className="animate-fade-in w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
       >
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h2 className="font-semibold text-slate-900 dark:text-white">Acceso administrador</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Ingresa la clave para poder editar el directorio.
-            </p>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600">
+              <ShieldCheck size={19} className="text-white" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900 dark:text-white">Acceso administrador</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Ingresa la clave para poder editar
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            title="Cerrar"
+            className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <X size={18} />
           </button>
@@ -70,14 +88,24 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
         </div>
         {error && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">Clave incorrecta.</p>}
 
-        <button
-          type="submit"
-          disabled={checking || !value}
-          className="mt-4 w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {checking ? 'Verificando…' : 'Ingresar'}
-        </button>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={checking || !value}
+            className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {checking ? 'Verificando…' : 'Ingresar'}
+          </button>
+        </div>
       </form>
-    </div>
+    </div>,
+    document.body,
   )
 }
