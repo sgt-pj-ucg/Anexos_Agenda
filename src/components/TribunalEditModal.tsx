@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { X } from 'lucide-react'
-import type { FichaTribunal } from '../types'
+import type { FichaTribunal, Persona } from '../types'
+import { PersonaEmailPicker } from './PersonaEmailPicker'
 
 export interface TribunalFormValues {
   ministroVisitador: string
@@ -12,16 +13,22 @@ export interface TribunalFormValues {
 
 interface Props {
   ficha: FichaTribunal
+  personas: Persona[]
   onCancel: () => void
   onSubmit: (values: TribunalFormValues) => void
 }
 
-export function TribunalEditModal({ ficha, onCancel, onSubmit }: Props) {
+export function TribunalEditModal({ ficha, personas, onCancel, onSubmit }: Props) {
+  const funcionarios = personas.filter((p) => p.tribunal === ficha.nombre)
+  const administrador = funcionarios.find(
+    (p) => p.correos.length > 0 && /administrador/i.test(p.cargo ?? ''),
+  )
+
   const [values, setValues] = useState<TribunalFormValues>({
     ministroVisitador: ficha.ministroVisitador ?? '',
     telefono: ficha.telefono ?? '',
     competencias: ficha.competencias.join(', '),
-    correoAdminSecretario: ficha.correoAdminSecretario ?? '',
+    correoAdminSecretario: ficha.correoAdminSecretario ?? administrador?.correos[0] ?? '',
     correoSegundoLider: ficha.correoSegundoLider ?? '',
   })
 
@@ -83,19 +90,24 @@ export function TribunalEditModal({ ficha, onCancel, onSubmit }: Props) {
             />
           </Field>
           <Field label="Correo administrador(a) o secretario(a)">
-            <input
+            <PersonaEmailPicker
+              personas={funcionarios}
               value={values.correoAdminSecretario}
-              onChange={(e) => set('correoAdminSecretario', e.target.value)}
-              placeholder="nombre@pjud.cl"
-              className={inputClass}
+              onChange={(v) => set('correoAdminSecretario', v)}
+              placeholder="Busca por nombre o cargo…"
             />
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {administrador
+                ? `Sugerido por defecto: ${administrador.nombre} (Administrador). Puedes buscar y elegir a otro funcionario, por ejemplo el/la secretario(a).`
+                : 'No hay un funcionario con cargo "Administrador" registrado. Busca al secretario(a) u otro responsable.'}
+            </p>
           </Field>
           <Field label="Correo del segundo responsable del tribunal">
-            <input
+            <PersonaEmailPicker
+              personas={funcionarios}
               value={values.correoSegundoLider}
-              onChange={(e) => set('correoSegundoLider', e.target.value)}
-              placeholder="nombre@pjud.cl"
-              className={inputClass}
+              onChange={(v) => set('correoSegundoLider', v)}
+              placeholder="Busca por nombre o cargo…"
             />
           </Field>
         </div>

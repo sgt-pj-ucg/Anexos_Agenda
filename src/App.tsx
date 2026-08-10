@@ -497,6 +497,7 @@ export default function App() {
       {fichaModal && (
         <TribunalEditModal
           ficha={fichaModal}
+          personas={people}
           onCancel={() => setFichaModal(null)}
           onSubmit={handleSubmitFicha}
         />
