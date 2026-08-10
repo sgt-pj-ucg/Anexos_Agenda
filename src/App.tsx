@@ -342,7 +342,7 @@ export default function App() {
               <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
             )}
 
-            {!favoritesMode && (
+            {!favoritesMode && section === 'tribunal' && (
               <button
                 type="button"
                 onClick={() => {
