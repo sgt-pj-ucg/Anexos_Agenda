@@ -60,12 +60,12 @@ export function PersonaEmailPicker({ personas, value, onChange, placeholder, pri
             setOpen(true)
           }}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:ring-indigo-500/10"
+          className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:ring-indigo-500/10"
         />
       </div>
 
       {open && candidatos.length > 0 && (
-        <div className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+        <div className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-600 dark:bg-slate-800">
           {candidatos.map((p) => {
             const tieneCorreo = p.correos.length > 0
             return (
@@ -86,7 +86,7 @@ export function PersonaEmailPicker({ personas, value, onChange, placeholder, pri
                 }`}
               >
                 <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{p.nombre}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="text-xs text-slate-400 dark:text-slate-400">
                   {p.cargo ?? 'Sin cargo'} · {tieneCorreo ? p.correos[0] : 'sin correo registrado'}
                 </span>
               </button>

@@ -33,26 +33,26 @@ export function NovedadesPanel({ cambios, onClose }: { cambios: Cambio[]; onClos
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900"
+        className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
       >
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
           <h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
             <Bell size={16} className="text-indigo-500" /> Novedades
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
           >
             <X size={18} />
           </button>
         </div>
         {cambios.length === 0 ? (
-          <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
+          <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-400">
             Todavía no hay cambios registrados.
           </p>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {cambios.map((c) => {
               const meta = TIPO_META[c.tipo]
               const Icon = meta.icon
@@ -61,7 +61,7 @@ export function NovedadesPanel({ cambios, onClose }: { cambios: Cambio[]; onClos
                   <Icon size={15} className={`mt-0.5 shrink-0 ${meta.color}`} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-slate-700 dark:text-slate-200">{meta.label(c)}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">{timeAgo(c.createdAt)}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-400">{timeAgo(c.createdAt)}</p>
                   </div>
                 </li>
               )

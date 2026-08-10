@@ -15,11 +15,11 @@ export function EmailCopyBanner({
   const joined = correos.join(', ')
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div className="flex items-center gap-2">
         <Icon size={16} className="shrink-0 text-indigo-500" />
         <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{label}</span>
-        <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
           {correos.length}
         </span>
       </div>
@@ -35,14 +35,14 @@ export function EmailCopyBanner({
           <button
             type="button"
             onClick={() => copy(joined)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             {copied === joined ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
             Copiar todos
           </button>
         </div>
       ) : (
-        <p className="text-xs text-slate-400 dark:text-slate-600">Sin correos disponibles con este filtro.</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">Sin correos disponibles con este filtro.</p>
       )}
     </div>
   )

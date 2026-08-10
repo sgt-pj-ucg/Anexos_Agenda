@@ -15,7 +15,7 @@ export function CopyChip({ value, display, href, icon, label }: Props) {
   const isCopied = copied === value
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 py-1 pl-2.5 pr-1.5 text-xs text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-indigo-800 dark:hover:bg-indigo-500/10">
+    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 py-1 pl-2.5 pr-1.5 text-xs text-slate-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-indigo-800 dark:hover:bg-indigo-500/10">
       <button
         type="button"
         onClick={() => copy(value)}
@@ -29,7 +29,7 @@ export function CopyChip({ value, display, href, icon, label }: Props) {
         <a
           href={href}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
+          className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-indigo-600 dark:hover:bg-slate-700 dark:hover:text-indigo-400"
           title={`Abrir ${label}`}
         >
           <ArrowUpRight size={12} />

@@ -322,7 +322,7 @@ export default function App() {
 
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-6">
         {loading ? (
-          <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-300">
             Cargando directorio…
           </p>
         ) : (
@@ -353,7 +353,7 @@ export default function App() {
                 className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   contactosMode
                     ? 'border-indigo-400 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-300'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                 }`}
               >
                 <UserCog size={14} />
@@ -368,7 +368,7 @@ export default function App() {
                 className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   organigramaMode
                     ? 'border-amber-400 bg-amber-100 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-amber-200 hover:text-amber-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-amber-200 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                 }`}
               >
                 <Workflow size={14} />
@@ -402,7 +402,7 @@ export default function App() {
               <TribunalContactosView tribunales={tribunales} onEditFicha={setFichaModal} />
             ) : organigramaMode ? (
               <>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-300">
                   {cortePeople.length} funcionarios de la Corte de Apelaciones
                   {isAdmin && ' — arrastra una tarjeta a otra columna para reasignar de unidad.'}
                 </p>
@@ -410,12 +410,12 @@ export default function App() {
               </>
             ) : favoritesMode ? (
               <>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-300">
                   {favoriteResults.length}{' '}
                   {favoriteResults.length === 1 ? 'favorito' : 'favoritos'}
                 </p>
                 {favoriteResults.length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-slate-800 dark:text-slate-500">
+                  <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-400">
                     Aún no tienes favoritos. Marca la estrella de un contacto para agregarlo aquí.
                   </p>
                 ) : (
@@ -437,7 +437,7 @@ export default function App() {
               />
             ) : (
               <>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-300">
                   {filteredResults.length}{' '}
                   {filteredResults.length === 1 ? 'resultado' : 'resultados'}
                   {section !== 'todos' && <> en {SECTION_META[section].label}</>}

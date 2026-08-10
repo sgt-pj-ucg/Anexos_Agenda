@@ -22,7 +22,7 @@ export function SectionTabs({
             className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
               isActive
                 ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-indigo-900'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-indigo-900'
             }`}
           >
             <Icon size={15} />
@@ -31,7 +31,7 @@ export function SectionTabs({
               className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[11px] ${
                 isActive
                   ? 'bg-white/20'
-                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                  : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
               }`}
             >
               {counts[key] ?? 0}

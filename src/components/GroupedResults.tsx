@@ -73,7 +73,7 @@ export function GroupedResults({
             ) : (
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-slate-800 dark:text-slate-100">{g.label}</h3>
-                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
                   <Users size={11} /> {g.people.length}
                 </span>
                 <GroupEmailButton people={g.people} />

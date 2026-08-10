@@ -15,7 +15,7 @@ export function OrganigramaCard({ persona, draggable }: { persona: Persona; drag
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
       {...(draggable ? { ...attributes, ...listeners } : {})}
-      className={`flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm transition-opacity dark:border-slate-800 dark:bg-slate-900 ${
+      className={`flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm transition-opacity dark:border-slate-700 dark:bg-slate-800 ${
         draggable ? 'cursor-grab touch-none active:cursor-grabbing' : ''
       } ${isDragging ? 'opacity-30' : ''}`}
     >
@@ -29,10 +29,10 @@ export function OrganigramaCard({ persona, draggable }: { persona: Persona; drag
           {persona.nombre}
         </p>
         {persona.cargo && (
-          <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{persona.cargo}</p>
+          <p className="truncate text-[11px] text-slate-500 dark:text-slate-300">{persona.cargo}</p>
         )}
       </div>
-      {draggable && <GripVertical size={13} className="shrink-0 text-slate-300 dark:text-slate-600" />}
+      {draggable && <GripVertical size={13} className="shrink-0 text-slate-300 dark:text-slate-500" />}
     </div>
   )
 }

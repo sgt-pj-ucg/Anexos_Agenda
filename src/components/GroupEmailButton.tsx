@@ -25,7 +25,7 @@ export function GroupEmailButton({ people }: { people: Persona[] }) {
         type="button"
         onClick={() => copy(joined)}
         title="Copiar todas las direcciones (respaldo si Outlook no separa los destinatarios)"
-        className="rounded-full border border-slate-200 p-1.5 text-slate-400 hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-800 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
+        className="rounded-full border border-slate-200 p-1.5 text-slate-400 hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:text-indigo-400"
       >
         {copied === joined ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
       </button>

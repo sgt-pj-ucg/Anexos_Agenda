@@ -4,7 +4,7 @@ function chipClass(active: boolean) {
   return `rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
     active
       ? 'border-indigo-400 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-300'
-      : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+      : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
   }`
 }
 

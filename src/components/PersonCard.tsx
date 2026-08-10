@@ -36,7 +36,7 @@ export function PersonCard({
             type="button"
             onClick={onReport}
             title="Reportar dato incorrecto"
-            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           >
             <Flag size={13} />
           </button>
@@ -46,7 +46,7 @@ export function PersonCard({
             type="button"
             onClick={onEdit}
             title="Editar contacto"
-            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           >
             <Pencil size={13} />
           </button>
@@ -56,7 +56,7 @@ export function PersonCard({
             type="button"
             onClick={onDelete}
             title="Eliminar contacto"
-            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           >
             <Trash2 size={13} />
           </button>
@@ -67,7 +67,7 @@ export function PersonCard({
           type="button"
           onClick={onToggleFavorite}
           title={isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
-          className="rounded-full p-1.5 text-slate-300 hover:text-amber-400 dark:text-slate-600"
+          className="rounded-full p-1.5 text-slate-300 hover:text-amber-400 dark:text-slate-500"
         >
           <Star size={15} className={isFavorite ? 'fill-amber-400 text-amber-500' : ''} />
         </button>
@@ -102,7 +102,7 @@ export function PersonCard({
           <button
             type="button"
             onClick={onEdit}
-            className="mt-3 flex items-center gap-1.5 rounded-full border border-rose-300 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
+            className="mt-3 flex items-center gap-1.5 rounded-full border border-rose-300 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:bg-slate-800 dark:text-rose-300 dark:hover:bg-rose-500/10"
           >
             <Pencil size={12} />
             Incorporar funcionario
@@ -113,7 +113,7 @@ export function PersonCard({
   }
 
   return (
-    <div className="group relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <div className="group relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
       {cornerControls}
       <div className="flex items-start gap-3">
         <div
@@ -124,7 +124,7 @@ export function PersonCard({
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-slate-900 dark:text-white">{p.nombre}</p>
           {(p.cargo || p.calidadJuridica) && (
-            <p className="truncate text-sm text-slate-500 dark:text-slate-400">
+            <p className="truncate text-sm text-slate-500 dark:text-slate-300">
               {[p.cargo, p.calidadJuridica].filter(Boolean).join(' · ')}
             </p>
           )}
@@ -170,7 +170,7 @@ export function PersonCard({
       )}
 
       {!cumpleHoy && cumpleParsed && (
-        <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-600">🎂 {p.cumpleanos}</p>
+        <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">🎂 {p.cumpleanos}</p>
       )}
     </div>
   )

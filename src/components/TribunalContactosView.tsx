@@ -91,9 +91,9 @@ export function TribunalContactosView({
         <EmailCopyBanner icon={Gavel} label="Juez Presidente / Juez" correos={segundosLideres} />
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
         <table className="w-full min-w-[880px] border-collapse text-left text-sm">
-          <thead className="bg-slate-50 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+          <thead className="bg-slate-50 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
             <tr>
               <th className="px-3 py-2.5 font-medium">Tribunal</th>
               <th className="px-3 py-2.5 font-medium">Correo genérico</th>
@@ -102,15 +102,15 @@ export function TribunalContactosView({
               {isAdmin && <th className="px-3 py-2.5 font-medium">Editar</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {filtered.map((t) => (
               <tr
                 key={t.id}
-                className="bg-white transition-colors hover:bg-slate-50/70 dark:bg-slate-950 dark:hover:bg-slate-900/40"
+                className="bg-white transition-colors hover:bg-slate-50/70 dark:bg-slate-900 dark:hover:bg-slate-800/40"
               >
                 <td className="px-3 py-2.5 align-top">
                   <p className="font-medium text-slate-800 dark:text-slate-100">{t.nombre}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-400 dark:text-slate-400">
                     {[t.comuna, t.competencias.join(', ')].filter(Boolean).join(' · ')}
                   </p>
                 </td>
@@ -123,7 +123,7 @@ export function TribunalContactosView({
                       label="correo genérico"
                     />
                   ) : (
-                    <span className="text-xs text-slate-300 dark:text-slate-700">—</span>
+                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 align-top">
@@ -135,7 +135,7 @@ export function TribunalContactosView({
                       label="correo administrador o secretario"
                     />
                   ) : (
-                    <span className="text-xs italic text-slate-300 dark:text-slate-700">Sin asignar</span>
+                    <span className="text-xs italic text-slate-300 dark:text-slate-600">Sin asignar</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 align-top">
@@ -147,7 +147,7 @@ export function TribunalContactosView({
                       label="correo del Juez Presidente o Juez"
                     />
                   ) : (
-                    <span className="text-xs italic text-slate-300 dark:text-slate-700">Sin asignar</span>
+                    <span className="text-xs italic text-slate-300 dark:text-slate-600">Sin asignar</span>
                   )}
                 </td>
                 {isAdmin && (
@@ -156,7 +156,7 @@ export function TribunalContactosView({
                       type="button"
                       onClick={() => onEditFicha(t)}
                       title="Editar administrador/secretario y Juez Presidente / Juez"
-                      className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                      className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                     >
                       <Pencil size={13} />
                     </button>
