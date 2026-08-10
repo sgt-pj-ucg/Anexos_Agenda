@@ -349,7 +349,7 @@ export default function App() {
                   setContactosMode((v) => !v)
                   setOrganigramaMode(false)
                 }}
-                title="Correo genérico, administrador/secretario y segundo responsable de cada tribunal"
+                title="Correo genérico, administrador/secretario y Juez Presidente / Juez de cada tribunal"
                 className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   contactosMode
                     ? 'border-indigo-400 bg-indigo-100 text-indigo-800 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-300'

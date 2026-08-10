@@ -1,7 +1,6 @@
-// Protección de acceso liviana para uso interno: no es un mecanismo de
-// seguridad criptográfica robusta (la app es estática y se ejecuta en el
-// navegador del usuario), pero evita que la agenda sea navegable por
-// cualquiera que llegue al enlace o que quede indexada en buscadores.
+// El directorio es de acceso libre (sin clave). Solo la edición
+// administrativa está protegida: quien quiera editar debe ingresar la
+// clave de administrador desde el botón correspondiente en el encabezado.
 //
 // Las escrituras reales (agregar/editar/eliminar) están protegidas aparte,
 // del lado del servidor: cada llamada RPC a Supabase vuelve a validar la
@@ -13,12 +12,9 @@ const STORAGE_KEY = 'pj-la-serena-directorio-auth'
 
 export type Role = 'viewer' | 'admin'
 
-// SHA-256 de cada clave de acceso. Generadas con:
+// SHA-256 de la clave de administrador. Generado con:
 //   node -e "crypto.subtle.digest('SHA-256', new TextEncoder().encode('CLAVE')).then(b=>console.log(Buffer.from(b).toString('hex')))"
-const HASHES: Record<Role, string> = {
-  viewer: '1bee1763b075b1b81fcaa6890ff684a29dc3ed892d630076f8e23acc73a0257c', // Corte1849
-  admin: 'bbc0da8fc88d3442496a2f02e2769ea11cf7300c6b816f3071cbe8862582ef7b', // Admin1849
-}
+const ADMIN_HASH = 'bbc0da8fc88d3442496a2f02e2769ea11cf7300c6b816f3071cbe8862582ef7b' // Admin1849
 
 interface StoredAuth {
   role: Role
@@ -32,12 +28,9 @@ async function sha256Hex(text: string): Promise<string> {
     .join('')
 }
 
-export async function checkPassword(input: string): Promise<Role | null> {
+export async function checkAdminPassword(input: string): Promise<boolean> {
   const hash = await sha256Hex(input.trim())
-  for (const role of Object.keys(HASHES) as Role[]) {
-    if (HASHES[role] === hash) return role
-  }
-  return null
+  return hash === ADMIN_HASH
 }
 
 function readStored(): StoredAuth | null {
@@ -52,8 +45,8 @@ function readStored(): StoredAuth | null {
   }
 }
 
-export function getRole(): Role | null {
-  return readStored()?.role ?? null
+export function getRole(): Role {
+  return readStored()?.role ?? 'viewer'
 }
 
 export function getAdminPassword(): string | null {
@@ -61,8 +54,8 @@ export function getAdminPassword(): string | null {
   return stored?.role === 'admin' ? (stored.password ?? null) : null
 }
 
-export function setRole(role: Role, password: string): void {
-  const stored: StoredAuth = role === 'admin' ? { role, password } : { role }
+export function setAdmin(password: string): void {
+  const stored: StoredAuth = { role: 'admin', password }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
 }
 

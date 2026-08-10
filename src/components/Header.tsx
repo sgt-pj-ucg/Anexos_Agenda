@@ -1,6 +1,8 @@
-import { Bell, Flag, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
+import { useState } from 'react'
+import { Bell, Flag, Lock, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { lock } from '../lib/auth'
 import { useIsAdmin } from '../context/RoleContext'
+import { AdminAccessModal } from './AdminAccessModal'
 
 export function Header({
   theme,
@@ -22,6 +24,7 @@ export function Header({
   onOpenReportes: () => void
 }) {
   const isAdmin = useIsAdmin()
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
@@ -91,17 +94,29 @@ export function Header({
         >
           {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
         </button>
-        <button
-          onClick={() => {
-            lock()
-            window.location.reload()
-          }}
-          className="shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-rose-200 hover:text-rose-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-rose-900 dark:hover:text-rose-400"
-          title="Cerrar sesión (útil en computadores compartidos)"
-        >
-          <LogOut size={17} />
-        </button>
+        {isAdmin ? (
+          <button
+            onClick={() => {
+              lock()
+              window.location.reload()
+            }}
+            className="shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-rose-200 hover:text-rose-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-rose-900 dark:hover:text-rose-400"
+            title="Salir del modo administrador"
+          >
+            <LogOut size={17} />
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowAdminLogin(true)}
+            className="shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-800 dark:text-slate-400 dark:hover:border-indigo-900 dark:hover:text-indigo-400"
+            title="Acceder como administrador"
+          >
+            <Lock size={17} />
+          </button>
+        )}
       </div>
+
+      {showAdminLogin && <AdminAccessModal onClose={() => setShowAdminLogin(false)} />}
     </header>
   )
 }

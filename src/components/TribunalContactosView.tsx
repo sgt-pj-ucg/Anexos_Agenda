@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Mail, Pencil, ShieldCheck, UserCog } from 'lucide-react'
+import { Gavel, Mail, Pencil, UserCog } from 'lucide-react'
 import type { FichaTribunal } from '../types'
 import { COMUNA_ORDER, comunaRank } from '../lib/comunas'
 import { MATERIA_ORDER } from '../lib/materias'
@@ -88,7 +88,7 @@ export function TribunalContactosView({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <EmailCopyBanner icon={Mail} label="Correos genéricos" correos={genericos} />
         <EmailCopyBanner icon={UserCog} label="Administrador / Secretario" correos={adminSecretarios} />
-        <EmailCopyBanner icon={ShieldCheck} label="Segundo responsable" correos={segundosLideres} />
+        <EmailCopyBanner icon={Gavel} label="Juez Presidente / Juez" correos={segundosLideres} />
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -98,7 +98,7 @@ export function TribunalContactosView({
               <th className="px-3 py-2.5 font-medium">Tribunal</th>
               <th className="px-3 py-2.5 font-medium">Correo genérico</th>
               <th className="px-3 py-2.5 font-medium">Administrador / Secretario</th>
-              <th className="px-3 py-2.5 font-medium">Segundo responsable</th>
+              <th className="px-3 py-2.5 font-medium">Juez Presidente / Juez</th>
               {isAdmin && <th className="px-3 py-2.5 font-medium">Editar</th>}
             </tr>
           </thead>
@@ -142,9 +142,9 @@ export function TribunalContactosView({
                   {t.correoSegundoLider ? (
                     <CopyChip
                       value={t.correoSegundoLider}
-                      icon={<ShieldCheck size={12} />}
+                      icon={<Gavel size={12} />}
                       href={`mailto:${t.correoSegundoLider}`}
-                      label="correo del segundo responsable"
+                      label="correo del Juez Presidente o Juez"
                     />
                   ) : (
                     <span className="text-xs italic text-slate-300 dark:text-slate-700">Sin asignar</span>
@@ -155,7 +155,7 @@ export function TribunalContactosView({
                     <button
                       type="button"
                       onClick={() => onEditFicha(t)}
-                      title="Editar administrador/secretario y segundo responsable"
+                      title="Editar administrador/secretario y Juez Presidente / Juez"
                       className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
                     >
                       <Pencil size={13} />

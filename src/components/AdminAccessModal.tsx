@@ -1,0 +1,83 @@
+import { useState, type FormEvent } from 'react'
+import { Lock, X } from 'lucide-react'
+import { checkAdminPassword, setAdmin } from '../lib/auth'
+
+export function AdminAccessModal({ onClose }: { onClose: () => void }) {
+  const [value, setValue] = useState('')
+  const [error, setError] = useState(false)
+  const [checking, setChecking] = useState(false)
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setChecking(true)
+    const ok = await checkAdminPassword(value)
+    if (ok) {
+      setAdmin(value)
+      window.location.reload()
+      return
+    }
+    setChecking(false)
+    setError(true)
+    setValue('')
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <form
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <h2 className="font-semibold text-slate-900 dark:text-white">Acceso administrador</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Ingresa la clave para poder editar el directorio.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="relative">
+          <Lock
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+            size={16}
+          />
+          <input
+            type="password"
+            autoFocus
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value)
+              setError(false)
+            }}
+            placeholder="Clave de administrador"
+            className={`w-full rounded-xl border py-2.5 pr-3 pl-9 text-sm outline-none focus:ring-4 dark:bg-slate-950 dark:text-white ${
+              error
+                ? 'border-rose-400 focus:ring-rose-100 dark:focus:ring-rose-500/10'
+                : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100 dark:border-slate-700 dark:focus:ring-indigo-500/10'
+            }`}
+          />
+        </div>
+        {error && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">Clave incorrecta.</p>}
+
+        <button
+          type="submit"
+          disabled={checking || !value}
+          className="mt-4 w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {checking ? 'Verificando…' : 'Ingresar'}
+        </button>
+      </form>
+    </div>
+  )
+}

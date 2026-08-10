@@ -23,13 +23,15 @@ export function TribunalEditModal({ ficha, personas, onCancel, onSubmit }: Props
   const administrador = funcionarios.find(
     (p) => p.correos.length > 0 && /administrador/i.test(p.cargo ?? ''),
   )
+  const jueces = funcionarios.filter((p) => p.correos.length > 0 && /^juez$/i.test(p.cargo ?? ''))
+  const juezUnico = jueces.length === 1 ? jueces[0] : undefined
 
   const [values, setValues] = useState<TribunalFormValues>({
     ministroVisitador: ficha.ministroVisitador ?? '',
     telefono: ficha.telefono ?? '',
     competencias: ficha.competencias.join(', '),
     correoAdminSecretario: ficha.correoAdminSecretario ?? administrador?.correos[0] ?? '',
-    correoSegundoLider: ficha.correoSegundoLider ?? '',
+    correoSegundoLider: ficha.correoSegundoLider ?? juezUnico?.correos[0] ?? '',
   })
 
   const set = <K extends keyof TribunalFormValues>(key: K, value: TribunalFormValues[K]) =>
@@ -95,6 +97,7 @@ export function TribunalEditModal({ ficha, personas, onCancel, onSubmit }: Props
               value={values.correoAdminSecretario}
               onChange={(v) => set('correoAdminSecretario', v)}
               placeholder="Busca por nombre o cargo…"
+              prioridad={(p) => /administrador|secretario/i.test(p.cargo ?? '')}
             />
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
               {administrador
@@ -102,13 +105,21 @@ export function TribunalEditModal({ ficha, personas, onCancel, onSubmit }: Props
                 : 'No hay un funcionario con cargo "Administrador" registrado. Busca al secretario(a) u otro responsable.'}
             </p>
           </Field>
-          <Field label="Correo del segundo responsable del tribunal">
+          <Field label="Correo del Juez Presidente / Juez">
             <PersonaEmailPicker
               personas={funcionarios}
               value={values.correoSegundoLider}
               onChange={(v) => set('correoSegundoLider', v)}
               placeholder="Busca por nombre o cargo…"
+              prioridad={(p) => /juez/i.test(p.cargo ?? '')}
             />
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {juezUnico
+                ? `Sugerido por defecto: ${juezUnico.nombre} (Juez).`
+                : jueces.length > 1
+                  ? 'Este tribunal tiene varios jueces. Busca y selecciona quién ejerce como Juez Presidente.'
+                  : 'No hay jueces registrados para este tribunal. Busca entre el resto del personal.'}
+            </p>
           </Field>
         </div>
 

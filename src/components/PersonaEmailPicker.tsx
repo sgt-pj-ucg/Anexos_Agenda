@@ -8,9 +8,10 @@ interface Props {
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  prioridad?: (persona: Persona) => boolean
 }
 
-export function PersonaEmailPicker({ personas, value, onChange, placeholder }: Props) {
+export function PersonaEmailPicker({ personas, value, onChange, placeholder, prioridad }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
@@ -24,13 +25,19 @@ export function PersonaEmailPicker({ personas, value, onChange, placeholder }: P
   }, [])
 
   const candidatos = useMemo(() => {
-    const conCorreo = personas.filter((p) => p.correos.length > 0)
     const q = normalize(query)
-    if (!q) return conCorreo.slice(0, 8)
-    return conCorreo
-      .filter((p) => normalize(p.nombre).includes(q) || normalize(p.cargo).includes(q))
-      .slice(0, 8)
-  }, [personas, query])
+    const filtrados = q
+      ? personas.filter((p) => normalize(p.nombre).includes(q) || normalize(p.cargo).includes(q))
+      : personas
+    return [...filtrados].sort((a, b) => {
+      if (prioridad) {
+        const pa = prioridad(a) ? 0 : 1
+        const pb = prioridad(b) ? 0 : 1
+        if (pa !== pb) return pa - pb
+      }
+      return a.nombre.localeCompare(b.nombre, 'es')
+    })
+  }, [personas, query, prioridad])
 
   const seleccionado = useMemo(
     () => personas.find((p) => p.correos.includes(value)),
@@ -58,25 +65,33 @@ export function PersonaEmailPicker({ personas, value, onChange, placeholder }: P
       </div>
 
       {open && candidatos.length > 0 && (
-        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-          {candidatos.map((p) => (
-            <button
-              type="button"
-              key={p.id}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onChange(p.correos[0])
-                setQuery('')
-                setOpen(false)
-              }}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-1.5 text-left hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
-            >
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{p.nombre}</span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
-                {p.cargo ?? 'Sin cargo'} · {p.correos[0]}
-              </span>
-            </button>
-          ))}
+        <div className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          {candidatos.map((p) => {
+            const tieneCorreo = p.correos.length > 0
+            return (
+              <button
+                type="button"
+                key={p.id}
+                disabled={!tieneCorreo}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onChange(p.correos[0])
+                  setQuery('')
+                  setOpen(false)
+                }}
+                className={`flex w-full flex-col items-start gap-0.5 px-3 py-1.5 text-left ${
+                  tieneCorreo
+                    ? 'hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
+                    : 'cursor-not-allowed opacity-50'
+                }`}
+              >
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{p.nombre}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {p.cargo ?? 'Sin cargo'} · {tieneCorreo ? p.correos[0] : 'sin correo registrado'}
+                </span>
+              </button>
+            )
+          })}
         </div>
       )}
 
