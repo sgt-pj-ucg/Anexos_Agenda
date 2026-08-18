@@ -11,7 +11,8 @@ export interface FichaTribunal {
   id: string
   nombre: string
   correo: string | null
-  telefono: string | null
+  telefonos: string[]
+  direccion: string | null
   ministroVisitador: string | null
   competencias: string[]
   comuna: string | null

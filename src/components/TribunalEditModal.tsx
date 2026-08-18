@@ -5,7 +5,8 @@ import { PersonaEmailPicker } from './PersonaEmailPicker'
 
 export interface TribunalFormValues {
   ministroVisitador: string
-  telefono: string
+  telefonos: string
+  direccion: string
   competencias: string
   correoAdminSecretario: string
   correoSegundoLider: string
@@ -28,7 +29,8 @@ export function TribunalEditModal({ ficha, personas, onCancel, onSubmit }: Props
 
   const [values, setValues] = useState<TribunalFormValues>({
     ministroVisitador: ficha.ministroVisitador ?? '',
-    telefono: ficha.telefono ?? '',
+    telefonos: ficha.telefonos.join(', '),
+    direccion: ficha.direccion ?? '',
     competencias: ficha.competencias.join(', '),
     correoAdminSecretario: ficha.correoAdminSecretario ?? administrador?.correos[0] ?? '',
     correoSegundoLider: ficha.correoSegundoLider ?? juezUnico?.correos[0] ?? '',
@@ -76,10 +78,19 @@ export function TribunalEditModal({ ficha, personas, onCancel, onSubmit }: Props
               {ficha.correo ?? 'Sin correo general'}
             </p>
           </Field>
-          <Field label="Teléfono">
+          <Field label="Dirección">
             <input
-              value={values.telefono}
-              onChange={(e) => set('telefono', e.target.value)}
+              value={values.direccion}
+              onChange={(e) => set('direccion', e.target.value)}
+              placeholder="Calle, número, comuna…"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Teléfono(s) — separados por coma">
+            <input
+              value={values.telefonos}
+              onChange={(e) => set('telefonos', e.target.value)}
+              placeholder="Mesón: 51 2xxxxxx, OIRS: 51 2xxxxxx…"
               className={inputClass}
             />
           </Field>

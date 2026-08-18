@@ -37,6 +37,8 @@ create table if not exists tribunales (
   nombre text not null,
   correo text,
   telefono text,
+  telefonos text[] not null default '{}',
+  direccion text,
   ministro_visitador text,
   competencias text[] not null default '{}',
   comuna text,
@@ -229,7 +231,8 @@ begin
   update tribunales set
     ministro_visitador = patch->>'ministroVisitador',
     correo = patch->>'correo',
-    telefono = patch->>'telefono',
+    telefonos = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'telefonos', '[]'::jsonb)) x), '{}'),
+    direccion = patch->>'direccion',
     competencias = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'competencias', '[]'::jsonb)) x), '{}'),
     correo_admin_secretario = patch->>'correoAdminSecretario',
     correo_segundo_lider = patch->>'correoSegundoLider',

@@ -4,6 +4,7 @@ import {
   Flag,
   Landmark,
   Mail,
+  MapPin,
   Pencil,
   Phone,
   User,
@@ -68,7 +69,7 @@ export function TribunalFichaCard({
             <button
               type="button"
               onClick={onEdit}
-              title="Editar ficha del tribunal (ministro visitador, correo, teléfono, competencias)"
+              title="Editar ficha del tribunal (ministro visitador, dirección, teléfonos, competencias)"
               className="rounded-full border border-indigo-200 bg-white p-1.5 text-indigo-500 hover:border-indigo-400 hover:text-indigo-700 dark:border-indigo-800 dark:bg-slate-800 dark:text-indigo-400"
             >
               <Pencil size={12} />
@@ -86,7 +87,17 @@ export function TribunalFichaCard({
             label="correo general"
           />
         )}
-        {ficha.telefono && <CopyChip value={ficha.telefono} icon={<Phone size={12} />} label="teléfono" />}
+        {ficha.direccion && (
+          <CopyChip
+            value={ficha.direccion}
+            icon={<MapPin size={12} />}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ficha.direccion)}`}
+            label="dirección"
+          />
+        )}
+        {ficha.telefonos.map((tel) => (
+          <CopyChip key={tel} value={tel} icon={<Phone size={12} />} href={`tel:${tel}`} label="teléfono" />
+        ))}
         {ficha.competencias.map((c) => (
           <span
             key={c}

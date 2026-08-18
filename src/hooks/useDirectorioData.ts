@@ -30,7 +30,8 @@ interface TribunalRow {
   id: string
   nombre: string
   correo: string | null
-  telefono: string | null
+  telefonos: string[] | null
+  direccion: string | null
   ministro_visitador: string | null
   competencias: string[] | null
   comuna: string | null
@@ -82,7 +83,8 @@ function rowToFicha(row: TribunalRow): FichaTribunal {
     id: row.id,
     nombre: row.nombre,
     correo: row.correo,
-    telefono: row.telefono,
+    telefonos: row.telefonos ?? [],
+    direccion: row.direccion,
     ministroVisitador: row.ministro_visitador,
     competencias: row.competencias ?? [],
     comuna: row.comuna,

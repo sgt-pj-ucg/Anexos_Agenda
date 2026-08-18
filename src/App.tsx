@@ -285,7 +285,11 @@ export default function App() {
       await updateFicha(fichaModal.id, {
         ministroVisitador: values.ministroVisitador.trim() || null,
         correo: fichaModal.correo,
-        telefono: values.telefono.trim() || null,
+        telefonos: values.telefonos
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        direccion: values.direccion.trim() || null,
         competencias: values.competencias
           .split(',')
           .map((s) => s.trim())
