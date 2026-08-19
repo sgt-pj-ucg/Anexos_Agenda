@@ -245,6 +245,7 @@ export default function App() {
 
   const [deleteTarget, setDeleteTarget] = useState<Persona | null>(null)
   const [editingContactoExterno, setEditingContactoExterno] = useState<ContactoExterno | null>(null)
+  const [deleteExternoTarget, setDeleteExternoTarget] = useState<ContactoExterno | null>(null)
 
   const handleSubmitContactoExterno = async (values: ContactoExternoFormValues) => {
     if (!editingContactoExterno) return
@@ -272,10 +273,28 @@ export default function App() {
     }
   }
 
-  const handleDeleteContactoExterno = async (contacto: ContactoExterno) => {
-    if (!window.confirm(`¿Eliminar a ${contacto.nombre ?? contacto.institucion} de contactos externos?`)) return
+  const handleVacateExterno = async () => {
+    if (!deleteExternoTarget) return
     try {
-      await deleteContactoExterno(contacto.id)
+      await updateContactoExterno(deleteExternoTarget.id, {
+        nombre: '(Cargo vacante)',
+        cargo: null,
+        correos: [],
+        telefonos: [],
+        calidadJuridica: null,
+        observaciones: null,
+      })
+      setDeleteExternoTarget(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo dejar el cargo vacante.')
+    }
+  }
+
+  const handleDeleteExternoForever = async () => {
+    if (!deleteExternoTarget) return
+    try {
+      await deleteContactoExterno(deleteExternoTarget.id)
+      setDeleteExternoTarget(null)
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el contacto.')
     }
@@ -412,7 +431,15 @@ export default function App() {
           <>
             <div className="flex gap-2">
               <div className="min-w-0 flex-1">
-                <SearchBar value={query} onChange={setQuery} />
+                <SearchBar
+                  value={query}
+                  onChange={setQuery}
+                  placeholder={
+                    externosMode
+                      ? 'Busca por nombre, institución, comuna, correo o teléfono…'
+                      : undefined
+                  }
+                />
               </div>
               <FavoritesToggle
                 active={favoritesMode}
@@ -514,8 +541,9 @@ export default function App() {
                 contactos={contactosExternos}
                 categoria={categoriaExterna}
                 onChangeCategoria={setCategoriaExterna}
+                query={trimmedQuery}
                 onEditContacto={setEditingContactoExterno}
-                onDeleteContacto={handleDeleteContactoExterno}
+                onDeleteContacto={setDeleteExternoTarget}
                 onReportContacto={(c) =>
                   openReport(c.nombre ?? c.institucion ?? 'Contacto externo', [c.institucion ?? '', c.cargo ?? ''])
                 }
@@ -640,10 +668,19 @@ export default function App() {
 
       {deleteTarget && (
         <DeleteConfirmModal
-          persona={deleteTarget}
+          nombre={deleteTarget.nombre}
           onCancel={() => setDeleteTarget(null)}
           onVacate={handleVacate}
           onDeleteForever={handleDeleteForever}
+        />
+      )}
+
+      {deleteExternoTarget && (
+        <DeleteConfirmModal
+          nombre={deleteExternoTarget.nombre ?? deleteExternoTarget.institucion ?? 'este contacto'}
+          onCancel={() => setDeleteExternoTarget(null)}
+          onVacate={handleVacateExterno}
+          onDeleteForever={handleDeleteExternoForever}
         />
       )}
 

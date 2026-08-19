@@ -1,6 +1,14 @@
 import { Search, X } from 'lucide-react'
 
-export function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function SearchBar({
+  value,
+  onChange,
+  placeholder = 'Busca por nombre, cargo, tribunal, unidad, correo o anexo…',
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
   return (
     <div className="relative">
       <Search
@@ -12,7 +20,7 @@ export function SearchBar({ value, onChange }: { value: string; onChange: (v: st
         onChange={(e) => onChange(e.target.value)}
         type="text"
         autoComplete="off"
-        placeholder="Busca por nombre, cargo, tribunal, unidad, correo o anexo…"
+        placeholder={placeholder}
         className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pr-11 pl-12 text-base text-slate-900 shadow-sm transition-shadow outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 dark:focus:ring-indigo-500/10"
       />
       {value && (

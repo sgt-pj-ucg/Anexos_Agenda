@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { useMemo } from 'react'
 import type { CategoriaExterna, ContactoExterno } from '../types'
 import { CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
 import { normalize } from '../lib/normalize'
 import { ContactoExternoCard } from './ContactoExternoCard'
+import { EmptyState } from './EmptyState'
 
 export function ContactosExternosView({
   contactos,
   categoria,
   onChangeCategoria,
+  query,
   onEditContacto,
   onDeleteContacto,
   onReportContacto,
@@ -16,12 +17,11 @@ export function ContactosExternosView({
   contactos: ContactoExterno[]
   categoria: CategoriaExterna
   onChangeCategoria: (categoria: CategoriaExterna) => void
+  query: string
   onEditContacto?: (contacto: ContactoExterno) => void
   onDeleteContacto?: (contacto: ContactoExterno) => void
   onReportContacto?: (contacto: ContactoExterno) => void
 }) {
-  const [query, setQuery] = useState('')
-
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
     for (const item of contactos) c[item.categoria] = (c[item.categoria] ?? 0) + 1
@@ -33,16 +33,24 @@ export function ContactosExternosView({
     [contactos, categoria],
   )
 
-  const trimmed = query.trim()
+  // Igual que el buscador principal: cada palabra escrita debe aparecer en
+  // algún dato del contacto (nombre, institución, cargo, comuna, correo,
+  // teléfono u observaciones), sin importar en qué campo esté cada una ni
+  // el orden — así "iquique administrador" encuentra al administrador de
+  // la Corte de Apelaciones de Iquique aunque ningún campo tenga ambas
+  // palabras juntas.
   const filtrados = useMemo(() => {
-    if (!trimmed) return enCategoria
-    const q = normalize(trimmed)
-    return enCategoria.filter((c) =>
-      [c.nombre, c.institucion, c.cargo, c.comuna, ...c.correos, ...c.telefonos]
-        .filter(Boolean)
-        .some((v) => normalize(v as string).includes(q)),
-    )
-  }, [enCategoria, trimmed])
+    const tokens = normalize(query).split(/\s+/).filter(Boolean)
+    if (tokens.length === 0) return enCategoria
+    return enCategoria.filter((c) => {
+      const all = normalize(
+        [c.nombre, c.institucion, c.cargo, c.comuna, c.calidadJuridica, c.observaciones, ...c.correos, ...c.telefonos]
+          .filter(Boolean)
+          .join(' '),
+      )
+      return tokens.every((t) => all.includes(t))
+    })
+  }, [enCategoria, query])
 
   const grupos = useMemo(() => {
     // Se agrupa por comuna cuando existe (algunas instituciones, como
@@ -69,14 +77,11 @@ export function ContactosExternosView({
             <button
               key={key}
               type="button"
-              onClick={() => {
-                onChangeCategoria(key)
-                setQuery('')
-              }}
+              onClick={() => onChangeCategoria(key)}
               className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
                 active
-                  ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-800'
+                  ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-indigo-800'
               }`}
             >
               <Icon size={15} />
@@ -95,24 +100,12 @@ export function ContactosExternosView({
 
       <p className="text-sm text-slate-500 dark:text-slate-400">{meta.description}</p>
 
-      <div className="relative">
-        <Search size={16} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-emerald-500" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={`Busca en ${meta.label.toLowerCase()} por nombre, comuna, correo...`}
-          className="w-full rounded-2xl border border-emerald-200 bg-white py-2.5 pr-4 pl-10 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 dark:border-emerald-900/50 dark:bg-slate-900 dark:text-white dark:focus:ring-emerald-500/10"
-        />
-      </div>
-
       {filtrados.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
-          Sin resultados para tu búsqueda.
-        </p>
+        <EmptyState query={query} />
       ) : (
         <div className="space-y-4">
           {grupos.map(([grupo, items]) => (
-            <div key={grupo} className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 dark:border-emerald-900/40 dark:bg-emerald-500/5">
+            <div key={grupo} className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/40 dark:bg-indigo-500/5">
               <p className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
                 {grupo}
                 <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">

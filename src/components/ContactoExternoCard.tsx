@@ -26,7 +26,7 @@ export function ContactoExternoCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           {subLabel && (
-            <p className="text-[11px] font-semibold tracking-wide text-emerald-600 uppercase dark:text-emerald-400">
+            <p className="text-[11px] font-semibold tracking-wide text-indigo-500 uppercase dark:text-indigo-400">
               {subLabel}
             </p>
           )}
@@ -37,7 +37,7 @@ export function ContactoExternoCard({
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {contacto.calidadJuridica && (
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
               {contacto.calidadJuridica}
             </span>
           )}
@@ -56,7 +56,7 @@ export function ContactoExternoCard({
               type="button"
               onClick={onEdit}
               title="Editar contacto"
-              className="rounded-full p-1.5 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400"
+              className="rounded-full p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
             >
               <Pencil size={13} />
             </button>
@@ -106,7 +106,7 @@ export function ContactoExternoCard({
           <button
             type="button"
             onClick={() => setShowObs((v) => !v)}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-emerald-600 dark:text-slate-500 dark:hover:text-emerald-400"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400"
           >
             <Info size={11} /> {showObs ? 'Ocultar nota' : 'Ver nota'}
           </button>

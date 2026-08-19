@@ -142,7 +142,7 @@ export function ContactoExternoEditModal({ contacto, onCancel, onSubmit }: Props
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             Guardar
           </button>
@@ -153,7 +153,7 @@ export function ContactoExternoEditModal({ contacto, onCancel, onSubmit }: Props
 }
 
 const inputClass =
-  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:ring-emerald-500/10'
+  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:ring-indigo-500/10'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

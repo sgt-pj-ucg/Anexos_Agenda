@@ -1,14 +1,13 @@
 import { AlertTriangle, X } from 'lucide-react'
-import type { Persona } from '../types'
 
 interface Props {
-  persona: Persona
+  nombre: string
   onCancel: () => void
   onVacate: () => void
   onDeleteForever: () => void
 }
 
-export function DeleteConfirmModal({ persona, onCancel, onVacate, onDeleteForever }: Props) {
+export function DeleteConfirmModal({ nombre, onCancel, onVacate, onDeleteForever }: Props) {
   return (
     <div
       className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm"
@@ -25,7 +24,7 @@ export function DeleteConfirmModal({ persona, onCancel, onVacate, onDeleteForeve
             </div>
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white">Quitar contacto</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-300">{persona.nombre}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">{nombre}</p>
             </div>
           </div>
           <button
