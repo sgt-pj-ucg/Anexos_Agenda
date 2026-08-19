@@ -38,6 +38,7 @@ import { NovedadesPanel } from './components/NovedadesPanel'
 import { ReportesPanel } from './components/ReportesPanel'
 import { OrganigramaBoard } from './components/OrganigramaBoard'
 import { TribunalContactosView } from './components/TribunalContactosView'
+import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ReportTarget = { subject: string; contexto: string[] } | null
@@ -224,10 +225,34 @@ export default function App() {
     }
   }
 
-  const handleDelete = async (p: Persona) => {
-    if (!window.confirm(`¿Eliminar a ${p.nombre} del directorio?`)) return
+  const [deleteTarget, setDeleteTarget] = useState<Persona | null>(null)
+
+  const handleVacate = async () => {
+    if (!deleteTarget) return
     try {
-      await deletePerson(p.id)
+      await updatePerson(
+        {
+          nombre: '(Cargo vacante)',
+          cargo: null,
+          correos: [],
+          cumpleanos: null,
+          calidadJuridica: null,
+          suplente: null,
+          vacante: true,
+        },
+        deleteTarget.id,
+      )
+      setDeleteTarget(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo dejar el cargo vacante.')
+    }
+  }
+
+  const handleDeleteForever = async () => {
+    if (!deleteTarget) return
+    try {
+      await deletePerson(deleteTarget.id)
+      setDeleteTarget(null)
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el contacto.')
     }
@@ -426,7 +451,7 @@ export default function App() {
                   <FlatResults
                     people={favoriteResults}
                     onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                    onDeletePerson={handleDelete}
+                    onDeletePerson={setDeleteTarget}
                     onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
                     isFavorite={(id) => favorites.has(id)}
                     onToggleFavorite={toggleFavorite}
@@ -461,7 +486,7 @@ export default function App() {
                   <FlatResults
                     people={filteredResults}
                     onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                    onDeletePerson={handleDelete}
+                    onDeletePerson={setDeleteTarget}
                     onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
                     isFavorite={(id) => favorites.has(id)}
                     onToggleFavorite={toggleFavorite}
@@ -471,7 +496,7 @@ export default function App() {
                     groups={groups}
                     collapsible={section === 'tribunal'}
                     onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                    onDeletePerson={handleDelete}
+                    onDeletePerson={setDeleteTarget}
                     onAddPerson={(g) => setModal({ mode: 'add', group: g })}
                     onEditFicha={setFichaModal}
                     onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
@@ -495,6 +520,15 @@ export default function App() {
           initial={modal.mode === 'edit' ? modal.person : undefined}
           onCancel={() => setModal(null)}
           onSubmit={handleSubmitModal}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteConfirmModal
+          persona={deleteTarget}
+          onCancel={() => setDeleteTarget(null)}
+          onVacate={handleVacate}
+          onDeleteForever={handleDeleteForever}
         />
       )}
 
