@@ -1,0 +1,74 @@
+import { useState } from 'react'
+import { Info, Mail, MapPin, Phone } from 'lucide-react'
+import type { ContactoExterno } from '../types'
+import { CopyChip } from './CopyChip'
+
+export function ContactoExternoCard({
+  contacto,
+  subLabel,
+}: {
+  contacto: ContactoExterno
+  subLabel?: string
+}) {
+  const [showObs, setShowObs] = useState(false)
+  const esVacante = contacto.nombre?.toUpperCase().includes('VACANTE')
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          {subLabel && (
+            <p className="text-[11px] font-semibold tracking-wide text-indigo-500 uppercase dark:text-indigo-400">
+              {subLabel}
+            </p>
+          )}
+          <p className={`font-medium ${esVacante ? 'text-slate-400 italic dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'}`}>
+            {contacto.nombre ?? 'Sin nombre'}
+          </p>
+          {contacto.cargo && <p className="text-xs text-slate-500 dark:text-slate-400">{contacto.cargo}</p>}
+        </div>
+        {contacto.calidadJuridica && (
+          <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+            {contacto.calidadJuridica}
+          </span>
+        )}
+      </div>
+
+      {(contacto.correos.length > 0 || contacto.telefonos.length > 0 || contacto.direccion) && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {contacto.correos.map((correo) => (
+            <CopyChip key={correo} value={correo} icon={<Mail size={12} />} href={`mailto:${correo}`} label="correo" />
+          ))}
+          {contacto.telefonos.map((tel) => (
+            <CopyChip key={tel} value={tel} icon={<Phone size={12} />} href={`tel:${tel}`} label="teléfono" />
+          ))}
+          {contacto.direccion && (
+            <CopyChip
+              value={contacto.direccion}
+              icon={<MapPin size={12} />}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contacto.direccion)}`}
+              label="dirección"
+            />
+          )}
+        </div>
+      )}
+
+      {contacto.observaciones && (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setShowObs((v) => !v)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400"
+          >
+            <Info size={11} /> {showObs ? 'Ocultar nota' : 'Ver nota'}
+          </button>
+          {showObs && (
+            <p className="mt-1 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              {contacto.observaciones}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

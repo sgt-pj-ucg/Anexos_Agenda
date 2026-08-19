@@ -39,6 +39,28 @@ export interface Persona {
   fuente?: string
 }
 
+export type CategoriaExterna =
+  | 'academia_judicial'
+  | 'cbr_notarias'
+  | 'cortes_pais'
+  | 'receptores_procuradores'
+  | 'policia_local'
+
+export interface ContactoExterno {
+  id: string
+  categoria: CategoriaExterna
+  institucion: string | null
+  nombre: string | null
+  cargo: string | null
+  comuna: string | null
+  correos: string[]
+  telefonos: string[]
+  direccion: string | null
+  calidadJuridica: string | null
+  observaciones: string | null
+  orden: number
+}
+
 export type CambioTipo = 'persona_agregada' | 'persona_editada' | 'persona_eliminada' | 'ficha_editada'
 
 export interface Cambio {

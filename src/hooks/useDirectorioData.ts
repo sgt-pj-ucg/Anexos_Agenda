@@ -4,7 +4,16 @@ import { supabase } from '../lib/supabaseClient'
 import { getAdminPassword } from '../lib/auth'
 import { slugify } from '../lib/normalize'
 import { useIsAdmin } from '../context/RoleContext'
-import type { Cambio, FichaTribunal, Persona, Reporte, ReporteEstado, Seccion } from '../types'
+import type {
+  Cambio,
+  CategoriaExterna,
+  ContactoExterno,
+  FichaTribunal,
+  Persona,
+  Reporte,
+  ReporteEstado,
+  Seccion,
+} from '../types'
 
 interface PersonaRow {
   id: string
@@ -38,6 +47,21 @@ interface TribunalRow {
   correo_admin_secretario: string | null
   correo_segundo_lider: string | null
   updated_at: string
+}
+
+interface ContactoExternoRow {
+  id: string
+  categoria: CategoriaExterna
+  institucion: string | null
+  nombre: string | null
+  cargo: string | null
+  comuna: string | null
+  correos: string[] | null
+  telefonos: string[] | null
+  direccion: string | null
+  calidad_juridica: string | null
+  observaciones: string | null
+  orden: number
 }
 
 interface CambioRow {
@@ -93,6 +117,23 @@ function rowToFicha(row: TribunalRow): FichaTribunal {
   }
 }
 
+function rowToContactoExterno(row: ContactoExternoRow): ContactoExterno {
+  return {
+    id: row.id,
+    categoria: row.categoria,
+    institucion: row.institucion,
+    nombre: row.nombre,
+    cargo: row.cargo,
+    comuna: row.comuna,
+    correos: row.correos ?? [],
+    telefonos: row.telefonos ?? [],
+    direccion: row.direccion,
+    calidadJuridica: row.calidad_juridica,
+    observaciones: row.observaciones,
+    orden: row.orden,
+  }
+}
+
 function rowToCambio(row: CambioRow): Cambio {
   return {
     id: row.id,
@@ -144,6 +185,7 @@ export function useDirectorioData() {
   const [tribunales, setTribunales] = useState<FichaTribunal[]>([])
   const [cambios, setCambios] = useState<Cambio[]>([])
   const [reportes, setReportes] = useState<Reporte[]>([])
+  const [contactosExternos, setContactosExternos] = useState<ContactoExterno[]>([])
   const [generatedAt, setGeneratedAt] = useState(directorio.generatedAt)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -191,6 +233,18 @@ export function useDirectorioData() {
     setCambios(((data ?? []) as CambioRow[]).map(rowToCambio))
   }, [])
 
+  const loadContactosExternos = useCallback(async () => {
+    // Igual que "cambios": si la tabla aún no existe (no se ha corrido la
+    // migración de contactos externos), se deja la lista vacía sin romper
+    // el resto de la app.
+    const { data, error: contactosError } = await supabase
+      .from('contactos_externos')
+      .select('*')
+      .order('orden', { ascending: true })
+    if (contactosError) return
+    setContactosExternos(((data ?? []) as ContactoExternoRow[]).map(rowToContactoExterno))
+  }, [])
+
   const loadReportes = useCallback(async () => {
     // Igual que "cambios": si la tabla aún no existe (no se ha corrido la
     // migración de reportes), se deja la lista vacía sin romper la app.
@@ -205,6 +259,7 @@ export function useDirectorioData() {
   useEffect(() => {
     load()
     loadCambios()
+    loadContactosExternos()
     if (isAdmin) loadReportes()
 
     const channel = supabase
@@ -212,6 +267,9 @@ export function useDirectorioData() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'personas' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tribunales' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cambios' }, () => loadCambios())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contactos_externos' }, () =>
+        loadContactosExternos(),
+      )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reportes' }, () => {
         if (isAdmin) loadReportes()
       })
@@ -220,7 +278,7 @@ export function useDirectorioData() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [load, loadCambios, loadReportes, isAdmin])
+  }, [load, loadCambios, loadContactosExternos, loadReportes, isAdmin])
 
   const writePersona = async (persona: Persona) => {
     const admin_password = requireAdminPassword()
@@ -292,6 +350,7 @@ export function useDirectorioData() {
     tribunales,
     cambios,
     reportes,
+    contactosExternos,
     correoGeneralSeccion: directorio.correoGeneralSeccion,
     generatedAt,
     loading,

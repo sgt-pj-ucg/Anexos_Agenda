@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { UserCog, Workflow } from 'lucide-react'
+import { BookUser, UserCog, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
@@ -38,6 +38,7 @@ import { NovedadesPanel } from './components/NovedadesPanel'
 import { ReportesPanel } from './components/ReportesPanel'
 import { OrganigramaBoard } from './components/OrganigramaBoard'
 import { TribunalContactosView } from './components/TribunalContactosView'
+import { ContactosExternosView } from './components/ContactosExternosView'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
@@ -50,6 +51,7 @@ export default function App() {
     tribunales,
     cambios,
     reportes,
+    contactosExternos,
     correoGeneralSeccion,
     generatedAt,
     loading,
@@ -71,6 +73,7 @@ export default function App() {
   const [favoritesMode, setFavoritesMode] = useState(false)
   const [organigramaMode, setOrganigramaMode] = useState(false)
   const [contactosMode, setContactosMode] = useState(false)
+  const [externosMode, setExternosMode] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
@@ -195,6 +198,7 @@ export default function App() {
     setFavoritesMode(false)
     setOrganigramaMode(false)
     setContactosMode(false)
+    setExternosMode(false)
   }
 
   const handleMoveUnidad = async (personId: string, nuevaUnidad: string) => {
@@ -363,7 +367,10 @@ export default function App() {
               <FavoritesToggle
                 active={favoritesMode}
                 count={favorites.size}
-                onClick={() => setFavoritesMode((v) => !v)}
+                onClick={() => {
+                  setFavoritesMode((v) => !v)
+                  setExternosMode(false)
+                }}
               />
             </div>
 
@@ -371,7 +378,27 @@ export default function App() {
               <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
             )}
 
-            {!favoritesMode && section === 'tribunal' && (
+            {!favoritesMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setExternosMode((v) => !v)
+                  setOrganigramaMode(false)
+                  setContactosMode(false)
+                }}
+                title="Academia Judicial, CBR y Notarías, Cortes del país, Receptores/Procuradores y Policía Local"
+                className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  externosMode
+                    ? 'border-emerald-400 bg-emerald-100 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                }`}
+              >
+                <BookUser size={14} />
+                {externosMode ? 'Ver directorio interno' : 'Contactos externos'}
+              </button>
+            )}
+
+            {!favoritesMode && !externosMode && section === 'tribunal' && (
               <button
                 type="button"
                 onClick={() => {
@@ -390,7 +417,7 @@ export default function App() {
               </button>
             )}
 
-            {!favoritesMode && !contactosMode && isAdmin && section === 'corte' && (
+            {!favoritesMode && !contactosMode && !externosMode && isAdmin && section === 'corte' && (
               <button
                 type="button"
                 onClick={() => setOrganigramaMode((v) => !v)}
@@ -405,7 +432,7 @@ export default function App() {
               </button>
             )}
 
-            {!favoritesMode && !organigramaMode && !contactosMode && showComunaChips && (
+            {!favoritesMode && !organigramaMode && !contactosMode && !externosMode && showComunaChips && (
               <ComunaChips
                 comunas={comunasDisponibles}
                 active={comuna}
@@ -414,7 +441,7 @@ export default function App() {
               />
             )}
 
-            {!favoritesMode && !contactosMode && showMateriaChips && (
+            {!favoritesMode && !contactosMode && !externosMode && showMateriaChips && (
               <MateriaChips
                 materias={materiasDisponibles}
                 active={materia}
@@ -423,11 +450,13 @@ export default function App() {
               />
             )}
 
-            {!favoritesMode && !organigramaMode && !contactosMode && birthdayPeople.length > 0 && !trimmedQuery && (
+            {!favoritesMode && !organigramaMode && !contactosMode && !externosMode && birthdayPeople.length > 0 && !trimmedQuery && (
               <BirthdayBanner people={birthdayPeople} />
             )}
 
-            {contactosMode ? (
+            {externosMode ? (
+              <ContactosExternosView contactos={contactosExternos} />
+            ) : contactosMode ? (
               <TribunalContactosView tribunales={tribunales} personas={people} onEditFicha={setFichaModal} />
             ) : organigramaMode ? (
               <>
