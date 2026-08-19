@@ -11,3 +11,12 @@ createRoot(document.getElementById('root')!).render(
     </PasswordGate>
   </StrictMode>,
 )
+
+// Registra el service worker solo en producción: habilita "Instalar app" en
+// el celular sin interferir con la recarga en caliente del servidor de
+// desarrollo.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {})
+  })
+}
