@@ -1,13 +1,16 @@
+import type { ReactNode } from 'react'
 import { SECTION_META, SECTION_ORDER, type SeccionKey } from '../lib/sections'
 
 export function SectionTabs({
   active,
   onChange,
   counts,
+  trailing,
 }: {
   active: SeccionKey
   onChange: (s: SeccionKey) => void
   counts: Record<string, number>
+  trailing?: ReactNode
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -39,6 +42,7 @@ export function SectionTabs({
           </button>
         )
       })}
+      {trailing}
     </div>
   )
 }

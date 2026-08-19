@@ -1,12 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
-import type { ContactoExterno } from '../types'
+import type { CategoriaExterna, ContactoExterno } from '../types'
 import { CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
 import { normalize } from '../lib/normalize'
 import { ContactoExternoCard } from './ContactoExternoCard'
 
-export function ContactosExternosView({ contactos }: { contactos: ContactoExterno[] }) {
-  const [categoria, setCategoria] = useState(CATEGORIA_ORDER[0])
+export function ContactosExternosView({
+  contactos,
+  categoria,
+  onChangeCategoria,
+}: {
+  contactos: ContactoExterno[]
+  categoria: CategoriaExterna
+  onChangeCategoria: (categoria: CategoriaExterna) => void
+}) {
   const [query, setQuery] = useState('')
 
   const counts = useMemo(() => {
@@ -57,7 +64,7 @@ export function ContactosExternosView({ contactos }: { contactos: ContactoExtern
               key={key}
               type="button"
               onClick={() => {
-                setCategoria(key)
+                onChangeCategoria(key)
                 setQuery('')
               }}
               className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${

@@ -37,10 +37,17 @@ export function ContactoExternoCard({
       {(contacto.correos.length > 0 || contacto.telefonos.length > 0 || contacto.direccion) && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {contacto.correos.map((correo) => (
-            <CopyChip key={correo} value={correo} icon={<Mail size={12} />} href={`mailto:${correo}`} label="correo" />
+            <CopyChip
+              key={correo}
+              value={correo}
+              icon={<Mail size={12} />}
+              href={`mailto:${correo}`}
+              label="correo"
+              wide
+            />
           ))}
           {contacto.telefonos.map((tel) => (
-            <CopyChip key={tel} value={tel} icon={<Phone size={12} />} href={`tel:${tel}`} label="teléfono" />
+            <CopyChip key={tel} value={tel} icon={<Phone size={12} />} href={`tel:${tel}`} label="teléfono" wide />
           ))}
           {contacto.direccion && (
             <CopyChip
@@ -48,6 +55,7 @@ export function ContactoExternoCard({
               icon={<MapPin size={12} />}
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contacto.direccion)}`}
               label="dirección"
+              wide
             />
           )}
         </div>

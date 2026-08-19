@@ -12,7 +12,8 @@ import { normalize } from './lib/normalize'
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, type SeccionKey } from './lib/sections'
-import type { FichaTribunal, Persona } from './types'
+import type { CategoriaExterna, FichaTribunal, Persona } from './types'
+import { CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
 import type { TribunalFormValues } from './components/TribunalEditModal'
@@ -39,6 +40,7 @@ import { ReportesPanel } from './components/ReportesPanel'
 import { OrganigramaBoard } from './components/OrganigramaBoard'
 import { TribunalContactosView } from './components/TribunalContactosView'
 import { ContactosExternosView } from './components/ContactosExternosView'
+import { ContactoExternoPickerModal } from './components/ContactoExternoPickerModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
@@ -74,6 +76,8 @@ export default function App() {
   const [organigramaMode, setOrganigramaMode] = useState(false)
   const [contactosMode, setContactosMode] = useState(false)
   const [externosMode, setExternosMode] = useState(false)
+  const [externosPickerOpen, setExternosPickerOpen] = useState(false)
+  const [categoriaExterna, setCategoriaExterna] = useState<CategoriaExterna>(CATEGORIA_ORDER[0])
   const [modal, setModal] = useState<ModalState>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
@@ -88,6 +92,12 @@ export default function App() {
     for (const p of people) counts[p.seccion] = (counts[p.seccion] ?? 0) + 1
     return counts
   }, [people])
+
+  const externosCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const c of contactosExternos) counts[c.categoria] = (counts[c.categoria] ?? 0) + 1
+    return counts
+  }, [contactosExternos])
 
   const comunaCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -375,27 +385,32 @@ export default function App() {
             </div>
 
             {!favoritesMode && (
-              <SectionTabs active={section} onChange={handleSelectSection} counts={sectionCounts} />
-            )}
-
-            {!favoritesMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setExternosMode((v) => !v)
-                  setOrganigramaMode(false)
-                  setContactosMode(false)
-                }}
-                title="Academia Judicial, CBR y Notarías, Cortes del país, Receptores/Procuradores y Policía Local"
-                className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  externosMode
-                    ? 'border-emerald-400 bg-emerald-100 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300'
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                }`}
-              >
-                <BookUser size={14} />
-                {externosMode ? 'Ver directorio interno' : 'Contactos externos'}
-              </button>
+              <SectionTabs
+                active={section}
+                onChange={handleSelectSection}
+                counts={sectionCounts}
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (externosMode) {
+                        setExternosMode(false)
+                      } else {
+                        setExternosPickerOpen(true)
+                      }
+                    }}
+                    title="Academia Judicial, CBR y Notarías, Cortes del país, Receptores/Procuradores y Policía Local"
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+                      externosMode
+                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-800'
+                    }`}
+                  >
+                    <BookUser size={15} />
+                    {externosMode ? 'Ver directorio interno' : 'Externo'}
+                  </button>
+                }
+              />
             )}
 
             {!favoritesMode && !externosMode && section === 'tribunal' && (
@@ -455,7 +470,11 @@ export default function App() {
             )}
 
             {externosMode ? (
-              <ContactosExternosView contactos={contactosExternos} />
+              <ContactosExternosView
+                contactos={contactosExternos}
+                categoria={categoriaExterna}
+                onChangeCategoria={setCategoriaExterna}
+              />
             ) : contactosMode ? (
               <TribunalContactosView tribunales={tribunales} personas={people} onEditFicha={setFichaModal} />
             ) : organigramaMode ? (
@@ -549,6 +568,20 @@ export default function App() {
           initial={modal.mode === 'edit' ? modal.person : undefined}
           onCancel={() => setModal(null)}
           onSubmit={handleSubmitModal}
+        />
+      )}
+
+      {externosPickerOpen && (
+        <ContactoExternoPickerModal
+          counts={externosCounts}
+          onClose={() => setExternosPickerOpen(false)}
+          onSelect={(categoria) => {
+            setCategoriaExterna(categoria)
+            setExternosMode(true)
+            setExternosPickerOpen(false)
+            setOrganigramaMode(false)
+            setContactosMode(false)
+          }}
         />
       )}
 

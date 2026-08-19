@@ -8,9 +8,10 @@ interface Props {
   href?: string
   icon: ReactNode
   label: string
+  wide?: boolean
 }
 
-export function CopyChip({ value, display, href, icon, label }: Props) {
+export function CopyChip({ value, display, href, icon, label, wide }: Props) {
   const { copied, copy } = useCopy()
   const isCopied = copied === value
 
@@ -23,7 +24,9 @@ export function CopyChip({ value, display, href, icon, label }: Props) {
         title={`Copiar ${label}`}
       >
         {isCopied ? <Check size={13} className="text-emerald-500" /> : icon}
-        <span className="max-w-[11rem] truncate">{display ?? value}</span>
+        <span className={wide ? 'max-w-[26rem] whitespace-normal' : 'max-w-[11rem] truncate'}>
+          {display ?? value}
+        </span>
       </button>
       {href && (
         <a
