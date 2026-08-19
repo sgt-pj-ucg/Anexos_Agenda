@@ -323,6 +323,27 @@ export function useDirectorioData() {
     await load()
   }
 
+  const updateContactoExterno = async (id: string, patch: Partial<ContactoExterno>) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_update_contacto_externo', {
+      admin_password,
+      contacto_id: id,
+      patch,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadContactosExternos()
+  }
+
+  const deleteContactoExterno = async (id: string) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_delete_contacto_externo', {
+      admin_password,
+      contacto_id: id,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadContactosExternos()
+  }
+
   const submitReport = async (entidad: string, contexto: string, descripcion: string) => {
     const { error: insertError } = await supabase
       .from('reportes')
@@ -359,6 +380,8 @@ export function useDirectorioData() {
     createPerson,
     deletePerson,
     updateFicha,
+    updateContactoExterno,
+    deleteContactoExterno,
     submitReport,
     setReporteEstado,
   }

@@ -9,10 +9,16 @@ export function ContactosExternosView({
   contactos,
   categoria,
   onChangeCategoria,
+  onEditContacto,
+  onDeleteContacto,
+  onReportContacto,
 }: {
   contactos: ContactoExterno[]
   categoria: CategoriaExterna
   onChangeCategoria: (categoria: CategoriaExterna) => void
+  onEditContacto?: (contacto: ContactoExterno) => void
+  onDeleteContacto?: (contacto: ContactoExterno) => void
+  onReportContacto?: (contacto: ContactoExterno) => void
 }) {
   const [query, setQuery] = useState('')
 
@@ -69,8 +75,8 @@ export function ContactosExternosView({
               }}
               className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
                 active
-                  ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-indigo-800'
+                  ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-800'
               }`}
             >
               <Icon size={15} />
@@ -90,12 +96,12 @@ export function ContactosExternosView({
       <p className="text-sm text-slate-500 dark:text-slate-400">{meta.description}</p>
 
       <div className="relative">
-        <Search size={16} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-emerald-500" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Busca en ${meta.label.toLowerCase()} por nombre, comuna, correo...`}
-          className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:ring-indigo-500/10"
+          className="w-full rounded-2xl border border-emerald-200 bg-white py-2.5 pr-4 pl-10 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 dark:border-emerald-900/50 dark:bg-slate-900 dark:text-white dark:focus:ring-emerald-500/10"
         />
       </div>
 
@@ -106,7 +112,7 @@ export function ContactosExternosView({
       ) : (
         <div className="space-y-4">
           {grupos.map(([grupo, items]) => (
-            <div key={grupo} className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/40 dark:bg-indigo-500/5">
+            <div key={grupo} className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 dark:border-emerald-900/40 dark:bg-emerald-500/5">
               <p className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
                 {grupo}
                 <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
@@ -119,6 +125,9 @@ export function ContactosExternosView({
                     key={c.id}
                     contacto={c}
                     subLabel={c.institucion && c.institucion !== grupo ? c.institucion : undefined}
+                    onEdit={onEditContacto ? () => onEditContacto(c) : undefined}
+                    onDelete={onDeleteContacto ? () => onDeleteContacto(c) : undefined}
+                    onReport={onReportContacto ? () => onReportContacto(c) : undefined}
                   />
                 ))}
               </div>

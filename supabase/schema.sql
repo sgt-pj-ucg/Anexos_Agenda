@@ -81,6 +81,25 @@ create table if not exists reportes (
   resolved_at timestamptz
 );
 
+-- Directorio de referencia de contactos externos: Academia Judicial, CBR y
+-- Notarías, Cortes del país, Receptores/Procuradores del Número y Juzgados
+-- de Policía Local.
+create table if not exists contactos_externos (
+  id text primary key,
+  categoria text not null,
+  institucion text,
+  nombre text,
+  cargo text,
+  comuna text,
+  correos text[] not null default '{}',
+  telefonos text[] not null default '{}',
+  direccion text,
+  calidad_juridica text,
+  observaciones text,
+  orden integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
 -- ---------------------------------------------------------------------
 -- Seguridad: lectura pública, escritura solo vía funciones con clave
 -- ---------------------------------------------------------------------
@@ -89,6 +108,7 @@ alter table tribunales enable row level security;
 alter table app_config enable row level security;
 alter table cambios enable row level security;
 alter table reportes enable row level security;
+alter table contactos_externos enable row level security;
 
 drop policy if exists "lectura publica personas" on personas;
 create policy "lectura publica personas" on personas for select using (true);
@@ -101,6 +121,9 @@ create policy "lectura publica cambios" on cambios for select using (true);
 
 drop policy if exists "lectura publica reportes" on reportes;
 create policy "lectura publica reportes" on reportes for select using (true);
+
+drop policy if exists "lectura publica contactos_externos" on contactos_externos;
+create policy "lectura publica contactos_externos" on contactos_externos for select using (true);
 
 -- Cualquier usuario puede crear un reporte (no requiere clave de
 -- administrador), pero siempre en estado "pendiente"; solo la función
@@ -116,6 +139,7 @@ revoke insert, update, delete on personas from anon, authenticated;
 revoke insert, update, delete on tribunales from anon, authenticated;
 revoke insert, update, delete on cambios from anon, authenticated;
 revoke update, delete on reportes from anon, authenticated;
+revoke insert, update, delete on contactos_externos from anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- Funciones de escritura (verifican la clave de administrador)
@@ -262,10 +286,68 @@ begin
 end;
 $$;
 
+create or replace function admin_update_contacto_externo(admin_password text, contacto_id text, patch jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nombre_previo text;
+begin
+  if not verify_admin(admin_password) then
+    raise exception 'Clave de administrador incorrecta';
+  end if;
+
+  select nombre into nombre_previo from contactos_externos where id = contacto_id;
+
+  update contactos_externos set
+    institucion = patch->>'institucion',
+    nombre = patch->>'nombre',
+    cargo = patch->>'cargo',
+    comuna = patch->>'comuna',
+    correos = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'correos', '[]'::jsonb)) x), '{}'),
+    telefonos = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'telefonos', '[]'::jsonb)) x), '{}'),
+    direccion = patch->>'direccion',
+    calidad_juridica = patch->>'calidadJuridica',
+    observaciones = patch->>'observaciones',
+    updated_at = now()
+  where id = contacto_id;
+
+  insert into cambios (tipo, entidad, detalle)
+  values ('contacto_externo_editado', coalesce(patch->>'nombre', nombre_previo, contacto_id), null);
+end;
+$$;
+
+create or replace function admin_delete_contacto_externo(admin_password text, contacto_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nombre_contacto text;
+begin
+  if not verify_admin(admin_password) then
+    raise exception 'Clave de administrador incorrecta';
+  end if;
+
+  select nombre into nombre_contacto from contactos_externos where id = contacto_id;
+
+  delete from contactos_externos where id = contacto_id;
+
+  if nombre_contacto is not null then
+    insert into cambios (tipo, entidad, detalle) values ('contacto_externo_eliminado', nombre_contacto, null);
+  end if;
+end;
+$$;
+
 grant execute on function admin_upsert_persona(text, jsonb) to anon, authenticated;
 grant execute on function admin_delete_persona(text, text) to anon, authenticated;
 grant execute on function admin_update_ficha(text, text, jsonb) to anon, authenticated;
 grant execute on function admin_set_reporte_estado(text, bigint, text) to anon, authenticated;
+grant execute on function admin_update_contacto_externo(text, text, jsonb) to anon, authenticated;
+grant execute on function admin_delete_contacto_externo(text, text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- Tiempo real: para que los cambios se vean al instante en todas las
@@ -275,3 +357,4 @@ alter publication supabase_realtime add table personas;
 alter publication supabase_realtime add table tribunales;
 alter publication supabase_realtime add table cambios;
 alter publication supabase_realtime add table reportes;
+alter publication supabase_realtime add table contactos_externos;

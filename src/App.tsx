@@ -12,11 +12,12 @@ import { normalize } from './lib/normalize'
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, type SeccionKey } from './lib/sections'
-import type { CategoriaExterna, FichaTribunal, Persona } from './types'
+import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
 import { CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
 import type { TribunalFormValues } from './components/TribunalEditModal'
+import type { ContactoExternoFormValues } from './components/ContactoExternoEditModal'
 
 import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
@@ -41,6 +42,7 @@ import { OrganigramaBoard } from './components/OrganigramaBoard'
 import { TribunalContactosView } from './components/TribunalContactosView'
 import { ContactosExternosView } from './components/ContactosExternosView'
 import { ContactoExternoPickerModal } from './components/ContactoExternoPickerModal'
+import { ContactoExternoEditModal } from './components/ContactoExternoEditModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
@@ -62,6 +64,8 @@ export default function App() {
     createPerson,
     deletePerson,
     updateFicha,
+    updateContactoExterno,
+    deleteContactoExterno,
     submitReport,
     setReporteEstado,
   } = useDirectorioData()
@@ -240,6 +244,42 @@ export default function App() {
   }
 
   const [deleteTarget, setDeleteTarget] = useState<Persona | null>(null)
+  const [editingContactoExterno, setEditingContactoExterno] = useState<ContactoExterno | null>(null)
+
+  const handleSubmitContactoExterno = async (values: ContactoExternoFormValues) => {
+    if (!editingContactoExterno) return
+    try {
+      await updateContactoExterno(editingContactoExterno.id, {
+        institucion: values.institucion.trim() || null,
+        nombre: values.nombre.trim() || null,
+        cargo: values.cargo.trim() || null,
+        comuna: values.comuna.trim() || null,
+        correos: values.correos
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        telefonos: values.telefonos
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        direccion: values.direccion.trim() || null,
+        calidadJuridica: values.calidadJuridica.trim() || null,
+        observaciones: values.observaciones.trim() || null,
+      })
+      setEditingContactoExterno(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo guardar el contacto externo.')
+    }
+  }
+
+  const handleDeleteContactoExterno = async (contacto: ContactoExterno) => {
+    if (!window.confirm(`¿Eliminar a ${contacto.nombre ?? contacto.institucion} de contactos externos?`)) return
+    try {
+      await deleteContactoExterno(contacto.id)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el contacto.')
+    }
+  }
 
   const handleVacate = async () => {
     if (!deleteTarget) return
@@ -474,6 +514,11 @@ export default function App() {
                 contactos={contactosExternos}
                 categoria={categoriaExterna}
                 onChangeCategoria={setCategoriaExterna}
+                onEditContacto={setEditingContactoExterno}
+                onDeleteContacto={handleDeleteContactoExterno}
+                onReportContacto={(c) =>
+                  openReport(c.nombre ?? c.institucion ?? 'Contacto externo', [c.institucion ?? '', c.cargo ?? ''])
+                }
               />
             ) : contactosMode ? (
               <TribunalContactosView tribunales={tribunales} personas={people} onEditFicha={setFichaModal} />
@@ -582,6 +627,14 @@ export default function App() {
             setOrganigramaMode(false)
             setContactosMode(false)
           }}
+        />
+      )}
+
+      {editingContactoExterno && (
+        <ContactoExternoEditModal
+          contacto={editingContactoExterno}
+          onCancel={() => setEditingContactoExterno(null)}
+          onSubmit={handleSubmitContactoExterno}
         />
       )}
 

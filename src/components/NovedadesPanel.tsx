@@ -1,4 +1,4 @@
-import { Bell, Landmark, Pencil, UserMinus, UserPlus, X, type LucideIcon } from 'lucide-react'
+import { Bell, BookUser, Landmark, Pencil, UserMinus, UserPlus, X, type LucideIcon } from 'lucide-react'
 import type { Cambio } from '../types'
 import { timeAgo } from '../lib/timeAgo'
 
@@ -22,6 +22,16 @@ const TIPO_META: Record<Cambio['tipo'], { label: (c: Cambio) => string; icon: Lu
     label: (c) => `Se actualizó la ficha de ${c.entidad}`,
     icon: Landmark,
     color: 'text-amber-500',
+  },
+  contacto_externo_editado: {
+    label: (c) => `Se editó el contacto externo ${c.entidad}`,
+    icon: BookUser,
+    color: 'text-emerald-500',
+  },
+  contacto_externo_eliminado: {
+    label: (c) => `Se eliminó el contacto externo ${c.entidad}`,
+    icon: BookUser,
+    color: 'text-rose-500',
   },
 }
 

@@ -61,7 +61,13 @@ export interface ContactoExterno {
   orden: number
 }
 
-export type CambioTipo = 'persona_agregada' | 'persona_editada' | 'persona_eliminada' | 'ficha_editada'
+export type CambioTipo =
+  | 'persona_agregada'
+  | 'persona_editada'
+  | 'persona_eliminada'
+  | 'ficha_editada'
+  | 'contacto_externo_editado'
+  | 'contacto_externo_eliminado'
 
 export interface Cambio {
   id: number
