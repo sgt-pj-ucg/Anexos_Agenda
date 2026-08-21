@@ -9,6 +9,7 @@ import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { MATERIA_ORDER } from './lib/materias'
 import { normalize } from './lib/normalize'
+import { collectGroupEmails, esFuncionarioCorte } from './lib/mailto'
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, type SeccionKey } from './lib/sections'
@@ -26,6 +27,7 @@ import { SectionTabs } from './components/SectionTabs'
 import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
+import { FuncionariosCorteEmailBanner } from './components/FuncionariosCorteEmailBanner'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -191,6 +193,11 @@ export default function App() {
   const showMateriaChips = section === 'tribunal' && materiasDisponibles.length > 1
 
   const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
+
+  const funcionariosCorteEmails = useMemo(() => {
+    if (section !== 'corte') return []
+    return collectGroupEmails(people.filter(esFuncionarioCorte))
+  }, [section, people])
 
   const groups = useMemo(() => {
     if (showOverview || trimmedQuery) return []
@@ -622,6 +629,10 @@ export default function App() {
                 </p>
 
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
+
+                {section === 'corte' && !trimmedQuery && (
+                  <FuncionariosCorteEmailBanner correos={funcionariosCorteEmails} />
+                )}
 
                 {section === 'tribunal' && !trimmedQuery && (
                   <TribunalesEmailBanner suffix={tribunalesEmailSuffix} correos={tribunalesEmails} />

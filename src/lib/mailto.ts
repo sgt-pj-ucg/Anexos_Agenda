@@ -1,4 +1,14 @@
 import type { Persona } from '../types'
+import { normalize } from './normalize'
+
+// Para el envío masivo a "funcionarios" de la Corte: quedan fuera los
+// ministros, relatores y fiscalías judiciales (son grupos con su propio
+// canal), y las casillas generales (esGenerico), que no son una persona.
+const UNIDAD_EXCLUIDA_FUNCIONARIOS = /(ministro|relator|fiscal)/
+
+export function esFuncionarioCorte(p: Persona): boolean {
+  return p.seccion === 'corte' && !p.esGenerico && !UNIDAD_EXCLUIDA_FUNCIONARIOS.test(normalize(p.unidad))
+}
 
 export function collectGroupEmails(people: Persona[]): string[] {
   // Se ordena por nombre antes de extraer los correos para que, al revisar
