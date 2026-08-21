@@ -2,6 +2,7 @@ import { Cake, Flag, Mail, Pencil, Phone, Star, Trash2 } from 'lucide-react'
 import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
+import { esVigenciaVencida, formatFecha } from '../lib/vigencia'
 import { CopyChip } from './CopyChip'
 import { useIsAdmin } from '../context/RoleContext'
 
@@ -27,6 +28,7 @@ export function PersonCard({
   const isAdmin = useIsAdmin()
   const cumpleHoy = isToday(p.cumpleanos)
   const cumpleParsed = parseCumple(p.cumpleanos)
+  const vigenciaVencida = esVigenciaVencida(p.vigenciaHasta)
 
   const cornerControls = (onReport || onToggleFavorite || (isAdmin && (onEdit || onDelete))) && (
     <div className="absolute top-3 right-3 flex items-center gap-1">
@@ -113,7 +115,13 @@ export function PersonCard({
   }
 
   return (
-    <div className="group relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+    <div
+      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 ${
+        vigenciaVencida
+          ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
+          : 'border-slate-200 bg-white dark:border-slate-700'
+      }`}
+    >
       {cornerControls}
       <div className="flex items-start gap-3">
         <div
@@ -134,6 +142,11 @@ export function PersonCard({
           {p.suplente && (
             <p className="mt-0.5 truncate text-xs text-amber-600 dark:text-amber-400">
               Suplente: {p.suplente}
+            </p>
+          )}
+          {vigenciaVencida && p.vigenciaHasta && (
+            <p className="mt-0.5 truncate text-xs font-medium text-orange-600 dark:text-orange-400">
+              Vigencia vencida el {formatFecha(p.vigenciaHasta)}
             </p>
           )}
         </div>

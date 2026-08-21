@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Flag, Info, Mail, MapPin, Pencil, Phone, Trash2 } from 'lucide-react'
 import type { ContactoExterno } from '../types'
+import { esVigenciaVencida, formatFecha } from '../lib/vigencia'
 import { CopyChip } from './CopyChip'
 import { useIsAdmin } from '../context/RoleContext'
 
@@ -20,9 +21,16 @@ export function ContactoExternoCard({
   const isAdmin = useIsAdmin()
   const [showObs, setShowObs] = useState(false)
   const esVacante = contacto.nombre?.toUpperCase().includes('VACANTE')
+  const vigenciaVencida = esVigenciaVencida(contacto.vigenciaHasta)
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+    <div
+      className={`rounded-xl border p-3 dark:bg-slate-900 ${
+        vigenciaVencida
+          ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
+          : 'border-slate-200 bg-white dark:border-slate-700'
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           {subLabel && (
@@ -34,6 +42,11 @@ export function ContactoExternoCard({
             {contacto.nombre ?? 'Sin nombre'}
           </p>
           {contacto.cargo && <p className="text-xs text-slate-500 dark:text-slate-400">{contacto.cargo}</p>}
+          {vigenciaVencida && contacto.vigenciaHasta && (
+            <p className="mt-0.5 text-xs font-medium text-orange-600 dark:text-orange-400">
+              Vigencia vencida el {formatFecha(contacto.vigenciaHasta)}
+            </p>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {contacto.calidadJuridica && (

@@ -22,6 +22,10 @@ create table if not exists personas (
   vacante boolean not null default false,
   suplente text,
   comuna text,
+  -- Vigencia de cargos transitorios (reemplazo, suplencia, interinato): si
+  -- "vigencia_hasta" ya pasó, la tarjeta se marca en naranjo como alerta.
+  vigencia_desde date,
+  vigencia_hasta date,
   orden integer not null default 0,
   updated_at timestamptz not null default now()
 );
@@ -96,9 +100,16 @@ create table if not exists contactos_externos (
   direccion text,
   calidad_juridica text,
   observaciones text,
+  vigencia_desde date,
+  vigencia_hasta date,
   orden integer not null default 0,
   updated_at timestamptz not null default now()
 );
+
+-- Igual que "personas": los contactos cargados desde la planilla traen su
+-- orden original por categoría; los agregados después reciben un número
+-- más alto automáticamente.
+create sequence if not exists contactos_externos_orden_seq start 100000;
 
 -- ---------------------------------------------------------------------
 -- Seguridad: lectura pública, escritura solo vía funciones con clave
@@ -175,7 +186,8 @@ begin
 
   insert into personas (
     id, nombre, cargo, unidad, seccion, tribunal, correos, anexo, cumpleanos,
-    grado, calidad_juridica, es_generico, vacante, suplente, comuna, orden, updated_at
+    grado, calidad_juridica, es_generico, vacante, suplente, comuna,
+    vigencia_desde, vigencia_hasta, orden, updated_at
   )
   values (
     p->>'id', p->>'nombre', p->>'cargo', p->>'unidad', p->>'seccion', p->>'tribunal',
@@ -184,6 +196,7 @@ begin
     coalesce((p->>'esGenerico')::boolean, false),
     coalesce((p->>'vacante')::boolean, false),
     p->>'suplente', p->>'comuna',
+    nullif(p->>'vigenciaDesde', '')::date, nullif(p->>'vigenciaHasta', '')::date,
     coalesce((p->>'orden')::int, nextval('personas_orden_seq')),
     now()
   )
@@ -202,6 +215,8 @@ begin
     vacante = excluded.vacante,
     suplente = excluded.suplente,
     comuna = excluded.comuna,
+    vigencia_desde = excluded.vigencia_desde,
+    vigencia_hasta = excluded.vigencia_hasta,
     updated_at = now();
     -- orden no se actualiza: un contacto editado mantiene su posición.
 
@@ -286,6 +301,8 @@ begin
 end;
 $$;
 
+-- Actualiza el contacto si el id ya existe, o lo crea si no (alta desde la
+-- sección "Externo").
 create or replace function admin_update_contacto_externo(admin_password text, contacto_id text, patch jsonb)
 returns void
 language plpgsql
@@ -293,29 +310,49 @@ security definer
 set search_path = public
 as $$
 declare
-  nombre_previo text;
+  ya_existia boolean;
 begin
   if not verify_admin(admin_password) then
     raise exception 'Clave de administrador incorrecta';
   end if;
 
-  select nombre into nombre_previo from contactos_externos where id = contacto_id;
+  select exists(select 1 from contactos_externos where id = contacto_id) into ya_existia;
 
-  update contactos_externos set
-    institucion = patch->>'institucion',
-    nombre = patch->>'nombre',
-    cargo = patch->>'cargo',
-    comuna = patch->>'comuna',
-    correos = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'correos', '[]'::jsonb)) x), '{}'),
-    telefonos = coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'telefonos', '[]'::jsonb)) x), '{}'),
-    direccion = patch->>'direccion',
-    calidad_juridica = patch->>'calidadJuridica',
-    observaciones = patch->>'observaciones',
-    updated_at = now()
-  where id = contacto_id;
+  insert into contactos_externos (
+    id, categoria, institucion, nombre, cargo, comuna, correos, telefonos,
+    direccion, calidad_juridica, observaciones, vigencia_desde, vigencia_hasta,
+    orden, updated_at
+  )
+  values (
+    contacto_id, patch->>'categoria', patch->>'institucion', patch->>'nombre', patch->>'cargo', patch->>'comuna',
+    coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'correos', '[]'::jsonb)) x), '{}'),
+    coalesce((select array_agg(x) from jsonb_array_elements_text(coalesce(patch->'telefonos', '[]'::jsonb)) x), '{}'),
+    patch->>'direccion', patch->>'calidadJuridica', patch->>'observaciones',
+    nullif(patch->>'vigenciaDesde', '')::date, nullif(patch->>'vigenciaHasta', '')::date,
+    nextval('contactos_externos_orden_seq'),
+    now()
+  )
+  on conflict (id) do update set
+    categoria = excluded.categoria,
+    institucion = excluded.institucion,
+    nombre = excluded.nombre,
+    cargo = excluded.cargo,
+    comuna = excluded.comuna,
+    correos = excluded.correos,
+    telefonos = excluded.telefonos,
+    direccion = excluded.direccion,
+    calidad_juridica = excluded.calidad_juridica,
+    observaciones = excluded.observaciones,
+    vigencia_desde = excluded.vigencia_desde,
+    vigencia_hasta = excluded.vigencia_hasta,
+    updated_at = now();
 
   insert into cambios (tipo, entidad, detalle)
-  values ('contacto_externo_editado', coalesce(patch->>'nombre', nombre_previo, contacto_id), null);
+  values (
+    case when ya_existia then 'contacto_externo_editado' else 'contacto_externo_agregado' end,
+    coalesce(patch->>'nombre', patch->>'institucion', contacto_id),
+    null
+  );
 end;
 $$;
 

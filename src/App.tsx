@@ -13,7 +13,7 @@ import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, type SeccionKey } from './lib/sections'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
-import { CATEGORIA_ORDER } from './lib/contactosExternos'
+import { CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
 import type { TribunalFormValues } from './components/TribunalEditModal'
@@ -46,6 +46,10 @@ import { ContactoExternoEditModal } from './components/ContactoExternoEditModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
+type ContactoExternoModalState =
+  | { mode: 'edit'; contacto: ContactoExterno }
+  | { mode: 'add'; categoria: CategoriaExterna }
+  | null
 type ReportTarget = { subject: string; contexto: string[] } | null
 
 export default function App() {
@@ -64,6 +68,7 @@ export default function App() {
     createPerson,
     deletePerson,
     updateFicha,
+    createContactoExterno,
     updateContactoExterno,
     deleteContactoExterno,
     submitReport,
@@ -244,30 +249,40 @@ export default function App() {
   }
 
   const [deleteTarget, setDeleteTarget] = useState<Persona | null>(null)
-  const [editingContactoExterno, setEditingContactoExterno] = useState<ContactoExterno | null>(null)
+  const [contactoExternoModal, setContactoExternoModal] = useState<ContactoExternoModalState>(null)
   const [deleteExternoTarget, setDeleteExternoTarget] = useState<ContactoExterno | null>(null)
 
   const handleSubmitContactoExterno = async (values: ContactoExternoFormValues) => {
-    if (!editingContactoExterno) return
+    if (!contactoExternoModal) return
+    const patch = {
+      institucion: values.institucion.trim() || null,
+      nombre: values.nombre.trim() || null,
+      cargo: values.cargo.trim() || null,
+      comuna: values.comuna.trim() || null,
+      correos: values.correos
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      telefonos: values.telefonos
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      direccion: values.direccion.trim() || null,
+      calidadJuridica: values.calidadJuridica.trim() || null,
+      observaciones: values.observaciones.trim() || null,
+      vigenciaDesde: values.vigenciaDesde.trim() || null,
+      vigenciaHasta: values.vigenciaHasta.trim() || null,
+    }
     try {
-      await updateContactoExterno(editingContactoExterno.id, {
-        institucion: values.institucion.trim() || null,
-        nombre: values.nombre.trim() || null,
-        cargo: values.cargo.trim() || null,
-        comuna: values.comuna.trim() || null,
-        correos: values.correos
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        telefonos: values.telefonos
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        direccion: values.direccion.trim() || null,
-        calidadJuridica: values.calidadJuridica.trim() || null,
-        observaciones: values.observaciones.trim() || null,
-      })
-      setEditingContactoExterno(null)
+      if (contactoExternoModal.mode === 'edit') {
+        await updateContactoExterno(contactoExternoModal.contacto.id, {
+          ...patch,
+          categoria: contactoExternoModal.contacto.categoria,
+        })
+      } else {
+        await createContactoExterno({ ...patch, categoria: contactoExternoModal.categoria })
+      }
+      setContactoExternoModal(null)
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'No se pudo guardar el contacto externo.')
     }
@@ -283,6 +298,8 @@ export default function App() {
         telefonos: [],
         calidadJuridica: null,
         observaciones: null,
+        vigenciaDesde: null,
+        vigenciaHasta: null,
       })
       setDeleteExternoTarget(null)
     } catch (err) {
@@ -312,6 +329,8 @@ export default function App() {
           calidadJuridica: null,
           suplente: null,
           vacante: true,
+          vigenciaDesde: null,
+          vigenciaHasta: null,
         },
         deleteTarget.id,
       )
@@ -340,6 +359,8 @@ export default function App() {
     const anexo = values.anexo.trim() || null
     const cumpleanos = values.cumpleanos.trim() || null
     const calidadJuridica = values.calidadJuridica.trim() || null
+    const vigenciaDesde = values.vigenciaDesde.trim() || null
+    const vigenciaHasta = values.vigenciaHasta.trim() || null
 
     try {
       if (modal?.mode === 'edit') {
@@ -350,6 +371,8 @@ export default function App() {
           anexo,
           cumpleanos,
           calidadJuridica,
+          vigenciaDesde,
+          vigenciaHasta,
         }
         // Al completar el nombre de un cargo vacante, se considera ocupado.
         if (modal.person.vacante) patch.vacante = false
@@ -369,6 +392,8 @@ export default function App() {
           calidadJuridica,
           esGenerico: false,
           comuna: sample?.comuna ?? null,
+          vigenciaDesde,
+          vigenciaHasta,
         })
       }
       setModal(null)
@@ -542,11 +567,12 @@ export default function App() {
                 categoria={categoriaExterna}
                 onChangeCategoria={setCategoriaExterna}
                 query={trimmedQuery}
-                onEditContacto={setEditingContactoExterno}
+                onEditContacto={(c) => setContactoExternoModal({ mode: 'edit', contacto: c })}
                 onDeleteContacto={setDeleteExternoTarget}
                 onReportContacto={(c) =>
                   openReport(c.nombre ?? c.institucion ?? 'Contacto externo', [c.institucion ?? '', c.cargo ?? ''])
                 }
+                onAddContacto={(cat) => setContactoExternoModal({ mode: 'add', categoria: cat })}
               />
             ) : contactosMode ? (
               <TribunalContactosView tribunales={tribunales} personas={people} onEditFicha={setFichaModal} />
@@ -658,10 +684,16 @@ export default function App() {
         />
       )}
 
-      {editingContactoExterno && (
+      {contactoExternoModal && (
         <ContactoExternoEditModal
-          contacto={editingContactoExterno}
-          onCancel={() => setEditingContactoExterno(null)}
+          title={contactoExternoModal.mode === 'edit' ? 'Editar contacto externo' : 'Agregar contacto externo'}
+          categoriaLabel={
+            CATEGORIA_META[
+              contactoExternoModal.mode === 'edit' ? contactoExternoModal.contacto.categoria : contactoExternoModal.categoria
+            ].label
+          }
+          initial={contactoExternoModal.mode === 'edit' ? contactoExternoModal.contacto : undefined}
+          onCancel={() => setContactoExternoModal(null)}
           onSubmit={handleSubmitContactoExterno}
         />
       )}

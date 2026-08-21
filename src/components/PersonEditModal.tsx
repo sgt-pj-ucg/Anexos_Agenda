@@ -9,6 +9,8 @@ export interface PersonFormValues {
   anexo: string
   cumpleanos: string
   calidadJuridica: string
+  vigenciaDesde: string
+  vigenciaHasta: string
 }
 
 function toFormValues(p?: Persona): PersonFormValues {
@@ -19,6 +21,8 @@ function toFormValues(p?: Persona): PersonFormValues {
     anexo: p?.anexo ?? '',
     cumpleanos: p?.cumpleanos ?? '',
     calidadJuridica: p?.calidadJuridica ?? '',
+    vigenciaDesde: p?.vigenciaDesde ?? '',
+    vigenciaHasta: p?.vigenciaHasta ?? '',
   }
 }
 
@@ -105,6 +109,28 @@ export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: 
               className={inputClass}
             />
           </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Vigente desde">
+              <input
+                type="date"
+                value={values.vigenciaDesde}
+                onChange={(e) => set('vigenciaDesde', e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Vigente hasta">
+              <input
+                type="date"
+                value={values.vigenciaHasta}
+                onChange={(e) => set('vigenciaHasta', e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            Completa esto solo si es un cargo transitorio (reemplazo, suplencia, interinato): al
+            pasar la fecha "hasta", la tarjeta se marcará en naranjo como aviso.
+          </p>
         </div>
 
         <div className="mt-5 flex justify-end gap-2">

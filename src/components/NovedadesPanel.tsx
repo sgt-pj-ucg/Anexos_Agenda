@@ -23,6 +23,11 @@ const TIPO_META: Record<Cambio['tipo'], { label: (c: Cambio) => string; icon: Lu
     icon: Landmark,
     color: 'text-amber-500',
   },
+  contacto_externo_agregado: {
+    label: (c) => `Se agregó el contacto externo ${c.entidad}`,
+    icon: UserPlus,
+    color: 'text-emerald-500',
+  },
   contacto_externo_editado: {
     label: (c) => `Se editó el contacto externo ${c.entidad}`,
     icon: BookUser,

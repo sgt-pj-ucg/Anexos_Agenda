@@ -12,26 +12,36 @@ export interface ContactoExternoFormValues {
   direccion: string
   calidadJuridica: string
   observaciones: string
+  vigenciaDesde: string
+  vigenciaHasta: string
+}
+
+function toFormValues(c?: ContactoExterno): ContactoExternoFormValues {
+  return {
+    institucion: c?.institucion ?? '',
+    nombre: c?.nombre ?? '',
+    cargo: c?.cargo ?? '',
+    comuna: c?.comuna ?? '',
+    correos: c?.correos.join(', ') ?? '',
+    telefonos: c?.telefonos.join(', ') ?? '',
+    direccion: c?.direccion ?? '',
+    calidadJuridica: c?.calidadJuridica ?? '',
+    observaciones: c?.observaciones ?? '',
+    vigenciaDesde: c?.vigenciaDesde ?? '',
+    vigenciaHasta: c?.vigenciaHasta ?? '',
+  }
 }
 
 interface Props {
-  contacto: ContactoExterno
+  title: string
+  categoriaLabel: string
+  initial?: ContactoExterno
   onCancel: () => void
   onSubmit: (values: ContactoExternoFormValues) => void
 }
 
-export function ContactoExternoEditModal({ contacto, onCancel, onSubmit }: Props) {
-  const [values, setValues] = useState<ContactoExternoFormValues>({
-    institucion: contacto.institucion ?? '',
-    nombre: contacto.nombre ?? '',
-    cargo: contacto.cargo ?? '',
-    comuna: contacto.comuna ?? '',
-    correos: contacto.correos.join(', '),
-    telefonos: contacto.telefonos.join(', '),
-    direccion: contacto.direccion ?? '',
-    calidadJuridica: contacto.calidadJuridica ?? '',
-    observaciones: contacto.observaciones ?? '',
-  })
+export function ContactoExternoEditModal({ title, categoriaLabel, initial, onCancel, onSubmit }: Props) {
+  const [values, setValues] = useState<ContactoExternoFormValues>(() => toFormValues(initial))
 
   const set = <K extends keyof ContactoExternoFormValues>(key: K, value: ContactoExternoFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }))
@@ -49,9 +59,9 @@ export function ContactoExternoEditModal({ contacto, onCancel, onSubmit }: Props
       >
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h2 className="font-semibold text-slate-900 dark:text-white">Editar contacto externo</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">{title}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-300">
-              {contacto.nombre ?? contacto.institucion}
+              {initial ? (initial.nombre ?? initial.institucion) : categoriaLabel}
             </p>
           </div>
           <button
@@ -130,6 +140,28 @@ export function ContactoExternoEditModal({ contacto, onCancel, onSubmit }: Props
               className={inputClass}
             />
           </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Vigente desde">
+              <input
+                type="date"
+                value={values.vigenciaDesde}
+                onChange={(e) => set('vigenciaDesde', e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Vigente hasta">
+              <input
+                type="date"
+                value={values.vigenciaHasta}
+                onChange={(e) => set('vigenciaHasta', e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            Completa esto solo si es un cargo transitorio (reemplazo, suplencia, interinato): al
+            pasar la fecha "hasta", la tarjeta se marcará en naranjo como aviso.
+          </p>
         </div>
 
         <div className="mt-5 flex justify-end gap-2">

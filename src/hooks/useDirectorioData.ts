@@ -31,6 +31,8 @@ interface PersonaRow {
   vacante: boolean
   suplente: string | null
   comuna: string | null
+  vigencia_desde: string | null
+  vigencia_hasta: string | null
   orden: number
   updated_at: string
 }
@@ -61,6 +63,8 @@ interface ContactoExternoRow {
   direccion: string | null
   calidad_juridica: string | null
   observaciones: string | null
+  vigencia_desde: string | null
+  vigencia_hasta: string | null
   orden: number
 }
 
@@ -99,6 +103,8 @@ function rowToPersona(row: PersonaRow): Persona {
     vacante: row.vacante,
     suplente: row.suplente,
     comuna: row.comuna,
+    vigenciaDesde: row.vigencia_desde,
+    vigenciaHasta: row.vigencia_hasta,
   }
 }
 
@@ -130,6 +136,8 @@ function rowToContactoExterno(row: ContactoExternoRow): ContactoExterno {
     direccion: row.direccion,
     calidadJuridica: row.calidad_juridica,
     observaciones: row.observaciones,
+    vigenciaDesde: row.vigencia_desde,
+    vigenciaHasta: row.vigencia_hasta,
     orden: row.orden,
   }
 }
@@ -325,13 +333,25 @@ export function useDirectorioData() {
 
   const updateContactoExterno = async (id: string, patch: Partial<ContactoExterno>) => {
     const admin_password = requireAdminPassword()
+    // Se envía el objeto completo (fusionando con el actual), igual que con
+    // "personas": así un patch parcial (por ejemplo, al dejar el cargo
+    // vacante) no borra los campos que no menciona, como institución o
+    // categoría.
+    const current = contactosExternos.find((c) => c.id === id)
+    const merged = current ? { ...current, ...patch } : patch
     const { error: rpcError } = await supabase.rpc('admin_update_contacto_externo', {
       admin_password,
       contacto_id: id,
-      patch,
+      patch: merged,
     })
     if (rpcError) throw new Error(friendlyMessage(rpcError.message))
     await loadContactosExternos()
+  }
+
+  const createContactoExterno = async (draft: Omit<ContactoExterno, 'id' | 'orden'>) => {
+    const existing = new Set(contactosExternos.map((c) => c.id))
+    const id = uniqueId(`${draft.categoria}-${draft.nombre ?? draft.institucion ?? 'contacto'}`, existing)
+    await updateContactoExterno(id, draft)
   }
 
   const deleteContactoExterno = async (id: string) => {
@@ -380,6 +400,7 @@ export function useDirectorioData() {
     createPerson,
     deletePerson,
     updateFicha,
+    createContactoExterno,
     updateContactoExterno,
     deleteContactoExterno,
     submitReport,

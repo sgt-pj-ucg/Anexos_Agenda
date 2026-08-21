@@ -37,6 +37,8 @@ export interface Persona {
   suplente?: string | null
   comuna: string | null
   fuente?: string
+  vigenciaDesde: string | null
+  vigenciaHasta: string | null
 }
 
 export type CategoriaExterna =
@@ -59,6 +61,8 @@ export interface ContactoExterno {
   calidadJuridica: string | null
   observaciones: string | null
   orden: number
+  vigenciaDesde: string | null
+  vigenciaHasta: string | null
 }
 
 export type CambioTipo =
@@ -66,6 +70,7 @@ export type CambioTipo =
   | 'persona_editada'
   | 'persona_eliminada'
   | 'ficha_editada'
+  | 'contacto_externo_agregado'
   | 'contacto_externo_editado'
   | 'contacto_externo_eliminado'
 

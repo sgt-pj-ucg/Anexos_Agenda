@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
+import { UserPlus } from 'lucide-react'
 import type { CategoriaExterna, ContactoExterno } from '../types'
 import { CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
 import { normalize } from '../lib/normalize'
 import { ContactoExternoCard } from './ContactoExternoCard'
 import { EmptyState } from './EmptyState'
+import { useIsAdmin } from '../context/RoleContext'
 
 export function ContactosExternosView({
   contactos,
@@ -13,6 +15,7 @@ export function ContactosExternosView({
   onEditContacto,
   onDeleteContacto,
   onReportContacto,
+  onAddContacto,
 }: {
   contactos: ContactoExterno[]
   categoria: CategoriaExterna
@@ -21,7 +24,9 @@ export function ContactosExternosView({
   onEditContacto?: (contacto: ContactoExterno) => void
   onDeleteContacto?: (contacto: ContactoExterno) => void
   onReportContacto?: (contacto: ContactoExterno) => void
+  onAddContacto?: (categoria: CategoriaExterna) => void
 }) {
+  const isAdmin = useIsAdmin()
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
     for (const item of contactos) c[item.categoria] = (c[item.categoria] ?? 0) + 1
@@ -98,7 +103,19 @@ export function ContactosExternosView({
         })}
       </div>
 
-      <p className="text-sm text-slate-500 dark:text-slate-400">{meta.description}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-slate-500 dark:text-slate-400">{meta.description}</p>
+        {isAdmin && onAddContacto && (
+          <button
+            type="button"
+            onClick={() => onAddContacto(categoria)}
+            className="inline-flex items-center gap-1.5 self-start rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+          >
+            <UserPlus size={12} />
+            Agregar contacto
+          </button>
+        )}
+      </div>
 
       {filtrados.length === 0 ? (
         <EmptyState query={query} />
