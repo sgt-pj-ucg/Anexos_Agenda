@@ -13,6 +13,13 @@ import type { Seccion } from '../types'
 
 export type SeccionKey = Seccion | 'todos'
 
+// La Unidad de Insolvencia y Reemprendimiento se lista también dentro de la
+// Corte de Apelaciones (comparten dependencia), sin dejar de tener su
+// propia sección principal.
+export function perteneceASeccionCorte(seccion: Seccion): boolean {
+  return seccion === 'corte' || seccion === 'insolvencia'
+}
+
 export interface SectionMeta {
   key: SeccionKey
   label: string

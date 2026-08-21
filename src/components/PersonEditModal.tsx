@@ -11,6 +11,7 @@ export interface PersonFormValues {
   calidadJuridica: string
   vigenciaDesde: string
   vigenciaHasta: string
+  esGenerico: boolean
 }
 
 function toFormValues(p?: Persona): PersonFormValues {
@@ -23,6 +24,7 @@ function toFormValues(p?: Persona): PersonFormValues {
     calidadJuridica: p?.calidadJuridica ?? '',
     vigenciaDesde: p?.vigenciaDesde ?? '',
     vigenciaHasta: p?.vigenciaHasta ?? '',
+    esGenerico: p?.esGenerico ?? false,
   }
 }
 
@@ -131,6 +133,21 @@ export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: 
             Completa esto solo si es un cargo transitorio (reemplazo, suplencia, interinato): al
             pasar la fecha "hasta", la tarjeta se marcará en naranjo como aviso.
           </p>
+          <label className="flex items-start gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600">
+            <input
+              type="checkbox"
+              checked={values.esGenerico}
+              onChange={(e) => set('esGenerico', e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400 dark:border-slate-500"
+            />
+            <span className="text-xs text-slate-600 dark:text-slate-300">
+              Es una casilla o anexo genérico, no una persona
+              <span className="mt-0.5 block text-[11px] text-slate-400 dark:text-slate-500">
+                Ej: "Casilla general", "Sala de Reuniones". Se excluye de los grupos de correo
+                masivo por funcionario.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="mt-5 flex justify-end gap-2">

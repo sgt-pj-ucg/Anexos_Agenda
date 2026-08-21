@@ -1,13 +1,19 @@
 import type { Persona } from '../types'
 import { normalize } from './normalize'
+import { perteneceASeccionCorte } from './sections'
 
 // Para el envío masivo a "funcionarios" de la Corte: quedan fuera los
-// ministros, relatores y fiscalías judiciales (son grupos con su propio
-// canal), y las casillas generales (esGenerico), que no son una persona.
-const UNIDAD_EXCLUIDA_FUNCIONARIOS = /(ministro|relator|fiscal)/
+// ministros, relatores y fiscalías judiciales (tienen su propio grupo, ver
+// esMinistroRelatorFiscal), y las casillas/anexos genéricos (esGenerico),
+// que no son una persona.
+const UNIDAD_MINISTRO_RELATOR_FISCAL = /(ministro|relator|fiscal)/
 
 export function esFuncionarioCorte(p: Persona): boolean {
-  return p.seccion === 'corte' && !p.esGenerico && !UNIDAD_EXCLUIDA_FUNCIONARIOS.test(normalize(p.unidad))
+  return perteneceASeccionCorte(p.seccion) && !p.esGenerico && !UNIDAD_MINISTRO_RELATOR_FISCAL.test(normalize(p.unidad))
+}
+
+export function esMinistroRelatorFiscal(p: Persona): boolean {
+  return perteneceASeccionCorte(p.seccion) && !p.esGenerico && UNIDAD_MINISTRO_RELATOR_FISCAL.test(normalize(p.unidad))
 }
 
 export function collectGroupEmails(people: Persona[]): string[] {

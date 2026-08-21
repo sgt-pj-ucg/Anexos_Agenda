@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BookUser, UserCog, Workflow } from 'lucide-react'
+import { BookUser, Gavel, UserCog, Users, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
@@ -9,10 +9,10 @@ import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { MATERIA_ORDER } from './lib/materias'
 import { normalize } from './lib/normalize'
-import { collectGroupEmails, esFuncionarioCorte } from './lib/mailto'
+import { collectGroupEmails, esFuncionarioCorte, esMinistroRelatorFiscal } from './lib/mailto'
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
-import { SECTION_META, type SeccionKey } from './lib/sections'
+import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
 import { CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
@@ -27,7 +27,7 @@ import { SectionTabs } from './components/SectionTabs'
 import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
-import { FuncionariosCorteEmailBanner } from './components/FuncionariosCorteEmailBanner'
+import { CorteGroupEmailBanner } from './components/CorteGroupEmailBanner'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -101,6 +101,10 @@ export default function App() {
   const sectionCounts = useMemo(() => {
     const counts: Record<string, number> = { todos: people.length }
     for (const p of people) counts[p.seccion] = (counts[p.seccion] ?? 0) + 1
+    // La Unidad de Insolvencia también se lista dentro de Corte de
+    // Apelaciones (ver perteneceASeccionCorte), sin dejar de contarse en su
+    // propia pestaña.
+    counts.corte = (counts.corte ?? 0) + (counts.insolvencia ?? 0)
     return counts
   }, [people])
 
@@ -180,7 +184,11 @@ export default function App() {
 
   const filteredResults = useMemo(() => {
     let results = baseResults
-    if (section !== 'todos') results = results.filter((p) => p.seccion === section)
+    if (section !== 'todos') {
+      results = results.filter((p) =>
+        section === 'corte' ? perteneceASeccionCorte(p.seccion) : p.seccion === section,
+      )
+    }
     if (section === 'tribunal' && comuna) results = results.filter((p) => p.comuna === comuna)
     if (section === 'tribunal' && materia) {
       results = results.filter((p) => fichaByUnidad.get(normalize(p.unidad))?.competencias.includes(materia))
@@ -197,6 +205,11 @@ export default function App() {
   const funcionariosCorteEmails = useMemo(() => {
     if (section !== 'corte') return []
     return collectGroupEmails(people.filter(esFuncionarioCorte))
+  }, [section, people])
+
+  const ministrosRelatoresFiscaliasEmails = useMemo(() => {
+    if (section !== 'corte') return []
+    return collectGroupEmails(people.filter(esMinistroRelatorFiscal))
   }, [section, people])
 
   const groups = useMemo(() => {
@@ -380,6 +393,7 @@ export default function App() {
           calidadJuridica,
           vigenciaDesde,
           vigenciaHasta,
+          esGenerico: values.esGenerico,
         }
         // Al completar el nombre de un cargo vacante, se considera ocupado.
         if (modal.person.vacante) patch.vacante = false
@@ -397,7 +411,7 @@ export default function App() {
           cumpleanos,
           grado: null,
           calidadJuridica,
-          esGenerico: false,
+          esGenerico: values.esGenerico,
           comuna: sample?.comuna ?? null,
           vigenciaDesde,
           vigenciaHasta,
@@ -631,7 +645,21 @@ export default function App() {
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
 
                 {section === 'corte' && !trimmedQuery && (
-                  <FuncionariosCorteEmailBanner correos={funcionariosCorteEmails} />
+                  <>
+                    <CorteGroupEmailBanner
+                      icon={Users}
+                      tone="violet"
+                      label="Funcionarios de la Corte"
+                      sublabel="sin ministros, relatores, fiscalías ni casillas genéricas"
+                      correos={funcionariosCorteEmails}
+                    />
+                    <CorteGroupEmailBanner
+                      icon={Gavel}
+                      tone="amber"
+                      label="Ministros, Relatores y Fiscalías"
+                      correos={ministrosRelatoresFiscaliasEmails}
+                    />
+                  </>
                 )}
 
                 {section === 'tribunal' && !trimmedQuery && (
