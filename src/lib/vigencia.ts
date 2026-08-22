@@ -8,6 +8,16 @@ export function esVigenciaVencida(vigenciaHasta: string | null | undefined): boo
   return vigenciaHasta < hoy
 }
 
+// "Primer día vencido": la fecha "hasta" fue exactamente ayer, es decir hoy
+// es el primer día en que ya no está vigente. Se usa para la alerta única
+// que ven los administradores (no se repite día tras día).
+export function esPrimerDiaVencido(vigenciaHasta: string | null | undefined): boolean {
+  if (!vigenciaHasta) return false
+  const ayer = new Date()
+  ayer.setDate(ayer.getDate() - 1)
+  return vigenciaHasta === ayer.toISOString().slice(0, 10)
+}
+
 export function formatFecha(iso: string): string {
   const [y, m, d] = iso.split('-')
   if (!y || !m || !d) return iso

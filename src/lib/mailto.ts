@@ -2,18 +2,47 @@ import type { Persona } from '../types'
 import { normalize } from './normalize'
 import { perteneceASeccionCorte } from './sections'
 
-// Para el envío masivo a "funcionarios" de la Corte: quedan fuera los
-// ministros, relatores y fiscalías judiciales (tienen su propio grupo, ver
-// esMinistroRelatorFiscal), y las casillas/anexos genéricos (esGenerico),
-// que no son una persona.
-const UNIDAD_MINISTRO_RELATOR_FISCAL = /(ministro|relator|fiscal)/
+// Grupos de correo masivo de la Corte de Apelaciones (incluye Insolvencia,
+// ver perteneceASeccionCorte): cada uno de los 4 grupos "especiales" es
+// mutuamente excluyente entre sí y con "Funcionarios" (todo el resto), y
+// las casillas/anexos genéricos (esGenerico) nunca cuentan como persona.
+const UNIDAD_FISCALIA = /fiscal/
+const UNIDAD_RELATORES = /relator/
 
-export function esFuncionarioCorte(p: Persona): boolean {
-  return perteneceASeccionCorte(p.seccion) && !p.esGenerico && !UNIDAD_MINISTRO_RELATOR_FISCAL.test(normalize(p.unidad))
+function esCorteEnviable(p: Persona): boolean {
+  return perteneceASeccionCorte(p.seccion) && !p.esGenerico
 }
 
-export function esMinistroRelatorFiscal(p: Persona): boolean {
-  return perteneceASeccionCorte(p.seccion) && !p.esGenerico && UNIDAD_MINISTRO_RELATOR_FISCAL.test(normalize(p.unidad))
+export function esMinistroOPresidencia(p: Persona): boolean {
+  if (!esCorteEnviable(p)) return false
+  const u = normalize(p.unidad)
+  return u === 'ministros' || u === 'presidencia'
+}
+
+export function esFiscalia(p: Persona): boolean {
+  return esCorteEnviable(p) && UNIDAD_FISCALIA.test(normalize(p.unidad))
+}
+
+export function esRelator(p: Persona): boolean {
+  return esCorteEnviable(p) && UNIDAD_RELATORES.test(normalize(p.unidad))
+}
+
+export function esAbogadoIntegrante(p: Persona): boolean {
+  return esCorteEnviable(p) && normalize(p.unidad) === 'abogados integrantes'
+}
+
+export function esFuncionarioCorte(p: Persona): boolean {
+  return (
+    esCorteEnviable(p) &&
+    !esMinistroOPresidencia(p) &&
+    !esFiscalia(p) &&
+    !esRelator(p) &&
+    !esAbogadoIntegrante(p)
+  )
+}
+
+export function esCualquieraDeCorte(p: Persona): boolean {
+  return esCorteEnviable(p)
 }
 
 export function collectGroupEmails(people: Persona[]): string[] {

@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { Lock, ShieldCheck, X } from 'lucide-react'
-import { checkAdminPassword, setAdmin } from '../lib/auth'
+import { IdCard, Lock, ShieldCheck, X } from 'lucide-react'
+import { checkAdminLogin, setAdmin } from '../lib/auth'
+import { formatRut } from '../lib/rut'
 
 export function AdminAccessModal({ onClose }: { onClose: () => void }) {
-  const [value, setValue] = useState('')
+  const [rut, setRut] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
   const [checking, setChecking] = useState(false)
 
@@ -20,14 +22,14 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     setChecking(true)
     try {
-      const ok = await checkAdminPassword(value)
+      const ok = await checkAdminLogin(rut, password)
       if (ok) {
-        setAdmin(value)
+        setAdmin(password)
         window.location.reload()
         return
       }
       setError(true)
-      setValue('')
+      setPassword('')
     } finally {
       setChecking(false)
     }
@@ -51,7 +53,7 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white">Acceso administrador</h2>
               <p className="text-xs text-slate-500 dark:text-slate-300">
-                Ingresa la clave para poder editar
+                Ingresa tu RUT y clave para poder editar
               </p>
             </div>
           </div>
@@ -65,28 +67,53 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="relative">
-          <Lock
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
-            size={16}
-          />
-          <input
-            type="password"
-            autoFocus
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value)
-              setError(false)
-            }}
-            placeholder="Clave de administrador"
-            className={`w-full rounded-xl border py-2.5 pr-3 pl-9 text-sm outline-none focus:ring-4 dark:bg-slate-900 dark:text-white ${
-              error
-                ? 'border-rose-400 focus:ring-rose-100 dark:focus:ring-rose-500/10'
-                : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100 dark:border-slate-600 dark:focus:ring-indigo-500/10'
-            }`}
-          />
+        <div className="space-y-2">
+          <div className="relative">
+            <IdCard
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+              size={16}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              autoFocus
+              value={rut}
+              onChange={(e) => {
+                setRut(formatRut(e.target.value))
+                setError(false)
+              }}
+              placeholder="RUT (ej. 12.345.678-9)"
+              className={`w-full rounded-xl border py-2.5 pr-3 pl-9 text-sm outline-none focus:ring-4 dark:bg-slate-900 dark:text-white ${
+                error
+                  ? 'border-rose-400 focus:ring-rose-100 dark:focus:ring-rose-500/10'
+                  : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100 dark:border-slate-600 dark:focus:ring-indigo-500/10'
+              }`}
+            />
+          </div>
+          <div className="relative">
+            <Lock
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+              size={16}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setError(false)
+              }}
+              placeholder="Clave de acceso"
+              className={`w-full rounded-xl border py-2.5 pr-3 pl-9 text-sm outline-none focus:ring-4 dark:bg-slate-900 dark:text-white ${
+                error
+                  ? 'border-rose-400 focus:ring-rose-100 dark:focus:ring-rose-500/10'
+                  : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100 dark:border-slate-600 dark:focus:ring-indigo-500/10'
+              }`}
+            />
+          </div>
         </div>
-        {error && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">Clave incorrecta.</p>}
+        {error && (
+          <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">RUT o clave incorrectos.</p>
+        )}
 
         <div className="mt-4 flex gap-2">
           <button
@@ -98,7 +125,7 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
           </button>
           <button
             type="submit"
-            disabled={checking || !value}
+            disabled={checking || !rut || !password}
             className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
           >
             {checking ? 'Verificando…' : 'Ingresar'}

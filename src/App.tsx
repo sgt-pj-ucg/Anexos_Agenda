@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BookUser, Gavel, UserCog, Users, Workflow } from 'lucide-react'
+import { BookOpenText, BookUser, Briefcase, Landmark, Scale, UserCog, Users, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
@@ -9,7 +9,15 @@ import { isToday } from './lib/cumpleanos'
 import { COMUNA_ORDER } from './lib/comunas'
 import { MATERIA_ORDER } from './lib/materias'
 import { normalize } from './lib/normalize'
-import { collectGroupEmails, esFuncionarioCorte, esMinistroRelatorFiscal } from './lib/mailto'
+import {
+  collectGroupEmails,
+  esAbogadoIntegrante,
+  esCualquieraDeCorte,
+  esFiscalia,
+  esFuncionarioCorte,
+  esMinistroOPresidencia,
+  esRelator,
+} from './lib/mailto'
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
@@ -27,7 +35,7 @@ import { SectionTabs } from './components/SectionTabs'
 import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
-import { CorteGroupEmailBanner } from './components/CorteGroupEmailBanner'
+import { CorteMailGroupsRow, type CorteMailGroup } from './components/CorteMailGroupsRow'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -46,6 +54,7 @@ import { ContactosExternosView } from './components/ContactosExternosView'
 import { ContactoExternoPickerModal } from './components/ContactoExternoPickerModal'
 import { ContactoExternoEditModal } from './components/ContactoExternoEditModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
+import { VigenciaAlertBanner } from './components/VigenciaAlertBanner'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ContactoExternoModalState =
@@ -202,14 +211,20 @@ export default function App() {
 
   const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
 
-  const funcionariosCorteEmails = useMemo(() => {
+  const corteMailGroups: CorteMailGroup[] = useMemo(() => {
     if (section !== 'corte') return []
-    return collectGroupEmails(people.filter(esFuncionarioCorte))
+    return [
+      { id: 'funcionarios', icon: Users, label: 'Funcionarios', tone: 'violet', correos: collectGroupEmails(people.filter(esFuncionarioCorte)) },
+      { id: 'ministros', icon: Landmark, label: 'Ministros y Presidencia', tone: 'indigo', correos: collectGroupEmails(people.filter(esMinistroOPresidencia)) },
+      { id: 'fiscalias', icon: Scale, label: 'Fiscalías', tone: 'rose', correos: collectGroupEmails(people.filter(esFiscalia)) },
+      { id: 'relatores', icon: BookOpenText, label: 'Relatores', tone: 'sky', correos: collectGroupEmails(people.filter(esRelator)) },
+      { id: 'abogados', icon: Briefcase, label: 'Abogados Integrantes', tone: 'amber', correos: collectGroupEmails(people.filter(esAbogadoIntegrante)) },
+    ]
   }, [section, people])
 
-  const ministrosRelatoresFiscaliasEmails = useMemo(() => {
+  const todosFuncionariosCorteEmails = useMemo(() => {
     if (section !== 'corte') return []
-    return collectGroupEmails(people.filter(esMinistroRelatorFiscal))
+    return collectGroupEmails(people.filter(esCualquieraDeCorte))
   }, [section, people])
 
   const groups = useMemo(() => {
@@ -475,6 +490,7 @@ export default function App() {
           </p>
         ) : (
           <>
+            <VigenciaAlertBanner people={people} contactosExternos={contactosExternos} />
             <div className="flex gap-2">
               <div className="min-w-0 flex-1">
                 <SearchBar
@@ -645,21 +661,7 @@ export default function App() {
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
 
                 {section === 'corte' && !trimmedQuery && (
-                  <>
-                    <CorteGroupEmailBanner
-                      icon={Users}
-                      tone="violet"
-                      label="Funcionarios de la Corte"
-                      sublabel="sin ministros, relatores, fiscalías ni casillas genéricas"
-                      correos={funcionariosCorteEmails}
-                    />
-                    <CorteGroupEmailBanner
-                      icon={Gavel}
-                      tone="amber"
-                      label="Ministros, Relatores y Fiscalías"
-                      correos={ministrosRelatoresFiscaliasEmails}
-                    />
-                  </>
+                  <CorteMailGroupsRow groups={corteMailGroups} todos={todosFuncionariosCorteEmails} />
                 )}
 
                 {section === 'tribunal' && !trimmedQuery && (
