@@ -22,9 +22,9 @@ export function AdminAccessModal({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     setChecking(true)
     try {
-      const ok = await checkAdminLogin(rut, password)
-      if (ok) {
-        setAdmin(password)
+      const nombre = await checkAdminLogin(rut, password)
+      if (nombre) {
+        setAdmin(password, nombre)
         window.location.reload()
         return
       }

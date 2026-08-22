@@ -8,7 +8,8 @@
 // clave contra la lista de administradores antes de tocar la base de datos
 // (ver supabase/schema.sql, función verify_admin). Por eso aquí se retiene
 // la clave en texto plano (solo en este navegador) — se necesita para
-// acompañar cada escritura.
+// acompañar cada escritura, y también para que el servidor identifique al
+// administrador y deje registro de quién hizo cada cambio (trazabilidad).
 import { supabase } from './supabaseClient'
 import { normalizeRut } from './rut'
 
@@ -19,15 +20,18 @@ export type Role = 'viewer' | 'admin'
 interface StoredAuth {
   role: Role
   password?: string
+  nombre?: string
 }
 
-export async function checkAdminLogin(rut: string, password: string): Promise<boolean> {
+// Devuelve el nombre del administrador si el RUT y la clave son correctos,
+// o null si no lo son.
+export async function checkAdminLogin(rut: string, password: string): Promise<string | null> {
   const { data, error } = await supabase.rpc('verify_admin_login', {
     admin_rut: normalizeRut(rut),
     admin_password: password,
   })
-  if (error) return false
-  return data === true
+  if (error || !data) return null
+  return data as string
 }
 
 function readStored(): StoredAuth | null {
@@ -51,8 +55,13 @@ export function getAdminPassword(): string | null {
   return stored?.role === 'admin' ? (stored.password ?? null) : null
 }
 
-export function setAdmin(password: string): void {
-  const stored: StoredAuth = { role: 'admin', password }
+export function getAdminNombre(): string | null {
+  const stored = readStored()
+  return stored?.role === 'admin' ? (stored.nombre ?? null) : null
+}
+
+export function setAdmin(password: string, nombre: string): void {
+  const stored: StoredAuth = { role: 'admin', password, nombre }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
 }
 

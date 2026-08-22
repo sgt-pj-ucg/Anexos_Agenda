@@ -75,6 +75,7 @@ interface CambioRow {
   tipo: Cambio['tipo']
   entidad: string
   detalle: string | null
+  admin_nombre: string | null
 }
 
 interface ReporteRow {
@@ -150,6 +151,7 @@ function rowToCambio(row: CambioRow): Cambio {
     tipo: row.tipo,
     entidad: row.entidad,
     detalle: row.detalle,
+    adminNombre: row.admin_nombre,
   }
 }
 

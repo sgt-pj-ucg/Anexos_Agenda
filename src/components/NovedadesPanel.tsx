@@ -76,7 +76,10 @@ export function NovedadesPanel({ cambios, onClose }: { cambios: Cambio[]; onClos
                   <Icon size={15} className={`mt-0.5 shrink-0 ${meta.color}`} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-slate-700 dark:text-slate-200">{meta.label(c)}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-400">{timeAgo(c.createdAt)}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-400">
+                      {timeAgo(c.createdAt)}
+                      {c.adminNombre && <> · por {c.adminNombre}</>}
+                    </p>
                   </div>
                 </li>
               )

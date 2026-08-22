@@ -79,7 +79,9 @@ create table if not exists cambios (
   created_at timestamptz not null default now(),
   tipo text not null,
   entidad text not null,
-  detalle text
+  detalle text,
+  -- Nombre del administrador que hizo el cambio (trazabilidad).
+  admin_nombre text
 );
 
 -- Avisos de "dato incorrecto" que cualquier usuario puede crear; solo el
@@ -183,18 +185,37 @@ begin
 end;
 $$;
 
+-- Busca el nombre del administrador dueño de esta clave (asume claves
+-- únicas por administrador, que es como se cargaron más abajo).
+create or replace function admin_nombre(admin_password text)
+returns text
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select nombre from admins where password_hash = encode(digest(admin_password, 'sha256'), 'hex') limit 1;
+$$;
+
 -- Verifica RUT + clave para el login (pantalla "Acceso administrador").
+-- Devuelve el nombre del administrador (para mostrarlo en el encabezado) o
+-- null si el RUT/clave no son correctos.
 create or replace function verify_admin_login(admin_rut text, admin_password text)
-returns boolean
+returns text
 language plpgsql
 security definer
 set search_path = public, extensions
 as $$
 declare
-  stored text;
+  encontrado record;
 begin
-  select password_hash into stored from admins where rut = admin_rut;
-  return stored is not null and encode(digest(admin_password, 'sha256'), 'hex') = stored;
+  select rut, nombre, password_hash into encontrado from admins where rut = admin_rut;
+  if encontrado.rut is null then
+    return null;
+  end if;
+  if encode(digest(admin_password, 'sha256'), 'hex') = encontrado.password_hash then
+    return encontrado.nombre;
+  end if;
+  return null;
 end;
 $$;
 
@@ -249,11 +270,12 @@ begin
     updated_at = now();
     -- orden no se actualiza: un contacto editado mantiene su posición.
 
-  insert into cambios (tipo, entidad, detalle)
+  insert into cambios (tipo, entidad, detalle, admin_nombre)
   values (
     case when ya_existia then 'persona_editada' else 'persona_agregada' end,
     p->>'nombre',
-    p->>'unidad'
+    p->>'unidad',
+    admin_nombre(admin_password)
   );
 end;
 $$;
@@ -276,7 +298,8 @@ begin
   delete from personas where id = persona_id;
 
   if nombre_persona is not null then
-    insert into cambios (tipo, entidad, detalle) values ('persona_eliminada', nombre_persona, null);
+    insert into cambios (tipo, entidad, detalle, admin_nombre)
+    values ('persona_eliminada', nombre_persona, null, admin_nombre(admin_password));
   end if;
 end;
 $$;
@@ -307,8 +330,8 @@ begin
     updated_at = now()
   where id = ficha_id;
 
-  insert into cambios (tipo, entidad, detalle)
-  values ('ficha_editada', coalesce(nombre_tribunal, ficha_id), null);
+  insert into cambios (tipo, entidad, detalle, admin_nombre)
+  values ('ficha_editada', coalesce(nombre_tribunal, ficha_id), null, admin_nombre(admin_password));
 end;
 $$;
 
@@ -376,11 +399,12 @@ begin
     vigencia_hasta = excluded.vigencia_hasta,
     updated_at = now();
 
-  insert into cambios (tipo, entidad, detalle)
+  insert into cambios (tipo, entidad, detalle, admin_nombre)
   values (
     case when ya_existia then 'contacto_externo_editado' else 'contacto_externo_agregado' end,
     coalesce(patch->>'nombre', patch->>'institucion', contacto_id),
-    null
+    null,
+    admin_nombre(admin_password)
   );
 end;
 $$;
@@ -403,7 +427,8 @@ begin
   delete from contactos_externos where id = contacto_id;
 
   if nombre_contacto is not null then
-    insert into cambios (tipo, entidad, detalle) values ('contacto_externo_eliminado', nombre_contacto, null);
+    insert into cambios (tipo, entidad, detalle, admin_nombre)
+    values ('contacto_externo_eliminado', nombre_contacto, null, admin_nombre(admin_password));
   end if;
 end;
 $$;
@@ -415,6 +440,7 @@ grant execute on function admin_set_reporte_estado(text, bigint, text) to anon, 
 grant execute on function admin_update_contacto_externo(text, text, jsonb) to anon, authenticated;
 grant execute on function admin_delete_contacto_externo(text, text) to anon, authenticated;
 grant execute on function verify_admin_login(text, text) to anon, authenticated;
+grant execute on function admin_nombre(text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------
 -- Administradores: cada uno con su propio RUT y clave (hash SHA-256, nunca

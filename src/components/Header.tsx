@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bell, Flag, Lock, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
-import { lock } from '../lib/auth'
+import { getAdminNombre, lock } from '../lib/auth'
 import { useIsAdmin } from '../context/RoleContext'
 import { AdminAccessModal } from './AdminAccessModal'
 
@@ -25,6 +25,7 @@ export function Header({
 }) {
   const isAdmin = useIsAdmin()
   const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const adminNombre = isAdmin ? getAdminNombre() : null
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80">
@@ -42,8 +43,9 @@ export function Header({
               Directorio Jurisdiccional · La Serena
             </h1>
             {isAdmin && (
-              <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-                <ShieldCheck size={11} /> Admin
+              <span className="flex min-w-0 shrink items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                <ShieldCheck size={11} className="shrink-0" />
+                <span className="truncate">Admin{adminNombre ? ` · ${adminNombre}` : ''}</span>
               </span>
             )}
           </div>
