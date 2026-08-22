@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Copy, Search, Send, Users, X } from 'lucide-react'
 import type { GroupContact } from '../lib/mailto'
@@ -7,13 +7,45 @@ import { normalize } from '../lib/normalize'
 import { avatarPalette, initials } from '../lib/format'
 import { useCopy } from '../hooks/useCopy'
 
+export interface FuncionariosCorteGrupo {
+  id: string
+  label: string
+  contactos: GroupContact[]
+}
+
+function GroupCheckbox({
+  checked,
+  indeterminate,
+  onChange,
+}: {
+  checked: boolean
+  indeterminate: boolean
+  onChange: () => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = indeterminate
+  }, [indeterminate])
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      className="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-400 dark:border-slate-600"
+    />
+  )
+}
+
 export function FuncionariosCorteModal({
-  contactos,
+  grupos,
   onClose,
 }: {
-  contactos: GroupContact[]
+  grupos: FuncionariosCorteGrupo[]
   onClose: () => void
 }) {
+  const contactos = useMemo(() => grupos.flatMap((g) => g.contactos), [grupos])
+
   // Siempre parte con todos marcados; desmarcar es una decisión puntual de
   // este envío, no una preferencia que deba recordarse entre aperturas.
   const [seleccionados, setSeleccionados] = useState<Set<string>>(
@@ -30,20 +62,38 @@ export function FuncionariosCorteModal({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  const filtrados = useMemo(() => {
+  const gruposFiltrados = useMemo(() => {
     const tokens = normalize(query).split(/\s+/).filter(Boolean)
-    if (tokens.length === 0) return contactos
-    return contactos.filter((c) => {
-      const all = normalize([c.nombre, c.unidad, c.cargo].filter(Boolean).join(' '))
-      return tokens.every((t) => all.includes(t))
-    })
-  }, [contactos, query])
+    if (tokens.length === 0) return grupos
+    return grupos
+      .map((g) => ({
+        ...g,
+        contactos: g.contactos.filter((c) => {
+          const all = normalize([c.nombre, c.unidad, c.cargo].filter(Boolean).join(' '))
+          return tokens.every((t) => all.includes(t))
+        }),
+      }))
+      .filter((g) => g.contactos.length > 0)
+  }, [grupos, query])
+
+  const filtrados = useMemo(() => gruposFiltrados.flatMap((g) => g.contactos), [gruposFiltrados])
 
   const toggle = (id: string) =>
     setSeleccionados((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
+      return next
+    })
+
+  const toggleGrupo = (grupo: FuncionariosCorteGrupo) =>
+    setSeleccionados((prev) => {
+      const todosMarcados = grupo.contactos.every((c) => prev.has(c.id))
+      const next = new Set(prev)
+      for (const c of grupo.contactos) {
+        if (todosMarcados) next.delete(c.id)
+        else next.add(c.id)
+      }
       return next
     })
 
@@ -137,41 +187,71 @@ export function FuncionariosCorteModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
-          {filtrados.length === 0 ? (
+          {gruposFiltrados.length === 0 ? (
             <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
               No hay funcionarios que coincidan con "{query}".
             </p>
           ) : (
-            <ul className="divide-y divide-slate-50 dark:divide-slate-800/60">
-              {filtrados.map((c) => {
-                const marcado = seleccionados.has(c.id)
+            <div className="space-y-1">
+              {gruposFiltrados.map((g) => {
+                const grupoOriginal = grupos.find((og) => og.id === g.id)!
+                const marcadosEnGrupo = grupoOriginal.contactos.filter((c) => seleccionados.has(c.id)).length
+                const grupoCompleto = marcadosEnGrupo === grupoOriginal.contactos.length
+                const grupoVacio = marcadosEnGrupo === 0
+
                 return (
-                  <li key={c.id}>
-                    <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                      <input
-                        type="checkbox"
-                        checked={marcado}
-                        onChange={() => toggle(c.id)}
-                        className="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-400 dark:border-slate-600"
+                  <div key={g.id}>
+                    <div className="sticky top-0 z-10 flex items-center gap-3 bg-slate-50/95 px-3 py-1.5 backdrop-blur dark:bg-slate-900/95">
+                      <GroupCheckbox
+                        checked={grupoCompleto}
+                        indeterminate={!grupoCompleto && !grupoVacio}
+                        onChange={() => toggleGrupo(grupoOriginal)}
                       />
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-opacity ${avatarPalette(c.id)} ${marcado ? '' : 'opacity-40'}`}
+                      <button
+                        type="button"
+                        onClick={() => toggleGrupo(grupoOriginal)}
+                        className="text-left text-xs font-semibold tracking-wide text-slate-500 uppercase hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                       >
-                        {initials(c.nombre)}
-                      </div>
-                      <div className={`min-w-0 flex-1 transition-opacity ${marcado ? '' : 'opacity-40'}`}>
-                        <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
-                          {c.nombre}
-                        </p>
-                        <p className="truncate text-xs text-slate-400 dark:text-slate-500">
-                          {[c.cargo, c.unidad].filter(Boolean).join(' · ')}
-                        </p>
-                      </div>
-                    </label>
-                  </li>
+                        {g.label}
+                      </button>
+                      <span className="rounded-full bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                        {marcadosEnGrupo}/{grupoOriginal.contactos.length}
+                      </span>
+                    </div>
+                    <ul className="divide-y divide-slate-50 dark:divide-slate-800/60">
+                      {g.contactos.map((c) => {
+                        const marcado = seleccionados.has(c.id)
+                        return (
+                          <li key={c.id}>
+                            <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                              <input
+                                type="checkbox"
+                                checked={marcado}
+                                onChange={() => toggle(c.id)}
+                                className="h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-400 dark:border-slate-600"
+                              />
+                              <div
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-opacity ${avatarPalette(c.id)} ${marcado ? '' : 'opacity-40'}`}
+                              >
+                                {initials(c.nombre)}
+                              </div>
+                              <div className={`min-w-0 flex-1 transition-opacity ${marcado ? '' : 'opacity-40'}`}>
+                                <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                                  {c.nombre}
+                                </p>
+                                <p className="truncate text-xs text-slate-400 dark:text-slate-500">
+                                  {[c.cargo, c.unidad].filter(Boolean).join(' · ')}
+                                </p>
+                              </div>
+                            </label>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
                 )
               })}
-            </ul>
+            </div>
           )}
         </div>
 

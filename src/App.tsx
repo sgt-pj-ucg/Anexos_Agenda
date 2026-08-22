@@ -11,9 +11,7 @@ import { MATERIA_ORDER } from './lib/materias'
 import { normalize } from './lib/normalize'
 import {
   collectGroupContacts,
-  collectGroupEmails,
   esAbogadoIntegrante,
-  esCualquieraDeCorte,
   esFiscalia,
   esFuncionarioCorte,
   esMinistroOPresidencia,
@@ -37,7 +35,7 @@ import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
 import { CorteMailGroupsRow, type CorteMailGroup } from './components/CorteMailGroupsRow'
-import { FuncionariosCorteModal } from './components/FuncionariosCorteModal'
+import { FuncionariosCorteModal, type FuncionariosCorteGrupo } from './components/FuncionariosCorteModal'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -214,21 +212,41 @@ export default function App() {
 
   const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
 
-  const corteMailGroups: CorteMailGroup[] = useMemo(() => {
+  const corteCategorias = useMemo(() => {
     if (section !== 'corte') return []
     return [
-      { id: 'funcionarios', icon: Users, label: 'Funcionarios', tone: 'violet', correos: collectGroupEmails(people.filter(esFuncionarioCorte)) },
-      { id: 'ministros', icon: Landmark, label: 'Ministros y Presidencia', tone: 'indigo', correos: collectGroupEmails(people.filter(esMinistroOPresidencia)) },
-      { id: 'fiscalias', icon: Scale, label: 'Fiscalías', tone: 'rose', correos: collectGroupEmails(people.filter(esFiscalia)) },
-      { id: 'relatores', icon: BookOpenText, label: 'Relatores', tone: 'sky', correos: collectGroupEmails(people.filter(esRelator)) },
-      { id: 'abogados', icon: Briefcase, label: 'Abogados Integrantes', tone: 'amber', correos: collectGroupEmails(people.filter(esAbogadoIntegrante)) },
+      { id: 'funcionarios', icon: Users, label: 'Funcionarios', tone: 'violet' as const, contactos: collectGroupContacts(people.filter(esFuncionarioCorte)) },
+      { id: 'ministros', icon: Landmark, label: 'Ministros y Presidencia', tone: 'indigo' as const, contactos: collectGroupContacts(people.filter(esMinistroOPresidencia)) },
+      { id: 'fiscalias', icon: Scale, label: 'Fiscalías', tone: 'rose' as const, contactos: collectGroupContacts(people.filter(esFiscalia)) },
+      { id: 'relatores', icon: BookOpenText, label: 'Relatores', tone: 'sky' as const, contactos: collectGroupContacts(people.filter(esRelator)) },
+      { id: 'abogados', icon: Briefcase, label: 'Abogados Integrantes', tone: 'amber' as const, contactos: collectGroupContacts(people.filter(esAbogadoIntegrante)) },
     ]
   }, [section, people])
 
-  const todosFuncionariosCorteContactos = useMemo(() => {
-    if (section !== 'corte') return []
-    return collectGroupContacts(people.filter(esCualquieraDeCorte))
-  }, [section, people])
+  const corteMailGroups: CorteMailGroup[] = useMemo(
+    () =>
+      corteCategorias.map((g) => ({
+        id: g.id,
+        icon: g.icon,
+        label: g.label,
+        tone: g.tone,
+        correos: g.contactos.map((c) => c.correo),
+      })),
+    [corteCategorias],
+  )
+
+  const funcionariosCorteGrupos: FuncionariosCorteGrupo[] = useMemo(
+    () =>
+      corteCategorias
+        .map((g) => ({ id: g.id, label: g.label, contactos: g.contactos }))
+        .filter((g) => g.contactos.length > 0),
+    [corteCategorias],
+  )
+
+  const todosFuncionariosCorteTotal = useMemo(
+    () => funcionariosCorteGrupos.reduce((sum, g) => sum + g.contactos.length, 0),
+    [funcionariosCorteGrupos],
+  )
 
   const groups = useMemo(() => {
     if (showOverview || trimmedQuery) return []
@@ -706,7 +724,7 @@ export default function App() {
                 {section === 'corte' && !trimmedQuery && (
                   <CorteMailGroupsRow
                     groups={corteMailGroups}
-                    todosCount={todosFuncionariosCorteContactos.length}
+                    todosCount={todosFuncionariosCorteTotal}
                     onOpenTodos={() => setFuncionariosModalOpen(true)}
                   />
                 )}
@@ -838,7 +856,7 @@ export default function App() {
 
       {funcionariosModalOpen && (
         <FuncionariosCorteModal
-          contactos={todosFuncionariosCorteContactos}
+          grupos={funcionariosCorteGrupos}
           onClose={() => setFuncionariosModalOpen(false)}
         />
       )}
