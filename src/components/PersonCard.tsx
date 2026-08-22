@@ -2,7 +2,7 @@ import { Cake, Flag, Mail, Pencil, Phone, Star, Trash2 } from 'lucide-react'
 import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
-import { esVigenciaVencida, formatFecha } from '../lib/vigencia'
+import { esVigenciaFutura, esVigenciaVencida, formatFecha } from '../lib/vigencia'
 import { CopyChip } from './CopyChip'
 import { useIsAdmin } from '../context/RoleContext'
 
@@ -29,6 +29,10 @@ export function PersonCard({
   const cumpleHoy = isToday(p.cumpleanos)
   const cumpleParsed = parseCumple(p.cumpleanos)
   const vigenciaVencida = esVigenciaVencida(p.vigenciaHasta)
+  // Si esto llega a renderizarse es porque quien mira es administrador: a
+  // los demás usuarios useDirectorioData ya les oculta por completo estos
+  // cargos "programados" hasta que empiece su período.
+  const vigenciaFutura = esVigenciaFutura(p.vigenciaDesde)
 
   const cornerControls = (onReport || onToggleFavorite || (isAdmin && (onEdit || onDelete))) && (
     <div className="absolute top-3 right-3 flex items-center gap-1">
@@ -116,10 +120,12 @@ export function PersonCard({
 
   return (
     <div
-      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 ${
+      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
         vigenciaVencida
           ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
-          : 'border-slate-200 bg-white dark:border-slate-700'
+          : vigenciaFutura
+            ? 'border-emerald-400 bg-slate-200 dark:border-emerald-500/60 dark:bg-slate-900/80'
+            : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
       }`}
     >
       {cornerControls}
@@ -147,6 +153,11 @@ export function PersonCard({
           {vigenciaVencida && p.vigenciaHasta && (
             <p className="mt-0.5 truncate text-xs font-medium text-orange-600 dark:text-orange-400">
               Vigencia vencida el {formatFecha(p.vigenciaHasta)}
+            </p>
+          )}
+          {vigenciaFutura && p.vigenciaDesde && (
+            <p className="mt-0.5 truncate text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Vigente desde el {formatFecha(p.vigenciaDesde)} · solo visible para Admin
             </p>
           )}
         </div>

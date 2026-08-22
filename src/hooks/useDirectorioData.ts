@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { directorio } from '../data'
 import { supabase } from '../lib/supabaseClient'
 import { getAdminPassword } from '../lib/auth'
 import { slugify } from '../lib/normalize'
+import { esVigenciaFutura } from '../lib/vigencia'
 import { useIsAdmin } from '../context/RoleContext'
 import type {
   Cambio,
@@ -189,7 +190,7 @@ function friendlyMessage(raw: string): string {
 
 export function useDirectorioData() {
   const isAdmin = useIsAdmin()
-  const [people, setPeople] = useState<Persona[]>([])
+  const [peopleRaw, setPeople] = useState<Persona[]>([])
   const [tribunales, setTribunales] = useState<FichaTribunal[]>([])
   const [cambios, setCambios] = useState<Cambio[]>([])
   const [reportes, setReportes] = useState<Reporte[]>([])
@@ -299,13 +300,13 @@ export function useDirectorioData() {
   }
 
   const updatePerson = async (patch: Partial<Persona>, id: string) => {
-    const current = people.find((p) => p.id === id)
+    const current = peopleRaw.find((p) => p.id === id)
     if (!current) return
     await writePersona({ ...current, ...patch })
   }
 
   const createPerson = async (draft: Omit<Persona, 'id'>) => {
-    const existing = new Set(people.map((p) => p.id))
+    const existing = new Set(peopleRaw.map((p) => p.id))
     const id = uniqueId(`${draft.nombre}-${draft.unidad}`, existing)
     await writePersona({ ...draft, id })
   }
@@ -385,6 +386,15 @@ export function useDirectorioData() {
     if (rpcError) throw new Error(friendlyMessage(rpcError.message))
     await loadReportes()
   }
+
+  // Un cargo cargado con "vigente desde" en el futuro (por proactividad,
+  // antes de que empiece su período) solo lo ven los administradores; para
+  // el resto queda invisible en todo el directorio hasta que llegue esa
+  // fecha.
+  const people = useMemo(
+    () => (isAdmin ? peopleRaw : peopleRaw.filter((p) => !esVigenciaFutura(p.vigenciaDesde))),
+    [peopleRaw, isAdmin],
+  )
 
   return {
     people,

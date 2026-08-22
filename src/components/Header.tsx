@@ -39,7 +39,7 @@ export function Header({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl dark:text-white">
-              Directorio Judicial · La Serena
+              Directorio Jurisdiccional · La Serena
             </h1>
             {isAdmin && (
               <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">

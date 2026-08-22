@@ -18,6 +18,15 @@ export function esPrimerDiaVencido(vigenciaHasta: string | null | undefined): bo
   return vigenciaHasta === ayer.toISOString().slice(0, 10)
 }
 
+// Cargo cargado por adelantado (con "vigente desde" en el futuro): solo lo
+// ven los administradores, marcado en gris con contorno verde, hasta que
+// llegue esa fecha y pase a mostrarse para todos como cualquier otro.
+export function esVigenciaFutura(vigenciaDesde: string | null | undefined): boolean {
+  if (!vigenciaDesde) return false
+  const hoy = new Date().toISOString().slice(0, 10)
+  return vigenciaDesde > hoy
+}
+
 export function formatFecha(iso: string): string {
   const [y, m, d] = iso.split('-')
   if (!y || !m || !d) return iso

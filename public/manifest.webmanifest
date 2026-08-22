@@ -1,7 +1,7 @@
 {
-  "name": "Directorio Judicial · Corte de Apelaciones de La Serena",
-  "short_name": "Directorio Judicial",
-  "description": "Directorio judicial de la Corte de Apelaciones de La Serena y los tribunales de la IV Región de Coquimbo.",
+  "name": "Directorio Jurisdiccional · Corte de Apelaciones de La Serena",
+  "short_name": "Directorio Jurisdiccional",
+  "description": "Directorio jurisdiccional de la Corte de Apelaciones de La Serena y los tribunales de la IV Región de Coquimbo.",
   "start_url": ".",
   "scope": ".",
   "id": ".",

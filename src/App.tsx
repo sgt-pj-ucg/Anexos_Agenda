@@ -243,7 +243,23 @@ export default function App() {
 
   const tribunalesEmailSuffix = [materia, comuna].filter(Boolean).join(' · ')
 
-  const cortePeople = useMemo(() => people.filter((p) => p.seccion === 'corte'), [people])
+  const cortePeople = useMemo(() => people.filter((p) => perteneceASeccionCorte(p.seccion)), [people])
+
+  // Para el selector "Trasladar a" del modal de edición: unidades ya
+  // existentes en Corte/Insolvencia (para saber a qué sección pertenece
+  // cada una al reconstruir el traslado) y el mapa por nombre de unidad.
+  const corteUnidadSeccion = useMemo(() => {
+    const map = new Map<string, Persona['seccion']>()
+    for (const p of cortePeople) {
+      if (!map.has(p.unidad)) map.set(p.unidad, p.seccion)
+    }
+    return map
+  }, [cortePeople])
+
+  const corteUnidades = useMemo(
+    () => Array.from(corteUnidadSeccion.keys()).sort((a, b) => a.localeCompare(b, 'es')),
+    [corteUnidadSeccion],
+  )
 
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
@@ -412,6 +428,30 @@ export default function App() {
         }
         // Al completar el nombre de un cargo vacante, se considera ocupado.
         if (modal.person.vacante) patch.vacante = false
+
+        // "Trasladar a": mueve de un tribunal a otro, o hacia/desde la
+        // Corte de Apelaciones, actualizando unidad/tribunal/comuna/sección
+        // juntos en un solo paso.
+        if (values.destino) {
+          const idx = values.destino.indexOf(':')
+          const kind = values.destino.slice(0, idx)
+          const ref = values.destino.slice(idx + 1)
+          if (kind === 'tribunal') {
+            const ficha = tribunales.find((t) => t.id === ref)
+            if (ficha) {
+              patch.seccion = 'tribunal'
+              patch.tribunal = ficha.nombre
+              patch.unidad = ficha.nombre
+              patch.comuna = ficha.comuna
+            }
+          } else if (kind === 'corte') {
+            patch.seccion = corteUnidadSeccion.get(ref) ?? 'corte'
+            patch.tribunal = 'Corte de Apelaciones de La Serena'
+            patch.unidad = ref
+            patch.comuna = 'La Serena'
+          }
+        }
+
         await updatePerson(patch, modal.person.id)
       } else if (modal?.mode === 'add') {
         const sample = modal.group.people[0]
@@ -706,6 +746,8 @@ export default function App() {
           title={modal.mode === 'edit' ? 'Editar contacto' : 'Agregar contacto'}
           unidad={modal.mode === 'edit' ? modal.person.unidad : modal.group.label}
           initial={modal.mode === 'edit' ? modal.person : undefined}
+          tribunales={tribunales}
+          corteUnidades={corteUnidades}
           onCancel={() => setModal(null)}
           onSubmit={handleSubmitModal}
         />

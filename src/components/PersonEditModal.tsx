@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { X } from 'lucide-react'
-import type { Persona } from '../types'
+import type { FichaTribunal, Persona } from '../types'
 
 export interface PersonFormValues {
   nombre: string
@@ -12,6 +12,7 @@ export interface PersonFormValues {
   vigenciaDesde: string
   vigenciaHasta: string
   esGenerico: boolean
+  destino: string
 }
 
 function toFormValues(p?: Persona): PersonFormValues {
@@ -25,6 +26,7 @@ function toFormValues(p?: Persona): PersonFormValues {
     vigenciaDesde: p?.vigenciaDesde ?? '',
     vigenciaHasta: p?.vigenciaHasta ?? '',
     esGenerico: p?.esGenerico ?? false,
+    destino: '',
   }
 }
 
@@ -32,11 +34,21 @@ interface Props {
   title: string
   unidad: string
   initial?: Persona
+  tribunales?: FichaTribunal[]
+  corteUnidades?: string[]
   onCancel: () => void
   onSubmit: (values: PersonFormValues) => void
 }
 
-export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: Props) {
+export function PersonEditModal({
+  title,
+  unidad,
+  initial,
+  tribunales = [],
+  corteUnidades = [],
+  onCancel,
+  onSubmit,
+}: Props) {
   const [values, setValues] = useState<PersonFormValues>(() => toFormValues(initial))
 
   const set = <K extends keyof PersonFormValues>(key: K, value: PersonFormValues[K]) =>
@@ -148,6 +160,40 @@ export function PersonEditModal({ title, unidad, initial, onCancel, onSubmit }: 
               </span>
             </span>
           </label>
+
+          {initial && (tribunales.length > 0 || corteUnidades.length > 0) && (
+            <Field label="Trasladar a otro tribunal o unidad de la Corte">
+              <select
+                value={values.destino}
+                onChange={(e) => set('destino', e.target.value)}
+                className={inputClass}
+              >
+                <option value="">(mantener aquí: {unidad})</option>
+                {corteUnidades.length > 0 && (
+                  <optgroup label="Corte de Apelaciones">
+                    {corteUnidades.map((u) => (
+                      <option key={u} value={`corte:${u}`}>
+                        {u}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {tribunales.length > 0 && (
+                  <optgroup label="Tribunales">
+                    {tribunales.map((t) => (
+                      <option key={t.id} value={`tribunal:${t.id}`}>
+                        {t.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+              <span className="mt-1 block text-[11px] text-slate-400 dark:text-slate-500">
+                Úsalo cuando este funcionario cambie de tribunal, o vaya de/hacia la Corte de
+                Apelaciones: actualiza unidad, tribunal y comuna en un solo paso.
+              </span>
+            </Field>
+          )}
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
