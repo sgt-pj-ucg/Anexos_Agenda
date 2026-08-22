@@ -10,6 +10,7 @@ import { COMUNA_ORDER } from './lib/comunas'
 import { MATERIA_ORDER } from './lib/materias'
 import { normalize } from './lib/normalize'
 import {
+  collectGroupContacts,
   collectGroupEmails,
   esAbogadoIntegrante,
   esCualquieraDeCorte,
@@ -36,6 +37,7 @@ import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
 import { CorteMailGroupsRow, type CorteMailGroup } from './components/CorteMailGroupsRow'
+import { FuncionariosCorteModal } from './components/FuncionariosCorteModal'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
 import { SectionOverview } from './components/SectionOverview'
@@ -103,6 +105,7 @@ export default function App() {
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
   const [novedadesOpen, setNovedadesOpen] = useState(false)
   const [reportesOpen, setReportesOpen] = useState(false)
+  const [funcionariosModalOpen, setFuncionariosModalOpen] = useState(false)
   const [lastSeen, setLastSeen] = useState<string | null>(() => getLastSeen())
 
   const searchIndex = useMemo(() => buildSearchIndex(people), [people])
@@ -222,9 +225,9 @@ export default function App() {
     ]
   }, [section, people])
 
-  const todosFuncionariosCorteEmails = useMemo(() => {
+  const todosFuncionariosCorteContactos = useMemo(() => {
     if (section !== 'corte') return []
-    return collectGroupEmails(people.filter(esCualquieraDeCorte))
+    return collectGroupContacts(people.filter(esCualquieraDeCorte))
   }, [section, people])
 
   const groups = useMemo(() => {
@@ -701,7 +704,11 @@ export default function App() {
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
 
                 {section === 'corte' && !trimmedQuery && (
-                  <CorteMailGroupsRow groups={corteMailGroups} todos={todosFuncionariosCorteEmails} />
+                  <CorteMailGroupsRow
+                    groups={corteMailGroups}
+                    todosCount={todosFuncionariosCorteContactos.length}
+                    onOpenTodos={() => setFuncionariosModalOpen(true)}
+                  />
                 )}
 
                 {section === 'tribunal' && !trimmedQuery && (
@@ -826,6 +833,13 @@ export default function App() {
           reportes={reportes}
           onSetEstado={handleSetReporteEstado}
           onClose={() => setReportesOpen(false)}
+        />
+      )}
+
+      {funcionariosModalOpen && (
+        <FuncionariosCorteModal
+          contactos={todosFuncionariosCorteContactos}
+          onClose={() => setFuncionariosModalOpen(false)}
         />
       )}
     </div>

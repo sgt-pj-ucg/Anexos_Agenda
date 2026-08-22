@@ -45,18 +45,34 @@ export function esCualquieraDeCorte(p: Persona): boolean {
   return esCorteEnviable(p)
 }
 
-export function collectGroupEmails(people: Persona[]): string[] {
+export interface GroupContact {
+  id: string
+  nombre: string
+  correo: string
+  unidad: string
+  cargo: string | null
+}
+
+export function collectGroupContacts(people: Persona[]): GroupContact[] {
   // Se ordena por nombre antes de extraer los correos para que, al revisar
   // los destinatarios en el cliente de correo, sea fácil comprobar cada
   // nombre contra su dirección (en vez de un orden arbitrario).
   const ordenados = [...people].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-  const emails = new Set<string>()
+  const vistos = new Set<string>()
+  const out: GroupContact[] = []
   for (const p of ordenados) {
     if (p.vacante || p.correos.length === 0) continue
     const institucional = p.correos.find((e) => e.endsWith('@pjud.cl'))
-    emails.add(institucional ?? p.correos[0])
+    const correo = institucional ?? p.correos[0]
+    if (vistos.has(correo)) continue
+    vistos.add(correo)
+    out.push({ id: p.id, nombre: p.nombre, correo, unidad: p.unidad, cargo: p.cargo })
   }
-  return Array.from(emails)
+  return out
+}
+
+export function collectGroupEmails(people: Persona[]): string[] {
+  return collectGroupContacts(people).map((c) => c.correo)
 }
 
 export function buildGroupMailto(emails: string[]): string {

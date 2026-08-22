@@ -49,11 +49,17 @@ function Chip({ icon: Icon, label, correos, tone }: CorteMailGroup) {
   )
 }
 
-export function CorteMailGroupsRow({ groups, todos }: { groups: CorteMailGroup[]; todos: string[] }) {
+export function CorteMailGroupsRow({
+  groups,
+  todosCount,
+  onOpenTodos,
+}: {
+  groups: CorteMailGroup[]
+  todosCount: number
+  onOpenTodos: () => void
+}) {
   const visibles = groups.filter((g) => g.correos.length > 0)
-  if (visibles.length === 0 && todos.length === 0) return null
-  const { copied, copy } = useCopy()
-  const joined = todos.join(', ')
+  if (visibles.length === 0 && todosCount === 0) return null
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/40">
@@ -63,26 +69,17 @@ export function CorteMailGroupsRow({ groups, todos }: { groups: CorteMailGroup[]
       {visibles.map((g) => (
         <Chip key={g.id} {...g} />
       ))}
-      {todos.length > 0 && (
-        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-600 pr-1 text-white">
-          <a
-            href={buildGroupMailto(todos)}
-            title={`Redactar correo a los ${todos.length} funcionarios de toda la Corte (en copia oculta)`}
-            className="flex items-center gap-1.5 rounded-full py-1.5 pl-2.5 text-xs font-semibold"
-          >
-            <Send size={13} />
-            Todos los funcionarios de la Corte
-            <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{todos.length}</span>
-          </a>
-          <button
-            type="button"
-            onClick={() => copy(joined)}
-            title="Copiar todas las direcciones (respaldo si Outlook no separa los destinatarios)"
-            className="rounded-full p-1 text-white/80 hover:text-white"
-          >
-            {copied === joined ? <Check size={12} /> : <Copy size={12} />}
-          </button>
-        </span>
+      {todosCount > 0 && (
+        <button
+          type="button"
+          onClick={onOpenTodos}
+          title="Ver la lista completa, elegir a quién enviar y copiar o enviar el correo"
+          className="flex items-center gap-1.5 rounded-full bg-emerald-600 py-1.5 pr-2.5 pl-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+        >
+          <Send size={13} />
+          Todos los funcionarios de la Corte
+          <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{todosCount}</span>
+        </button>
       )}
     </div>
   )
