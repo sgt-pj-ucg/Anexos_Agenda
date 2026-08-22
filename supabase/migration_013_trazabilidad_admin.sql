@@ -17,15 +17,18 @@ $$;
 
 -- Antes devolvía solo true/false; ahora devuelve el nombre del
 -- administrador (o null si el RUT/clave no son correctos), para mostrarlo
--- en el encabezado tras iniciar sesión.
-create or replace function verify_admin_login(admin_rut text, admin_password text)
+-- en el encabezado tras iniciar sesión. Postgres no permite cambiar el
+-- tipo de retorno de una función existente con "create or replace", así
+-- que primero hay que borrar la versión anterior (boolean).
+drop function if exists verify_admin_login(text, text);
+
+create function verify_admin_login(admin_rut text, admin_password text)
 returns text
 language plpgsql
 security definer
 set search_path = public, extensions
 as $$
 declare
-  stored text;
   encontrado record;
 begin
   select rut, nombre, password_hash into encontrado from admins where rut = admin_rut;

@@ -80,6 +80,7 @@ export interface Cambio {
   tipo: CambioTipo
   entidad: string
   detalle: string | null
+  adminNombre: string | null
 }
 
 export type ReporteEstado = 'pendiente' | 'resuelto'
