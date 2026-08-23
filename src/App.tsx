@@ -20,6 +20,7 @@ import {
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
+import { personasToTable, slugArchivo } from './lib/exportContactos'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
 import { CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
@@ -35,6 +36,7 @@ import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
 import { CorteMailGroupsRow, type CorteMailGroup } from './components/CorteMailGroupsRow'
+import { ExportButtons } from './components/ExportButtons'
 import { FuncionariosCorteModal, type FuncionariosCorteGrupo } from './components/FuncionariosCorteModal'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
@@ -209,6 +211,20 @@ export default function App() {
   const showOverview = section === 'todos' && !trimmedQuery
   const showComunaChips = section === 'tribunal' && comunasDisponibles.length > 1
   const showMateriaChips = section === 'tribunal' && materiasDisponibles.length > 1
+
+  const exportTitulo = useMemo(() => {
+    const partes = [section === 'todos' ? 'Directorio completo' : SECTION_META[section].label]
+    if (comuna) partes.push(comuna)
+    if (materia) partes.push(materia)
+    if (trimmedQuery) partes.push(`Búsqueda: "${trimmedQuery}"`)
+    return partes.join(' · ')
+  }, [section, comuna, materia, trimmedQuery])
+
+  const exportFilename = useMemo(() => slugArchivo(`directorio-${exportTitulo}`), [exportTitulo])
+
+  const exportTabla = useMemo(() => personasToTable(filteredResults), [filteredResults])
+
+  const favoritosExportTabla = useMemo(() => personasToTable(favoriteResults), [favoriteResults])
 
   const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
 
@@ -684,10 +700,17 @@ export default function App() {
               </>
             ) : favoritesMode ? (
               <>
-                <p className="text-sm text-slate-500 dark:text-slate-300">
-                  {favoriteResults.length}{' '}
-                  {favoriteResults.length === 1 ? 'favorito' : 'favoritos'}
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-slate-500 dark:text-slate-300">
+                    {favoriteResults.length}{' '}
+                    {favoriteResults.length === 1 ? 'favorito' : 'favoritos'}
+                  </p>
+                  <ExportButtons
+                    titulo="Directorio Jurisdiccional · Mis favoritos"
+                    filename="directorio-mis-favoritos"
+                    tabla={favoritosExportTabla}
+                  />
+                </div>
                 {favoriteResults.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-400">
                     Aún no tienes favoritos. Marca la estrella de un contacto para agregarlo aquí.
@@ -711,13 +734,16 @@ export default function App() {
               />
             ) : (
               <>
-                <p className="text-sm text-slate-500 dark:text-slate-300">
-                  {filteredResults.length}{' '}
-                  {filteredResults.length === 1 ? 'resultado' : 'resultados'}
-                  {section !== 'todos' && <> en {SECTION_META[section].label}</>}
-                  {comuna && <> · {comuna}</>}
-                  {materia && <> · {materia}</>}
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-slate-500 dark:text-slate-300">
+                    {filteredResults.length}{' '}
+                    {filteredResults.length === 1 ? 'resultado' : 'resultados'}
+                    {section !== 'todos' && <> en {SECTION_META[section].label}</>}
+                    {comuna && <> · {comuna}</>}
+                    {materia && <> · {materia}</>}
+                  </p>
+                  <ExportButtons titulo={exportTitulo} filename={exportFilename} tabla={exportTabla} />
+                </div>
 
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
 

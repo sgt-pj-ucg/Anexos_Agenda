@@ -1,9 +1,11 @@
-import { Cake, Flag, Mail, Pencil, Phone, Star, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Cake, Flag, Mail, Pencil, Phone, Share2, Star, Trash2 } from 'lucide-react'
 import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
 import { esVigenciaFutura, esVigenciaVencida, formatFecha } from '../lib/vigencia'
 import { CopyChip } from './CopyChip'
+import { ShareContactModal } from './ShareContactModal'
 import { useIsAdmin } from '../context/RoleContext'
 
 interface Props {
@@ -26,6 +28,7 @@ export function PersonCard({
   onToggleFavorite,
 }: Props) {
   const isAdmin = useIsAdmin()
+  const [shareOpen, setShareOpen] = useState(false)
   const cumpleHoy = isToday(p.cumpleanos)
   const cumpleParsed = parseCumple(p.cumpleanos)
   const vigenciaVencida = esVigenciaVencida(p.vigenciaHasta)
@@ -34,7 +37,7 @@ export function PersonCard({
   // cargos "programados" hasta que empiece su período.
   const vigenciaFutura = esVigenciaFutura(p.vigenciaDesde)
 
-  const cornerControls = (onReport || onToggleFavorite || (isAdmin && (onEdit || onDelete))) && (
+  const cornerControls = (
     <div className="absolute top-3 right-3 flex items-center gap-1">
       <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         {onReport && (
@@ -68,6 +71,14 @@ export function PersonCard({
           </button>
         )}
       </div>
+      <button
+        type="button"
+        onClick={() => setShareOpen(true)}
+        title="Compartir contacto"
+        className="rounded-full p-1.5 text-slate-300 hover:text-indigo-500 dark:text-slate-500 dark:hover:text-indigo-400"
+      >
+        <Share2 size={15} />
+      </button>
       {onToggleFavorite && (
         <button
           type="button"
@@ -119,6 +130,7 @@ export function PersonCard({
   }
 
   return (
+    <>
     <div
       className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
         vigenciaVencida
@@ -197,5 +209,7 @@ export function PersonCard({
         <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">🎂 {p.cumpleanos}</p>
       )}
     </div>
+    {shareOpen && <ShareContactModal p={p} onClose={() => setShareOpen(false)} />}
+    </>
   )
 }
