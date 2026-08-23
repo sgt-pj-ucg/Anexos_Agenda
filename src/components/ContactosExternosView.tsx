@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { UserPlus } from 'lucide-react'
 import type { CategoriaExterna, ContactoExterno } from '../types'
-import { CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
-import { normalize } from '../lib/normalize'
+import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
 import { ContactoExternoCard } from './ContactoExternoCard'
 import { EmptyState } from './EmptyState'
 import { useIsAdmin } from '../context/RoleContext'
@@ -38,24 +37,7 @@ export function ContactosExternosView({
     [contactos, categoria],
   )
 
-  // Igual que el buscador principal: cada palabra escrita debe aparecer en
-  // algún dato del contacto (nombre, institución, cargo, comuna, correo,
-  // teléfono u observaciones), sin importar en qué campo esté cada una ni
-  // el orden — así "iquique administrador" encuentra al administrador de
-  // la Corte de Apelaciones de Iquique aunque ningún campo tenga ambas
-  // palabras juntas.
-  const filtrados = useMemo(() => {
-    const tokens = normalize(query).split(/\s+/).filter(Boolean)
-    if (tokens.length === 0) return enCategoria
-    return enCategoria.filter((c) => {
-      const all = normalize(
-        [c.nombre, c.institucion, c.cargo, c.comuna, c.calidadJuridica, c.observaciones, ...c.correos, ...c.telefonos]
-          .filter(Boolean)
-          .join(' '),
-      )
-      return tokens.every((t) => all.includes(t))
-    })
-  }, [enCategoria, query])
+  const filtrados = useMemo(() => buscarContactosExternos(enCategoria, query), [enCategoria, query])
 
   const grupos = useMemo(() => {
     // Se agrupa por comuna cuando existe (algunas instituciones, como

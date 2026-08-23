@@ -71,11 +71,13 @@ export function PersonCard({
           </button>
         )}
       </div>
+      {/* Solo en el celular: en el PC no existe el panel nativo "Compartir"
+          (WhatsApp, etc.) y los datos se copian mejor con los chips de abajo. */}
       <button
         type="button"
         onClick={() => setShareOpen(true)}
         title="Compartir contacto"
-        className="rounded-full p-1.5 text-slate-300 hover:text-indigo-500 dark:text-slate-500 dark:hover:text-indigo-400"
+        className="rounded-full p-1.5 text-slate-300 hover:text-indigo-500 md:hidden dark:text-slate-500 dark:hover:text-indigo-400"
       >
         <Share2 size={15} />
       </button>

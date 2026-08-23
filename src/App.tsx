@@ -20,9 +20,8 @@ import {
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
-import { personasToTable, slugArchivo } from './lib/exportContactos'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
-import { CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
+import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
 import type { TribunalFormValues } from './components/TribunalEditModal'
@@ -36,7 +35,6 @@ import { ComunaChips } from './components/ComunaChips'
 import { MateriaChips } from './components/MateriaChips'
 import { TribunalesEmailBanner } from './components/TribunalesEmailBanner'
 import { CorteMailGroupsRow, type CorteMailGroup } from './components/CorteMailGroupsRow'
-import { ExportButtons } from './components/ExportButtons'
 import { FuncionariosCorteModal, type FuncionariosCorteGrupo } from './components/FuncionariosCorteModal'
 import { BirthdayBanner } from './components/BirthdayBanner'
 import { GeneralEmailBanner } from './components/GeneralEmailBanner'
@@ -53,6 +51,7 @@ import { ReportesPanel } from './components/ReportesPanel'
 import { OrganigramaBoard } from './components/OrganigramaBoard'
 import { TribunalContactosView } from './components/TribunalContactosView'
 import { ContactosExternosView } from './components/ContactosExternosView'
+import { ContactoExternoCard } from './components/ContactoExternoCard'
 import { ContactoExternoPickerModal } from './components/ContactoExternoPickerModal'
 import { ContactoExternoEditModal } from './components/ContactoExternoEditModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
@@ -208,23 +207,30 @@ export default function App() {
     return results
   }, [baseResults, section, comuna, materia, fichaByUnidad])
 
+  // El buscador principal también encuentra contactos externos (CBR y
+  // notarías, policía local, etc.) sin obligar a entrar primero a la
+  // pestaña "Externo" — solo aplica cuando se está buscando algo, para no
+  // mezclarse con la navegación normal por secciones.
+  const externosSearchResults = useMemo(
+    () => (trimmedQuery ? buscarContactosExternos(contactosExternos, trimmedQuery) : []),
+    [contactosExternos, trimmedQuery],
+  )
+
+  const externosSearchGrupos = useMemo(() => {
+    const porCategoria = new Map<CategoriaExterna, ContactoExterno[]>()
+    for (const c of externosSearchResults) {
+      if (!porCategoria.has(c.categoria)) porCategoria.set(c.categoria, [])
+      porCategoria.get(c.categoria)!.push(c)
+    }
+    return CATEGORIA_ORDER.filter((k) => porCategoria.has(k)).map((categoria) => ({
+      categoria,
+      contactos: porCategoria.get(categoria)!,
+    }))
+  }, [externosSearchResults])
+
   const showOverview = section === 'todos' && !trimmedQuery
   const showComunaChips = section === 'tribunal' && comunasDisponibles.length > 1
   const showMateriaChips = section === 'tribunal' && materiasDisponibles.length > 1
-
-  const exportTitulo = useMemo(() => {
-    const partes = [section === 'todos' ? 'Directorio completo' : SECTION_META[section].label]
-    if (comuna) partes.push(comuna)
-    if (materia) partes.push(materia)
-    if (trimmedQuery) partes.push(`Búsqueda: "${trimmedQuery}"`)
-    return partes.join(' · ')
-  }, [section, comuna, materia, trimmedQuery])
-
-  const exportFilename = useMemo(() => slugArchivo(`directorio-${exportTitulo}`), [exportTitulo])
-
-  const exportTabla = useMemo(() => personasToTable(filteredResults), [filteredResults])
-
-  const favoritosExportTabla = useMemo(() => personasToTable(favoriteResults), [favoriteResults])
 
   const generalEmail = section !== 'todos' ? correoGeneralSeccion[section] : undefined
 
@@ -700,17 +706,10 @@ export default function App() {
               </>
             ) : favoritesMode ? (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-slate-500 dark:text-slate-300">
-                    {favoriteResults.length}{' '}
-                    {favoriteResults.length === 1 ? 'favorito' : 'favoritos'}
-                  </p>
-                  <ExportButtons
-                    titulo="Directorio Jurisdiccional · Mis favoritos"
-                    filename="directorio-mis-favoritos"
-                    tabla={favoritosExportTabla}
-                  />
-                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-300">
+                  {favoriteResults.length}{' '}
+                  {favoriteResults.length === 1 ? 'favorito' : 'favoritos'}
+                </p>
                 {favoriteResults.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-400">
                     Aún no tienes favoritos. Marca la estrella de un contacto para agregarlo aquí.
@@ -734,16 +733,13 @@ export default function App() {
               />
             ) : (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-slate-500 dark:text-slate-300">
-                    {filteredResults.length}{' '}
-                    {filteredResults.length === 1 ? 'resultado' : 'resultados'}
-                    {section !== 'todos' && <> en {SECTION_META[section].label}</>}
-                    {comuna && <> · {comuna}</>}
-                    {materia && <> · {materia}</>}
-                  </p>
-                  <ExportButtons titulo={exportTitulo} filename={exportFilename} tabla={exportTabla} />
-                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-300">
+                  {filteredResults.length}{' '}
+                  {filteredResults.length === 1 ? 'resultado' : 'resultados'}
+                  {section !== 'todos' && <> en {SECTION_META[section].label}</>}
+                  {comuna && <> · {comuna}</>}
+                  {materia && <> · {materia}</>}
+                </p>
 
                 {generalEmail && !trimmedQuery && <GeneralEmailBanner correo={generalEmail} />}
 
@@ -759,30 +755,80 @@ export default function App() {
                   <TribunalesEmailBanner suffix={tribunalesEmailSuffix} correos={tribunalesEmails} />
                 )}
 
-                {filteredResults.length === 0 ? (
+                {filteredResults.length === 0 && externosSearchResults.length === 0 ? (
                   <EmptyState query={trimmedQuery} />
-                ) : trimmedQuery ? (
-                  <FlatResults
-                    people={filteredResults}
-                    onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                    onDeletePerson={setDeleteTarget}
-                    onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
-                    isFavorite={(id) => favorites.has(id)}
-                    onToggleFavorite={toggleFavorite}
-                  />
                 ) : (
-                  <GroupedResults
-                    groups={groups}
-                    collapsible={section === 'tribunal'}
-                    onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
-                    onDeletePerson={setDeleteTarget}
-                    onAddPerson={(g) => setModal({ mode: 'add', group: g })}
-                    onEditFicha={setFichaModal}
-                    onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
-                    onReportFicha={(f) => openReport(f.nombre, ['Ficha de tribunal'])}
-                    isFavorite={(id) => favorites.has(id)}
-                    onToggleFavorite={toggleFavorite}
-                  />
+                  <>
+                    {filteredResults.length > 0 &&
+                      (trimmedQuery ? (
+                        <FlatResults
+                          people={filteredResults}
+                          onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                          onDeletePerson={setDeleteTarget}
+                          onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
+                          isFavorite={(id) => favorites.has(id)}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      ) : (
+                        <GroupedResults
+                          groups={groups}
+                          collapsible={section === 'tribunal'}
+                          onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                          onDeletePerson={setDeleteTarget}
+                          onAddPerson={(g) => setModal({ mode: 'add', group: g })}
+                          onEditFicha={setFichaModal}
+                          onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
+                          onReportFicha={(f) => openReport(f.nombre, ['Ficha de tribunal'])}
+                          isFavorite={(id) => favorites.has(id)}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      ))}
+
+                    {trimmedQuery && externosSearchResults.length > 0 && (
+                      <div className="space-y-4">
+                        <p className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                          <BookUser size={15} className="text-indigo-500" />
+                          {externosSearchResults.length}{' '}
+                          {externosSearchResults.length === 1 ? 'contacto externo' : 'contactos externos'}
+                        </p>
+                        {externosSearchGrupos.map(({ categoria, contactos }) => {
+                          const meta = CATEGORIA_META[categoria]
+                          const Icon = meta.icon
+                          return (
+                            <div
+                              key={categoria}
+                              className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/40 dark:bg-indigo-500/5"
+                            >
+                              <p className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                                <Icon size={15} className="text-indigo-500" />
+                                {meta.label}
+                                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
+                                  {contactos.length}
+                                </span>
+                              </p>
+                              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                {contactos.map((c) => (
+                                  <ContactoExternoCard
+                                    key={c.id}
+                                    contacto={c}
+                                    subLabel={c.institucion && c.institucion !== meta.label ? c.institucion : undefined}
+                                    onEdit={() => setContactoExternoModal({ mode: 'edit', contacto: c })}
+                                    onDelete={() => setDeleteExternoTarget(c)}
+                                    onReport={() =>
+                                      openReport(c.nombre ?? c.institucion ?? 'Contacto externo', [
+                                        c.institucion ?? '',
+                                        c.cargo ?? '',
+                                      ])
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

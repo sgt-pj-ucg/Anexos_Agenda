@@ -1,5 +1,6 @@
 import { Award, Gavel, Landmark, ScrollText, Users } from 'lucide-react'
-import type { CategoriaExterna } from '../types'
+import type { CategoriaExterna, ContactoExterno } from '../types'
+import { normalize } from './normalize'
 
 interface CategoriaMeta {
   key: CategoriaExterna
@@ -53,4 +54,20 @@ export const CATEGORIA_META: Record<CategoriaExterna, CategoriaMeta> = {
     description: 'Contactos de la Academia Judicial',
     icon: Award,
   },
+}
+
+// Cada palabra escrita debe aparecer en algún dato del contacto (nombre,
+// institución, cargo, comuna, correo, teléfono u observaciones), sin
+// importar en qué campo esté cada una ni el orden.
+export function buscarContactosExternos(contactos: ContactoExterno[], query: string): ContactoExterno[] {
+  const tokens = normalize(query).split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return contactos
+  return contactos.filter((c) => {
+    const all = normalize(
+      [c.nombre, c.institucion, c.cargo, c.comuna, c.calidadJuridica, c.observaciones, ...c.correos, ...c.telefonos]
+        .filter(Boolean)
+        .join(' '),
+    )
+    return tokens.every((t) => all.includes(t))
+  })
 }
