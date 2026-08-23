@@ -13,12 +13,14 @@ const TONES = {
     'border-amber-200 text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-500/10',
 } as const
 
+export type Tone = keyof typeof TONES
+
 export interface CorteMailGroup {
   id: string
   icon: LucideIcon
   label: string
   correos: string[]
-  tone: keyof typeof TONES
+  tone: Tone
 }
 
 function Chip({ icon: Icon, label, correos, tone }: CorteMailGroup) {

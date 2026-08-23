@@ -260,7 +260,7 @@ export default function App() {
   const funcionariosCorteGrupos: FuncionariosCorteGrupo[] = useMemo(
     () =>
       corteCategorias
-        .map((g) => ({ id: g.id, label: g.label, contactos: g.contactos }))
+        .map((g) => ({ id: g.id, label: g.label, icon: g.icon, tone: g.tone, contactos: g.contactos }))
         .filter((g) => g.contactos.length > 0),
     [corteCategorias],
   )

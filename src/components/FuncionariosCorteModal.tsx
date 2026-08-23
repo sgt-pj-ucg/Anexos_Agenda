@@ -1,16 +1,63 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Copy, Search, Send, Users, X } from 'lucide-react'
+import { Check, Copy, Search, Send, Users, X, type LucideIcon } from 'lucide-react'
 import type { GroupContact } from '../lib/mailto'
 import { buildGroupMailto } from '../lib/mailto'
 import { normalize } from '../lib/normalize'
 import { avatarPalette, initials } from '../lib/format'
 import { useCopy } from '../hooks/useCopy'
+import type { Tone } from './CorteMailGroupsRow'
 
 export interface FuncionariosCorteGrupo {
   id: string
   label: string
+  icon: LucideIcon
+  tone: Tone
   contactos: GroupContact[]
+}
+
+// Una tonalidad por categoría (las mismas de los chips "Enviar correo a:")
+// para que cada bloque se distinga de un vistazo, sobre todo con varios
+// grupos abiertos a la vez en una lista larga.
+const TONE_STYLES: Record<
+  Tone,
+  { spine: string; header: string; icon: string; label: string; badge: string }
+> = {
+  violet: {
+    spine: 'border-violet-300 dark:border-violet-700',
+    header: 'bg-violet-50/90 dark:bg-violet-500/10',
+    icon: 'text-violet-500 dark:text-violet-400',
+    label: 'text-violet-900 dark:text-violet-200',
+    badge: 'bg-violet-600/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
+  },
+  indigo: {
+    spine: 'border-indigo-300 dark:border-indigo-700',
+    header: 'bg-indigo-50/90 dark:bg-indigo-500/10',
+    icon: 'text-indigo-500 dark:text-indigo-400',
+    label: 'text-indigo-900 dark:text-indigo-200',
+    badge: 'bg-indigo-600/10 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300',
+  },
+  rose: {
+    spine: 'border-rose-300 dark:border-rose-700',
+    header: 'bg-rose-50/90 dark:bg-rose-500/10',
+    icon: 'text-rose-500 dark:text-rose-400',
+    label: 'text-rose-900 dark:text-rose-200',
+    badge: 'bg-rose-600/10 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300',
+  },
+  sky: {
+    spine: 'border-sky-300 dark:border-sky-700',
+    header: 'bg-sky-50/90 dark:bg-sky-500/10',
+    icon: 'text-sky-500 dark:text-sky-400',
+    label: 'text-sky-900 dark:text-sky-200',
+    badge: 'bg-sky-600/10 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300',
+  },
+  amber: {
+    spine: 'border-amber-300 dark:border-amber-700',
+    header: 'bg-amber-50/90 dark:bg-amber-500/10',
+    icon: 'text-amber-500 dark:text-amber-400',
+    label: 'text-amber-900 dark:text-amber-200',
+    badge: 'bg-amber-600/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300',
+  },
 }
 
 function GroupCheckbox({
@@ -192,29 +239,34 @@ export function FuncionariosCorteModal({
               No hay funcionarios que coincidan con "{query}".
             </p>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-3">
               {gruposFiltrados.map((g) => {
                 const grupoOriginal = grupos.find((og) => og.id === g.id)!
                 const marcadosEnGrupo = grupoOriginal.contactos.filter((c) => seleccionados.has(c.id)).length
                 const grupoCompleto = marcadosEnGrupo === grupoOriginal.contactos.length
                 const grupoVacio = marcadosEnGrupo === 0
+                const estilo = TONE_STYLES[g.tone]
+                const Icon = g.icon
 
                 return (
-                  <div key={g.id}>
-                    <div className="sticky top-0 z-10 flex items-center gap-3 bg-slate-50/95 px-3 py-1.5 backdrop-blur dark:bg-slate-900/95">
+                  <div key={g.id} className={`border-l-[3px] ${estilo.spine}`}>
+                    <div
+                      className={`sticky top-0 z-10 flex items-center gap-2.5 rounded-tr-lg px-3 py-1.5 backdrop-blur ${estilo.header}`}
+                    >
                       <GroupCheckbox
                         checked={grupoCompleto}
                         indeterminate={!grupoCompleto && !grupoVacio}
                         onChange={() => toggleGrupo(grupoOriginal)}
                       />
+                      <Icon size={13} className={`shrink-0 ${estilo.icon}`} />
                       <button
                         type="button"
                         onClick={() => toggleGrupo(grupoOriginal)}
-                        className="text-left text-xs font-semibold tracking-wide text-slate-500 uppercase hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
+                        className={`text-left text-xs font-bold tracking-wide uppercase ${estilo.label}`}
                       >
                         {g.label}
                       </button>
-                      <span className="rounded-full bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${estilo.badge}`}>
                         {marcadosEnGrupo}/{grupoOriginal.contactos.length}
                       </span>
                     </div>
