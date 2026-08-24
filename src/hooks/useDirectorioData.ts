@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { getAdminPassword } from '../lib/auth'
 import { slugify } from '../lib/normalize'
 import { esVigenciaFutura } from '../lib/vigencia'
+import { aplicarCargoTransitorio } from '../lib/cargoTransitorio'
 import { useIsAdmin } from '../context/RoleContext'
 import type {
   Cambio,
@@ -34,6 +35,13 @@ interface PersonaRow {
   comuna: string | null
   vigencia_desde: string | null
   vigencia_hasta: string | null
+  cargo_transitorio: string | null
+  tribunal_transitorio: string | null
+  unidad_transitorio: string | null
+  seccion_transitorio: Seccion | null
+  comuna_transitorio: string | null
+  transitorio_desde: string | null
+  transitorio_hasta: string | null
   orden: number
   updated_at: string
 }
@@ -107,6 +115,13 @@ function rowToPersona(row: PersonaRow): Persona {
     comuna: row.comuna,
     vigenciaDesde: row.vigencia_desde,
     vigenciaHasta: row.vigencia_hasta,
+    cargoTransitorio: row.cargo_transitorio,
+    tribunalTransitorio: row.tribunal_transitorio,
+    unidadTransitorio: row.unidad_transitorio,
+    seccionTransitorio: row.seccion_transitorio,
+    comunaTransitorio: row.comuna_transitorio,
+    transitorioDesde: row.transitorio_desde,
+    transitorioHasta: row.transitorio_hasta,
   }
 }
 
@@ -389,17 +404,27 @@ export function useDirectorioData() {
     await loadReportes()
   }
 
+  // Mientras un cargo transitorio está vigente, la persona se muestra en su
+  // tribunal/unidad de destino (buscador, grupos, organigrama, correo
+  // masivo); el registro guardado (peopleOrigen) nunca se toca, así que el
+  // regreso al tribunal de origen al vencer es automático.
+  const peopleConComision = useMemo(() => peopleRaw.map(aplicarCargoTransitorio), [peopleRaw])
+
   // Un cargo cargado con "vigente desde" en el futuro (por proactividad,
   // antes de que empiece su período) solo lo ven los administradores; para
   // el resto queda invisible en todo el directorio hasta que llegue esa
   // fecha.
   const people = useMemo(
-    () => (isAdmin ? peopleRaw : peopleRaw.filter((p) => !esVigenciaFutura(p.vigenciaDesde))),
-    [peopleRaw, isAdmin],
+    () => (isAdmin ? peopleConComision : peopleConComision.filter((p) => !esVigenciaFutura(p.vigenciaDesde))),
+    [peopleConComision, isAdmin],
   )
 
   return {
     people,
+    // Datos oficiales sin la superposición del cargo transitorio: los usa el
+    // formulario de edición para mostrar siempre el cargo/tribunal titular
+    // en la primera sección, aunque la persona esté hoy en comisión.
+    peopleOrigen: peopleRaw,
     tribunales,
     cambios,
     reportes,

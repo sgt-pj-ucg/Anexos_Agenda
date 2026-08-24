@@ -39,6 +39,23 @@ export interface Persona {
   fuente?: string
   vigenciaDesde: string | null
   vigenciaHasta: string | null
+  // Cargo transitorio (comisión de servicio en otro tribunal o unidad de la
+  // Corte): mientras está vigente, estos datos reemplazan a los de arriba en
+  // toda la plataforma (buscador, grupos, organigrama); al pasar
+  // "transitorioHasta" la persona vuelve sola a su tribunal de origen.
+  cargoTransitorio: string | null
+  tribunalTransitorio: string | null
+  unidadTransitorio: string | null
+  seccionTransitorio: Seccion | null
+  comunaTransitorio: string | null
+  transitorioDesde: string | null
+  transitorioHasta: string | null
+  // Agregados en memoria por aplicarCargoTransitorio() cuando la comisión
+  // está vigente: no se guardan en la base de datos.
+  enComision?: boolean
+  origenCargo?: string | null
+  origenUnidad?: string
+  origenTribunal?: string | null
 }
 
 export type CategoriaExterna =

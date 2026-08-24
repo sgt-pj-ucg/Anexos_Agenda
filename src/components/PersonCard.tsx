@@ -36,6 +36,10 @@ export function PersonCard({
   // los demás usuarios useDirectorioData ya les oculta por completo estos
   // cargos "programados" hasta que empiece su período.
   const vigenciaFutura = esVigenciaFutura(p.vigenciaDesde)
+  // Puesto por aplicarCargoTransitorio() en el hook de datos mientras la
+  // comisión de servicio está vigente; p.origenTribunal es a dónde vuelve
+  // sola al vencer p.transitorioHasta.
+  const enComision = p.enComision === true
 
   const cornerControls = (
     <div className="absolute top-3 right-3 flex items-center gap-1">
@@ -137,9 +141,11 @@ export function PersonCard({
       className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
         vigenciaVencida
           ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
-          : vigenciaFutura
-            ? 'border-emerald-400 bg-slate-200 dark:border-emerald-500/60 dark:bg-slate-900/80'
-            : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+          : enComision
+            ? 'border-sky-400 bg-sky-50/40 dark:border-sky-500/60 dark:bg-sky-500/5'
+            : vigenciaFutura
+              ? 'border-emerald-400 bg-slate-200 dark:border-emerald-500/60 dark:bg-slate-900/80'
+              : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
       }`}
     >
       {cornerControls}
@@ -172,6 +178,12 @@ export function PersonCard({
           {vigenciaFutura && p.vigenciaDesde && (
             <p className="mt-0.5 truncate text-xs font-medium text-emerald-600 dark:text-emerald-400">
               Vigente desde el {formatFecha(p.vigenciaDesde)} · solo visible para Admin
+            </p>
+          )}
+          {enComision && (
+            <p className="mt-0.5 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
+              Cargo transitorio{p.origenTribunal && <> · titular en {p.origenTribunal}</>}
+              {p.transitorioHasta && <> · vuelve el {formatFecha(p.transitorioHasta)}</>}
             </p>
           )}
         </div>

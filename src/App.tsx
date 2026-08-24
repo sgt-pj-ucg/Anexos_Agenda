@@ -68,6 +68,7 @@ export default function App() {
   const { theme, toggle } = useTheme()
   const {
     people,
+    peopleOrigen,
     tribunales,
     cambios,
     reportes,
@@ -304,6 +305,12 @@ export default function App() {
     [corteUnidadSeccion],
   )
 
+  // El formulario de edición debe mostrar siempre el cargo/tribunal oficial
+  // en la primera sección, aunque la persona esté hoy en comisión de
+  // servicio (donde "people" ya muestra el destino transitorio).
+  const peopleOrigenById = useMemo(() => new Map(peopleOrigen.map((p) => [p.id, p])), [peopleOrigen])
+  const editarPersona = (p: Persona) => setModal({ mode: 'edit', person: peopleOrigenById.get(p.id) ?? p })
+
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
     setComuna(null)
@@ -455,6 +462,9 @@ export default function App() {
     const calidadJuridica = values.calidadJuridica.trim() || null
     const vigenciaDesde = values.vigenciaDesde.trim() || null
     const vigenciaHasta = values.vigenciaHasta.trim() || null
+    const transitorioCargo = values.transitorioCargo.trim() || null
+    const transitorioDesde = values.transitorioDesde.trim() || null
+    const transitorioHasta = values.transitorioHasta.trim() || null
 
     try {
       if (modal?.mode === 'edit') {
@@ -495,6 +505,42 @@ export default function App() {
           }
         }
 
+        // Cargo Transitorio: comisión de servicio a otro tribunal/unidad por
+        // un período con fecha de término conocida. useDirectorioData se
+        // encarga de mostrar a la persona en el destino mientras esté
+        // vigente, y de devolverla sola a estos datos de origen al vencer.
+        // Si se dejó vacío (o se usó "Quitar cargo transitorio"), se limpia.
+        if (values.transitorioDestino) {
+          const idx = values.transitorioDestino.indexOf(':')
+          const kind = values.transitorioDestino.slice(0, idx)
+          const ref = values.transitorioDestino.slice(idx + 1)
+          patch.cargoTransitorio = transitorioCargo
+          patch.transitorioDesde = transitorioDesde
+          patch.transitorioHasta = transitorioHasta
+          if (kind === 'tribunal') {
+            const ficha = tribunales.find((t) => t.id === ref)
+            if (ficha) {
+              patch.seccionTransitorio = 'tribunal'
+              patch.tribunalTransitorio = ficha.nombre
+              patch.unidadTransitorio = ficha.nombre
+              patch.comunaTransitorio = ficha.comuna
+            }
+          } else if (kind === 'corte') {
+            patch.seccionTransitorio = corteUnidadSeccion.get(ref) ?? 'corte'
+            patch.tribunalTransitorio = 'Corte de Apelaciones de La Serena'
+            patch.unidadTransitorio = ref
+            patch.comunaTransitorio = 'La Serena'
+          }
+        } else {
+          patch.cargoTransitorio = null
+          patch.tribunalTransitorio = null
+          patch.unidadTransitorio = null
+          patch.seccionTransitorio = null
+          patch.comunaTransitorio = null
+          patch.transitorioDesde = null
+          patch.transitorioHasta = null
+        }
+
         await updatePerson(patch, modal.person.id)
       } else if (modal?.mode === 'add') {
         const sample = modal.group.people[0]
@@ -513,6 +559,13 @@ export default function App() {
           comuna: sample?.comuna ?? null,
           vigenciaDesde,
           vigenciaHasta,
+          cargoTransitorio: null,
+          tribunalTransitorio: null,
+          unidadTransitorio: null,
+          seccionTransitorio: null,
+          comunaTransitorio: null,
+          transitorioDesde: null,
+          transitorioHasta: null,
         })
       }
       setModal(null)
@@ -717,7 +770,7 @@ export default function App() {
                 ) : (
                   <FlatResults
                     people={favoriteResults}
-                    onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                    onEditPerson={editarPersona}
                     onDeletePerson={setDeleteTarget}
                     onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
                     isFavorite={(id) => favorites.has(id)}
@@ -763,7 +816,7 @@ export default function App() {
                       (trimmedQuery ? (
                         <FlatResults
                           people={filteredResults}
-                          onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                          onEditPerson={editarPersona}
                           onDeletePerson={setDeleteTarget}
                           onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
                           isFavorite={(id) => favorites.has(id)}
@@ -773,7 +826,7 @@ export default function App() {
                         <GroupedResults
                           groups={groups}
                           collapsible={section === 'tribunal'}
-                          onEditPerson={(p) => setModal({ mode: 'edit', person: p })}
+                          onEditPerson={editarPersona}
                           onDeletePerson={setDeleteTarget}
                           onAddPerson={(g) => setModal({ mode: 'add', group: g })}
                           onEditFicha={setFichaModal}
