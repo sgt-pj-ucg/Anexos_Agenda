@@ -4,6 +4,7 @@ import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
 import { esVigenciaFutura, esVigenciaVencida, formatFecha } from '../lib/vigencia'
+import { addDiasIso } from '../lib/fechaChile'
 import { ausenteTipoLabel } from '../lib/ausentismo'
 import { CopyChip } from './CopyChip'
 import { ShareContactModal } from './ShareContactModal'
@@ -199,25 +200,38 @@ export function PersonCard({
             </p>
           )}
           {vigenciaVencida && p.vigenciaHasta && (
-            <p className="mt-0.5 truncate text-xs font-medium text-orange-600 dark:text-orange-400">
+            <p
+              title={`Vigencia vencida el ${formatFecha(p.vigenciaHasta)}`}
+              className="mt-0.5 truncate text-xs font-medium text-orange-600 dark:text-orange-400"
+            >
               Vigencia vencida el {formatFecha(p.vigenciaHasta)}
             </p>
           )}
           {vigenciaFutura && p.vigenciaDesde && (
-            <p className="mt-0.5 truncate text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <p
+              title={`Vigente desde el ${formatFecha(p.vigenciaDesde)} · solo visible para Admin`}
+              className="mt-0.5 truncate text-xs font-medium text-emerald-600 dark:text-emerald-400"
+            >
               Vigente desde el {formatFecha(p.vigenciaDesde)} · solo visible para Admin
             </p>
           )}
           {enComision && (
-            <p className="mt-0.5 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
+            <p
+              title={`Cargo transitorio${p.origenTribunal ? ` · titular en ${p.origenTribunal}` : ''}${p.transitorioHasta ? ` · vuelve el ${formatFecha(addDiasIso(p.transitorioHasta, 1))}` : ''}`}
+              className="mt-0.5 truncate text-xs font-medium text-sky-600 dark:text-sky-400"
+            >
               Cargo transitorio{p.origenTribunal && <> · titular en {p.origenTribunal}</>}
-              {p.transitorioHasta && <> · vuelve el {formatFecha(p.transitorioHasta)}</>}
+              {/* "hasta" es el último día vigente: vuelve recién al día siguiente. */}
+              {p.transitorioHasta && <> · vuelve el {formatFecha(addDiasIso(p.transitorioHasta, 1))}</>}
             </p>
           )}
           {ausente && (
-            <p className="mt-0.5 truncate text-xs font-medium text-violet-600 dark:text-violet-400">
+            <p
+              title={`Ausente: ${ausenteTipoLabel(p.ausenteTipo, p.ausenteMotivo)}${p.ausenteHasta ? ` · vuelve el ${formatFecha(addDiasIso(p.ausenteHasta, 1))}` : ''}`}
+              className="mt-0.5 truncate text-xs font-medium text-violet-600 dark:text-violet-400"
+            >
               Ausente: {ausenteTipoLabel(p.ausenteTipo, p.ausenteMotivo)}
-              {p.ausenteHasta && <> · vuelve el {formatFecha(p.ausenteHasta)}</>}
+              {p.ausenteHasta && <> · vuelve el {formatFecha(addDiasIso(p.ausenteHasta, 1))}</>}
             </p>
           )}
         </div>
