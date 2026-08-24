@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Cake, Flag, Mail, Pencil, Phone, Share2, Star, Trash2 } from 'lucide-react'
+import { Cake, CalendarX, Flag, Mail, Pencil, Phone, Route, Share2, Star, Trash2 } from 'lucide-react'
 import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
 import { esVigenciaFutura, esVigenciaVencida, formatFecha } from '../lib/vigencia'
+import { ausenteTipoLabel } from '../lib/ausentismo'
 import { CopyChip } from './CopyChip'
 import { ShareContactModal } from './ShareContactModal'
 import { useIsAdmin } from '../context/RoleContext'
@@ -14,6 +15,8 @@ interface Props {
   onEdit?: () => void
   onDelete?: () => void
   onReport?: () => void
+  onCargoTransitorio?: () => void
+  onAusentismo?: () => void
   isFavorite?: boolean
   onToggleFavorite?: () => void
 }
@@ -24,6 +27,8 @@ export function PersonCard({
   onEdit,
   onDelete,
   onReport,
+  onCargoTransitorio,
+  onAusentismo,
   isFavorite,
   onToggleFavorite,
 }: Props) {
@@ -36,10 +41,11 @@ export function PersonCard({
   // los demás usuarios useDirectorioData ya les oculta por completo estos
   // cargos "programados" hasta que empiece su período.
   const vigenciaFutura = esVigenciaFutura(p.vigenciaDesde)
-  // Puesto por aplicarCargoTransitorio() en el hook de datos mientras la
-  // comisión de servicio está vigente; p.origenTribunal es a dónde vuelve
-  // sola al vencer p.transitorioHasta.
+  // Puesto por aplicarCargoTransitorio()/aplicarAusentismo() en el hook de
+  // datos mientras corresponde; p.origenTribunal es a dónde vuelve sola al
+  // vencer p.transitorioHasta.
   const enComision = p.enComision === true
+  const ausente = p.ausente === true
 
   const cornerControls = (
     <div className="absolute top-3 right-3 flex items-center gap-1">
@@ -72,6 +78,26 @@ export function PersonCard({
             className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-rose-300 hover:text-rose-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           >
             <Trash2 size={13} />
+          </button>
+        )}
+        {isAdmin && onCargoTransitorio && (
+          <button
+            type="button"
+            onClick={onCargoTransitorio}
+            title="Cargo Transitorio"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-sky-300 hover:text-sky-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          >
+            <Route size={13} />
+          </button>
+        )}
+        {isAdmin && onAusentismo && (
+          <button
+            type="button"
+            onClick={onAusentismo}
+            title="Ausentismo"
+            className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:border-violet-300 hover:text-violet-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          >
+            <CalendarX size={13} />
           </button>
         )}
       </div>
@@ -141,11 +167,13 @@ export function PersonCard({
       className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
         vigenciaVencida
           ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
-          : enComision
-            ? 'border-sky-400 bg-sky-50/40 dark:border-sky-500/60 dark:bg-sky-500/5'
-            : vigenciaFutura
-              ? 'border-emerald-400 bg-slate-200 dark:border-emerald-500/60 dark:bg-slate-900/80'
-              : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+          : ausente
+            ? 'border-violet-400 bg-violet-50/40 dark:border-violet-500/60 dark:bg-violet-500/5'
+            : enComision
+              ? 'border-sky-400 bg-sky-50/40 dark:border-sky-500/60 dark:bg-sky-500/5'
+              : vigenciaFutura
+                ? 'border-emerald-400 bg-slate-200 dark:border-emerald-500/60 dark:bg-slate-900/80'
+                : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
       }`}
     >
       {cornerControls}
@@ -184,6 +212,12 @@ export function PersonCard({
             <p className="mt-0.5 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
               Cargo transitorio{p.origenTribunal && <> · titular en {p.origenTribunal}</>}
               {p.transitorioHasta && <> · vuelve el {formatFecha(p.transitorioHasta)}</>}
+            </p>
+          )}
+          {ausente && (
+            <p className="mt-0.5 truncate text-xs font-medium text-violet-600 dark:text-violet-400">
+              Ausente: {ausenteTipoLabel(p.ausenteTipo, p.ausenteMotivo)}
+              {p.ausenteHasta && <> · vuelve el {formatFecha(p.ausenteHasta)}</>}
             </p>
           )}
         </div>

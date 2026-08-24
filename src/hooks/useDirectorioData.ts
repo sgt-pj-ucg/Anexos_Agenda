@@ -5,6 +5,7 @@ import { getAdminPassword } from '../lib/auth'
 import { slugify } from '../lib/normalize'
 import { esVigenciaFutura } from '../lib/vigencia'
 import { aplicarCargoTransitorio } from '../lib/cargoTransitorio'
+import { aplicarAusentismo } from '../lib/ausentismo'
 import { useIsAdmin } from '../context/RoleContext'
 import type {
   Cambio,
@@ -36,12 +37,17 @@ interface PersonaRow {
   vigencia_desde: string | null
   vigencia_hasta: string | null
   cargo_transitorio: string | null
+  calidad_juridica_transitoria: string | null
   tribunal_transitorio: string | null
   unidad_transitorio: string | null
   seccion_transitorio: Seccion | null
   comuna_transitorio: string | null
   transitorio_desde: string | null
   transitorio_hasta: string | null
+  ausente_tipo: string | null
+  ausente_motivo: string | null
+  ausente_desde: string | null
+  ausente_hasta: string | null
   orden: number
   updated_at: string
 }
@@ -116,12 +122,17 @@ function rowToPersona(row: PersonaRow): Persona {
     vigenciaDesde: row.vigencia_desde,
     vigenciaHasta: row.vigencia_hasta,
     cargoTransitorio: row.cargo_transitorio,
+    calidadJuridicaTransitoria: row.calidad_juridica_transitoria,
     tribunalTransitorio: row.tribunal_transitorio,
     unidadTransitorio: row.unidad_transitorio,
     seccionTransitorio: row.seccion_transitorio,
     comunaTransitorio: row.comuna_transitorio,
     transitorioDesde: row.transitorio_desde,
     transitorioHasta: row.transitorio_hasta,
+    ausenteTipo: row.ausente_tipo,
+    ausenteMotivo: row.ausente_motivo,
+    ausenteDesde: row.ausente_desde,
+    ausenteHasta: row.ausente_hasta,
   }
 }
 
@@ -407,8 +418,13 @@ export function useDirectorioData() {
   // Mientras un cargo transitorio está vigente, la persona se muestra en su
   // tribunal/unidad de destino (buscador, grupos, organigrama, correo
   // masivo); el registro guardado (peopleOrigen) nunca se toca, así que el
-  // regreso al tribunal de origen al vencer es automático.
-  const peopleConComision = useMemo(() => peopleRaw.map(aplicarCargoTransitorio), [peopleRaw])
+  // regreso al tribunal de origen al vencer es automático. El ausentismo no
+  // traslada a nadie, solo agrega la marca de "ausente" mientras esté
+  // vigente.
+  const peopleConComision = useMemo(
+    () => peopleRaw.map(aplicarCargoTransitorio).map(aplicarAusentismo),
+    [peopleRaw],
+  )
 
   // Un cargo cargado con "vigente desde" en el futuro (por proactividad,
   // antes de que empiece su período) solo lo ven los administradores; para

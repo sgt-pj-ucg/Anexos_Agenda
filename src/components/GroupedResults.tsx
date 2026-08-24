@@ -22,6 +22,8 @@ interface Props {
   onEditFicha?: (ficha: FichaTribunal) => void
   onReportPerson?: (p: Persona) => void
   onReportFicha?: (ficha: FichaTribunal) => void
+  onCargoTransitorioPerson?: (p: Persona) => void
+  onAusentismoPerson?: (p: Persona) => void
   isFavorite?: (id: string) => boolean
   onToggleFavorite?: (id: string) => void
 }
@@ -35,6 +37,8 @@ export function GroupedResults({
   onEditFicha,
   onReportPerson,
   onReportFicha,
+  onCargoTransitorioPerson,
+  onAusentismoPerson,
   isFavorite,
   onToggleFavorite,
 }: Props) {
@@ -97,6 +101,8 @@ export function GroupedResults({
                     onEdit={onEditPerson ? () => onEditPerson(p) : undefined}
                     onDelete={onDeletePerson ? () => onDeletePerson(p) : undefined}
                     onReport={onReportPerson ? () => onReportPerson(p) : undefined}
+                    onCargoTransitorio={onCargoTransitorioPerson ? () => onCargoTransitorioPerson(p) : undefined}
+                    onAusentismo={onAusentismoPerson ? () => onAusentismoPerson(p) : undefined}
                     isFavorite={isFavorite?.(p.id)}
                     onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(p.id) : undefined}
                   />

@@ -17,6 +17,7 @@ export function aplicarCargoTransitorio(p: Persona): Persona {
   return {
     ...p,
     cargo: p.cargoTransitorio ?? p.cargo,
+    calidadJuridica: p.calidadJuridicaTransitoria ?? p.calidadJuridica,
     unidad: p.unidadTransitorio ?? p.unidad,
     seccion: p.seccionTransitorio ?? p.seccion,
     tribunal: p.tribunalTransitorio ?? p.tribunal,
@@ -25,5 +26,6 @@ export function aplicarCargoTransitorio(p: Persona): Persona {
     origenCargo: p.cargo,
     origenUnidad: p.unidad,
     origenTribunal: p.tribunal,
+    origenCalidadJuridica: p.calidadJuridica,
   }
 }

@@ -44,18 +44,28 @@ export interface Persona {
   // toda la plataforma (buscador, grupos, organigrama); al pasar
   // "transitorioHasta" la persona vuelve sola a su tribunal de origen.
   cargoTransitorio: string | null
+  calidadJuridicaTransitoria: string | null
   tribunalTransitorio: string | null
   unidadTransitorio: string | null
   seccionTransitorio: Seccion | null
   comunaTransitorio: string | null
   transitorioDesde: string | null
   transitorioHasta: string | null
-  // Agregados en memoria por aplicarCargoTransitorio() cuando la comisión
-  // está vigente: no se guardan en la base de datos.
+  // Ausentismo (licencia médica, feriado legal, permiso, etc.): no mueve a
+  // la persona de tribunal, solo la marca como ausente mientras está
+  // vigente; al pasar "ausenteHasta" vuelve sola a la normalidad.
+  ausenteTipo: string | null
+  ausenteMotivo: string | null
+  ausenteDesde: string | null
+  ausenteHasta: string | null
+  // Agregados en memoria por aplicarCargoTransitorio()/aplicarAusentismo()
+  // cuando corresponde: no se guardan en la base de datos.
   enComision?: boolean
   origenCargo?: string | null
   origenUnidad?: string
   origenTribunal?: string | null
+  origenCalidadJuridica?: string | null
+  ausente?: boolean
 }
 
 export type CategoriaExterna =

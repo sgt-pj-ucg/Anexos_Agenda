@@ -1,6 +1,7 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent } from 'react'
 import { X } from 'lucide-react'
 import type { FichaTribunal, Persona } from '../types'
+import { Field, inputClass } from './formPrimitives'
 
 export interface PersonFormValues {
   nombre: string
@@ -13,25 +14,9 @@ export interface PersonFormValues {
   vigenciaHasta: string
   esGenerico: boolean
   destino: string
-  transitorioCargo: string
-  transitorioDestino: string
-  transitorioDesde: string
-  transitorioHasta: string
 }
 
-// Reconstruye la opción del selector ("tribunal:<id>" o "corte:<unidad>") a
-// partir del cargo transitorio ya guardado, para que al editar se vea la
-// comisión actual en vez de partir en blanco.
-function destinoTransitorioActual(p: Persona | undefined, tribunales: FichaTribunal[]): string {
-  if (!p?.tribunalTransitorio && !p?.unidadTransitorio) return ''
-  if (p.seccionTransitorio === 'tribunal') {
-    const ficha = tribunales.find((t) => t.nombre === p.tribunalTransitorio)
-    return ficha ? `tribunal:${ficha.id}` : ''
-  }
-  return p.unidadTransitorio ? `corte:${p.unidadTransitorio}` : ''
-}
-
-function toFormValues(p: Persona | undefined, tribunales: FichaTribunal[]): PersonFormValues {
+function toFormValues(p?: Persona): PersonFormValues {
   return {
     nombre: p && !p.vacante ? p.nombre : '',
     cargo: p?.cargo ?? '',
@@ -43,10 +28,6 @@ function toFormValues(p: Persona | undefined, tribunales: FichaTribunal[]): Pers
     vigenciaHasta: p?.vigenciaHasta ?? '',
     esGenerico: p?.esGenerico ?? false,
     destino: '',
-    transitorioCargo: p?.cargoTransitorio ?? '',
-    transitorioDestino: destinoTransitorioActual(p, tribunales),
-    transitorioDesde: p?.transitorioDesde ?? '',
-    transitorioHasta: p?.transitorioHasta ?? '',
   }
 }
 
@@ -69,29 +50,14 @@ export function PersonEditModal({
   onCancel,
   onSubmit,
 }: Props) {
-  const [values, setValues] = useState<PersonFormValues>(() => toFormValues(initial, tribunales))
+  const [values, setValues] = useState<PersonFormValues>(() => toFormValues(initial))
 
   const set = <K extends keyof PersonFormValues>(key: K, value: PersonFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }))
 
-  const quitarTransitorio = () =>
-    setValues((v) => ({ ...v, transitorioCargo: '', transitorioDestino: '', transitorioDesde: '', transitorioHasta: '' }))
-
-  const transitorioCompleto =
-    values.transitorioDestino && values.transitorioCargo.trim() && values.transitorioDesde && values.transitorioHasta
-  const transitorioParcial =
-    !transitorioCompleto &&
-    (values.transitorioDestino || values.transitorioCargo.trim() || values.transitorioDesde || values.transitorioHasta)
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!values.nombre.trim()) return
-    if (transitorioParcial) {
-      window.alert(
-        'Para el cargo transitorio completa destino, cargo, desde y hasta — o usa "Quitar cargo transitorio" para dejarlo vacío.',
-      )
-      return
-    }
     onSubmit(values)
   }
 
@@ -225,93 +191,12 @@ export function PersonEditModal({
                 )}
               </select>
               <span className="mt-1 block text-[11px] text-slate-400 dark:text-slate-500">
-                Úsalo cuando este funcionario cambie de tribunal, o vaya de/hacia la Corte de
-                Apelaciones: actualiza unidad, tribunal y comuna en un solo paso.
+                Úsalo cuando este funcionario cambie de tribunal de forma definitiva, o vaya
+                de/hacia la Corte de Apelaciones: actualiza unidad, tribunal y comuna en un solo
+                paso. Para una comisión de servicio con fecha de regreso, usa el botón "Cargo
+                Transitorio" en su tarjeta.
               </span>
             </Field>
-          )}
-
-          {initial && (tribunales.length > 0 || corteUnidades.length > 0) && (
-            <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/60 p-3 dark:border-sky-900/50 dark:bg-sky-500/5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold text-sky-800 dark:text-sky-300">Cargo Transitorio</p>
-                {(values.transitorioCargo ||
-                  values.transitorioDestino ||
-                  values.transitorioDesde ||
-                  values.transitorioHasta) && (
-                  <button
-                    type="button"
-                    onClick={quitarTransitorio}
-                    className="text-[11px] font-medium text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400"
-                  >
-                    Quitar cargo transitorio
-                  </button>
-                )}
-              </div>
-              <p className="text-[11px] text-sky-700/80 dark:text-sky-400/80">
-                Nombre: {values.nombre || '—'} · Correo: {values.correos || '(sin correo)'} (se mantienen)
-              </p>
-              <Field label="Cargo al que va">
-                <input
-                  value={values.transitorioCargo}
-                  onChange={(e) => set('transitorioCargo', e.target.value)}
-                  placeholder="Cargo en el tribunal de destino"
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Nuevo tribunal o unidad">
-                <select
-                  value={values.transitorioDestino}
-                  onChange={(e) => set('transitorioDestino', e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">(elegir destino)</option>
-                  {corteUnidades.length > 0 && (
-                    <optgroup label="Corte de Apelaciones">
-                      {corteUnidades.map((u) => (
-                        <option key={u} value={`corte:${u}`}>
-                          {u}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {tribunales.length > 0 && (
-                    <optgroup label="Tribunales">
-                      {tribunales.map((t) => (
-                        <option key={t.id} value={`tribunal:${t.id}`}>
-                          {t.nombre}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Desde">
-                  <input
-                    type="date"
-                    value={values.transitorioDesde}
-                    onChange={(e) => set('transitorioDesde', e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-                <Field label="Hasta">
-                  <input
-                    type="date"
-                    value={values.transitorioHasta}
-                    onChange={(e) => set('transitorioHasta', e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-              </div>
-              <p className="text-[11px] text-sky-700/80 dark:text-sky-400/80">
-                Úsalo cuando el funcionario vaya en comisión de servicio a otro tribunal o unidad,
-                por un período con fecha de término conocida. Al guardar, aparecerá en el destino
-                desde la fecha "desde" (o de inmediato si ya llegó); al pasar la fecha "hasta"
-                vuelve solo a su tribunal de origen, sin que nadie tenga que hacer nada. El cargo
-                oficial de arriba no se modifica.
-              </p>
-            </div>
           )}
         </div>
 
@@ -332,17 +217,5 @@ export function PersonEditModal({
         </div>
       </form>
     </div>
-  )
-}
-
-const inputClass =
-  'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:ring-indigo-500/10'
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-300">{label}</span>
-      {children}
-    </label>
   )
 }

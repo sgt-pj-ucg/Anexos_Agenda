@@ -20,10 +20,13 @@ import {
 import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
+import { resolverDestino } from './lib/destinoTribunal'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
+import type { CargoTransitorioFormValues } from './components/CargoTransitorioModal'
+import type { AusentismoFormValues } from './components/AusentismoModal'
 import type { TribunalFormValues } from './components/TribunalEditModal'
 import type { ContactoExternoFormValues } from './components/ContactoExternoEditModal'
 
@@ -44,6 +47,8 @@ import { FlatResults } from './components/FlatResults'
 import { EmptyState } from './components/EmptyState'
 import { Footer } from './components/Footer'
 import { PersonEditModal } from './components/PersonEditModal'
+import { CargoTransitorioModal } from './components/CargoTransitorioModal'
+import { AusentismoModal } from './components/AusentismoModal'
 import { TribunalEditModal } from './components/TribunalEditModal'
 import { ReportIssueModal } from './components/ReportIssueModal'
 import { NovedadesPanel } from './components/NovedadesPanel'
@@ -101,6 +106,8 @@ export default function App() {
   const [externosPickerOpen, setExternosPickerOpen] = useState(false)
   const [categoriaExterna, setCategoriaExterna] = useState<CategoriaExterna>(CATEGORIA_ORDER[0])
   const [modal, setModal] = useState<ModalState>(null)
+  const [cargoTransitorioTarget, setCargoTransitorioTarget] = useState<Persona | null>(null)
+  const [ausentismoTarget, setAusentismoTarget] = useState<Persona | null>(null)
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
   const [novedadesOpen, setNovedadesOpen] = useState(false)
@@ -310,6 +317,8 @@ export default function App() {
   // servicio (donde "people" ya muestra el destino transitorio).
   const peopleOrigenById = useMemo(() => new Map(peopleOrigen.map((p) => [p.id, p])), [peopleOrigen])
   const editarPersona = (p: Persona) => setModal({ mode: 'edit', person: peopleOrigenById.get(p.id) ?? p })
+  const abrirCargoTransitorio = (p: Persona) => setCargoTransitorioTarget(peopleOrigenById.get(p.id) ?? p)
+  const abrirAusentismo = (p: Persona) => setAusentismoTarget(peopleOrigenById.get(p.id) ?? p)
 
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
@@ -462,9 +471,6 @@ export default function App() {
     const calidadJuridica = values.calidadJuridica.trim() || null
     const vigenciaDesde = values.vigenciaDesde.trim() || null
     const vigenciaHasta = values.vigenciaHasta.trim() || null
-    const transitorioCargo = values.transitorioCargo.trim() || null
-    const transitorioDesde = values.transitorioDesde.trim() || null
-    const transitorioHasta = values.transitorioHasta.trim() || null
 
     try {
       if (modal?.mode === 'edit') {
@@ -484,61 +490,13 @@ export default function App() {
 
         // "Trasladar a": mueve de un tribunal a otro, o hacia/desde la
         // Corte de Apelaciones, actualizando unidad/tribunal/comuna/sección
-        // juntos en un solo paso.
-        if (values.destino) {
-          const idx = values.destino.indexOf(':')
-          const kind = values.destino.slice(0, idx)
-          const ref = values.destino.slice(idx + 1)
-          if (kind === 'tribunal') {
-            const ficha = tribunales.find((t) => t.id === ref)
-            if (ficha) {
-              patch.seccion = 'tribunal'
-              patch.tribunal = ficha.nombre
-              patch.unidad = ficha.nombre
-              patch.comuna = ficha.comuna
-            }
-          } else if (kind === 'corte') {
-            patch.seccion = corteUnidadSeccion.get(ref) ?? 'corte'
-            patch.tribunal = 'Corte de Apelaciones de La Serena'
-            patch.unidad = ref
-            patch.comuna = 'La Serena'
-          }
-        }
-
-        // Cargo Transitorio: comisión de servicio a otro tribunal/unidad por
-        // un período con fecha de término conocida. useDirectorioData se
-        // encarga de mostrar a la persona en el destino mientras esté
-        // vigente, y de devolverla sola a estos datos de origen al vencer.
-        // Si se dejó vacío (o se usó "Quitar cargo transitorio"), se limpia.
-        if (values.transitorioDestino) {
-          const idx = values.transitorioDestino.indexOf(':')
-          const kind = values.transitorioDestino.slice(0, idx)
-          const ref = values.transitorioDestino.slice(idx + 1)
-          patch.cargoTransitorio = transitorioCargo
-          patch.transitorioDesde = transitorioDesde
-          patch.transitorioHasta = transitorioHasta
-          if (kind === 'tribunal') {
-            const ficha = tribunales.find((t) => t.id === ref)
-            if (ficha) {
-              patch.seccionTransitorio = 'tribunal'
-              patch.tribunalTransitorio = ficha.nombre
-              patch.unidadTransitorio = ficha.nombre
-              patch.comunaTransitorio = ficha.comuna
-            }
-          } else if (kind === 'corte') {
-            patch.seccionTransitorio = corteUnidadSeccion.get(ref) ?? 'corte'
-            patch.tribunalTransitorio = 'Corte de Apelaciones de La Serena'
-            patch.unidadTransitorio = ref
-            patch.comunaTransitorio = 'La Serena'
-          }
-        } else {
-          patch.cargoTransitorio = null
-          patch.tribunalTransitorio = null
-          patch.unidadTransitorio = null
-          patch.seccionTransitorio = null
-          patch.comunaTransitorio = null
-          patch.transitorioDesde = null
-          patch.transitorioHasta = null
+        // juntos en un solo paso, de forma permanente e inmediata.
+        const destino = resolverDestino(values.destino, tribunales, corteUnidadSeccion)
+        if (destino) {
+          patch.seccion = destino.seccion
+          patch.tribunal = destino.tribunal
+          patch.unidad = destino.unidad
+          patch.comuna = destino.comuna
         }
 
         await updatePerson(patch, modal.person.id)
@@ -560,17 +518,65 @@ export default function App() {
           vigenciaDesde,
           vigenciaHasta,
           cargoTransitorio: null,
+          calidadJuridicaTransitoria: null,
           tribunalTransitorio: null,
           unidadTransitorio: null,
           seccionTransitorio: null,
           comunaTransitorio: null,
           transitorioDesde: null,
           transitorioHasta: null,
+          ausenteTipo: null,
+          ausenteMotivo: null,
+          ausenteDesde: null,
+          ausenteHasta: null,
         })
       }
       setModal(null)
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'No se pudo guardar el contacto.')
+    }
+  }
+
+  const handleSubmitCargoTransitorio = async (values: CargoTransitorioFormValues) => {
+    if (!cargoTransitorioTarget) return
+    const patch: Partial<Persona> = {
+      cargoTransitorio: values.cargo.trim() || null,
+      calidadJuridicaTransitoria: values.calidadJuridica.trim() || null,
+      transitorioDesde: values.desde.trim() || null,
+      transitorioHasta: values.hasta.trim() || null,
+      tribunalTransitorio: null,
+      unidadTransitorio: null,
+      seccionTransitorio: null,
+      comunaTransitorio: null,
+    }
+    const destino = resolverDestino(values.destino, tribunales, corteUnidadSeccion)
+    if (destino) {
+      patch.seccionTransitorio = destino.seccion
+      patch.tribunalTransitorio = destino.tribunal
+      patch.unidadTransitorio = destino.unidad
+      patch.comunaTransitorio = destino.comuna
+    }
+    try {
+      await updatePerson(patch, cargoTransitorioTarget.id)
+      setCargoTransitorioTarget(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo guardar el cargo transitorio.')
+    }
+  }
+
+  const handleSubmitAusentismo = async (values: AusentismoFormValues) => {
+    if (!ausentismoTarget) return
+    const patch: Partial<Persona> = {
+      ausenteTipo: values.tipo || null,
+      ausenteMotivo: values.motivo.trim() || null,
+      ausenteDesde: values.desde.trim() || null,
+      ausenteHasta: values.hasta.trim() || null,
+    }
+    try {
+      await updatePerson(patch, ausentismoTarget.id)
+      setAusentismoTarget(null)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo guardar el ausentismo.')
     }
   }
 
@@ -771,6 +777,8 @@ export default function App() {
                   <FlatResults
                     people={favoriteResults}
                     onEditPerson={editarPersona}
+                    onCargoTransitorioPerson={abrirCargoTransitorio}
+                    onAusentismoPerson={abrirAusentismo}
                     onDeletePerson={setDeleteTarget}
                     onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
                     isFavorite={(id) => favorites.has(id)}
@@ -817,6 +825,8 @@ export default function App() {
                         <FlatResults
                           people={filteredResults}
                           onEditPerson={editarPersona}
+                    onCargoTransitorioPerson={abrirCargoTransitorio}
+                    onAusentismoPerson={abrirAusentismo}
                           onDeletePerson={setDeleteTarget}
                           onReportPerson={(p) => openReport(p.nombre, [p.unidad, p.cargo ?? ''])}
                           isFavorite={(id) => favorites.has(id)}
@@ -827,6 +837,8 @@ export default function App() {
                           groups={groups}
                           collapsible={section === 'tribunal'}
                           onEditPerson={editarPersona}
+                    onCargoTransitorioPerson={abrirCargoTransitorio}
+                    onAusentismoPerson={abrirAusentismo}
                           onDeletePerson={setDeleteTarget}
                           onAddPerson={(g) => setModal({ mode: 'add', group: g })}
                           onEditFicha={setFichaModal}
@@ -900,6 +912,24 @@ export default function App() {
           corteUnidades={corteUnidades}
           onCancel={() => setModal(null)}
           onSubmit={handleSubmitModal}
+        />
+      )}
+
+      {cargoTransitorioTarget && (
+        <CargoTransitorioModal
+          persona={cargoTransitorioTarget}
+          tribunales={tribunales}
+          corteUnidades={corteUnidades}
+          onCancel={() => setCargoTransitorioTarget(null)}
+          onSubmit={handleSubmitCargoTransitorio}
+        />
+      )}
+
+      {ausentismoTarget && (
+        <AusentismoModal
+          persona={ausentismoTarget}
+          onCancel={() => setAusentismoTarget(null)}
+          onSubmit={handleSubmitAusentismo}
         />
       )}
 
