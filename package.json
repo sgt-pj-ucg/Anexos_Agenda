@@ -1,26 +1,31 @@
 {
-  "name": "tesoreria-iglesia-2026",
+  "name": "directorio-judicial-la-serena",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.57.0",
-    "next": "^15.5.21",
-    "pdf-parse": "1.1.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "xlsx": "0.18.5"
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@supabase/supabase-js": "^2.110.8",
+    "lucide-react": "^1.24.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@types/node": "22.10.2",
-    "@types/pdf-parse": "1.1.4",
-    "@types/react": "19.0.2",
-    "@types/react-dom": "19.0.2",
-    "typescript": "5.7.2"
+    "@tailwindcss/vite": "^4.3.2",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "oxlint": "^1.71.0",
+    "tailwindcss": "^4.3.2",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
   }
 }
