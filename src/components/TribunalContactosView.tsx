@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Gavel, Mail, Pencil, UserCog } from 'lucide-react'
+import { Gavel, Mail, Pencil, UserCog, type LucideIcon } from 'lucide-react'
 import type { FichaTribunal, Persona } from '../types'
 import { COMUNA_ORDER, comunaRank } from '../lib/comunas'
 import { MATERIA_ORDER } from '../lib/materias'
@@ -13,14 +13,45 @@ function uniqueEmails(values: (string | null)[]): string[] {
   return Array.from(new Set(values.filter((v): v is string => Boolean(v))))
 }
 
+function CorreoSeleccionable({
+  correo,
+  icon: Icon,
+  label,
+  seleccionado,
+  onToggle,
+}: {
+  correo: string
+  icon: LucideIcon
+  label: string
+  seleccionado: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="checkbox"
+        checked={seleccionado}
+        onChange={onToggle}
+        title="Seleccionar para armar un grupo de correo"
+        className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-400 dark:border-slate-600"
+      />
+      <CopyChip value={correo} icon={<Icon size={12} />} href={`mailto:${correo}`} label={label} />
+    </div>
+  )
+}
+
 export function TribunalContactosView({
   tribunales,
   personas,
   onEditFicha,
+  correosSeleccionados,
+  onToggleCorreo,
 }: {
   tribunales: FichaTribunal[]
   personas: Persona[]
   onEditFicha: (ficha: FichaTribunal) => void
+  correosSeleccionados?: Set<string>
+  onToggleCorreo?: (correo: string) => void
 }) {
   const isAdmin = useIsAdmin()
   const [comuna, setComuna] = useState<string | null>(null)
@@ -124,12 +155,22 @@ export function TribunalContactosView({
                 </td>
                 <td className="px-3 py-2.5 align-top">
                   {t.correo ? (
-                    <CopyChip
-                      value={t.correo}
-                      icon={<Mail size={12} />}
-                      href={`mailto:${t.correo}`}
-                      label="correo genérico"
-                    />
+                    onToggleCorreo ? (
+                      <CorreoSeleccionable
+                        correo={t.correo}
+                        icon={Mail}
+                        label="correo genérico"
+                        seleccionado={correosSeleccionados?.has(t.correo) ?? false}
+                        onToggle={() => onToggleCorreo(t.correo!)}
+                      />
+                    ) : (
+                      <CopyChip
+                        value={t.correo}
+                        icon={<Mail size={12} />}
+                        href={`mailto:${t.correo}`}
+                        label="correo genérico"
+                      />
+                    )
                   ) : (
                     <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
                   )}
@@ -137,12 +178,22 @@ export function TribunalContactosView({
                 <td className="px-3 py-2.5 align-top">
                   {t.correoAdminSecretario ? (
                     <>
-                      <CopyChip
-                        value={t.correoAdminSecretario}
-                        icon={<UserCog size={12} />}
-                        href={`mailto:${t.correoAdminSecretario}`}
-                        label="correo administrador o secretario"
-                      />
+                      {onToggleCorreo ? (
+                        <CorreoSeleccionable
+                          correo={t.correoAdminSecretario}
+                          icon={UserCog}
+                          label="correo administrador o secretario"
+                          seleccionado={correosSeleccionados?.has(t.correoAdminSecretario) ?? false}
+                          onToggle={() => onToggleCorreo(t.correoAdminSecretario!)}
+                        />
+                      ) : (
+                        <CopyChip
+                          value={t.correoAdminSecretario}
+                          icon={<UserCog size={12} />}
+                          href={`mailto:${t.correoAdminSecretario}`}
+                          label="correo administrador o secretario"
+                        />
+                      )}
                       {nombrePorCorreo.get(t.correoAdminSecretario) && (
                         <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-400">
                           {nombrePorCorreo.get(t.correoAdminSecretario)}
@@ -156,12 +207,22 @@ export function TribunalContactosView({
                 <td className="px-3 py-2.5 align-top">
                   {t.correoSegundoLider ? (
                     <>
-                      <CopyChip
-                        value={t.correoSegundoLider}
-                        icon={<Gavel size={12} />}
-                        href={`mailto:${t.correoSegundoLider}`}
-                        label="correo del Juez Presidente o Juez"
-                      />
+                      {onToggleCorreo ? (
+                        <CorreoSeleccionable
+                          correo={t.correoSegundoLider}
+                          icon={Gavel}
+                          label="correo del Juez Presidente o Juez"
+                          seleccionado={correosSeleccionados?.has(t.correoSegundoLider) ?? false}
+                          onToggle={() => onToggleCorreo(t.correoSegundoLider!)}
+                        />
+                      ) : (
+                        <CopyChip
+                          value={t.correoSegundoLider}
+                          icon={<Gavel size={12} />}
+                          href={`mailto:${t.correoSegundoLider}`}
+                          label="correo del Juez Presidente o Juez"
+                        />
+                      )}
                       {nombrePorCorreo.get(t.correoSegundoLider) && (
                         <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-400">
                           {nombrePorCorreo.get(t.correoSegundoLider)}

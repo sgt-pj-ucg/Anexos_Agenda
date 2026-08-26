@@ -47,6 +47,7 @@ import { FlatResults } from './components/FlatResults'
 import { EmptyState } from './components/EmptyState'
 import { Footer } from './components/Footer'
 import { PersonEditModal } from './components/PersonEditModal'
+import { SeleccionCorreosBar } from './components/SeleccionCorreosBar'
 import { CargoTransitorioModal } from './components/CargoTransitorioModal'
 import { AusentismoModal } from './components/AusentismoModal'
 import { TribunalEditModal } from './components/TribunalEditModal'
@@ -109,6 +110,7 @@ export default function App() {
   const [modal, setModal] = useState<ModalState>(null)
   const [cargoTransitorioTarget, setCargoTransitorioTarget] = useState<Persona | null>(null)
   const [ausentismoTarget, setAusentismoTarget] = useState<Persona | null>(null)
+  const [correosSeleccionados, setCorreosSeleccionados] = useState<Set<string>>(new Set())
   const [fichaModal, setFichaModal] = useState<FichaTribunal | null>(null)
   const [reportTarget, setReportTarget] = useState<ReportTarget>(null)
   const [novedadesOpen, setNovedadesOpen] = useState(false)
@@ -320,6 +322,15 @@ export default function App() {
   const editarPersona = (p: Persona) => setModal({ mode: 'edit', person: peopleOrigenById.get(p.id) ?? p })
   const abrirCargoTransitorio = (p: Persona) => setCargoTransitorioTarget(peopleOrigenById.get(p.id) ?? p)
   const abrirAusentismo = (p: Persona) => setAusentismoTarget(peopleOrigenById.get(p.id) ?? p)
+
+  const toggleCorreoSeleccionado = (correo: string) =>
+    setCorreosSeleccionados((prev) => {
+      const next = new Set(prev)
+      if (next.has(correo)) next.delete(correo)
+      else next.add(correo)
+      return next
+    })
+  const limpiarSeleccionCorreos = () => setCorreosSeleccionados(new Set())
 
   const handleSelectSection = (s: SeccionKey) => {
     setSection(s)
@@ -744,7 +755,13 @@ export default function App() {
                 onAddContacto={(cat) => setContactoExternoModal({ mode: 'add', categoria: cat })}
               />
             ) : contactosMode ? (
-              <TribunalContactosView tribunales={tribunales} personas={people} onEditFicha={setFichaModal} />
+              <TribunalContactosView
+                tribunales={tribunales}
+                personas={people}
+                onEditFicha={setFichaModal}
+                correosSeleccionados={correosSeleccionados}
+                onToggleCorreo={toggleCorreoSeleccionado}
+              />
             ) : organigramaMode ? (
               <>
                 <p className="text-sm text-slate-500 dark:text-slate-300">
@@ -827,8 +844,8 @@ export default function App() {
                           groups={groups}
                           collapsible={section === 'tribunal'}
                           onEditPerson={editarPersona}
-                    onCargoTransitorioPerson={abrirCargoTransitorio}
-                    onAusentismoPerson={abrirAusentismo}
+                          onCargoTransitorioPerson={abrirCargoTransitorio}
+                          onAusentismoPerson={abrirAusentismo}
                           onDeletePerson={setDeleteTarget}
                           onAddPerson={(g) => setModal({ mode: 'add', group: g })}
                           onEditFicha={setFichaModal}
@@ -836,6 +853,8 @@ export default function App() {
                           onReportFicha={(f) => openReport(f.nombre, ['Ficha de tribunal'])}
                           isFavorite={(id) => favorites.has(id)}
                           onToggleFavorite={toggleFavorite}
+                          correosSeleccionados={correosSeleccionados}
+                          onToggleCorreo={toggleCorreoSeleccionado}
                         />
                       ))}
 
@@ -892,6 +911,11 @@ export default function App() {
       </main>
 
       <Footer generatedAt={generatedAt} />
+
+      <SeleccionCorreosBar
+        correos={Array.from(correosSeleccionados)}
+        onLimpiar={limpiarSeleccionCorreos}
+      />
 
       {modal && (
         <PersonEditModal

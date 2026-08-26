@@ -21,7 +21,12 @@ function nuevaKey(): string {
   return `nuevo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+function periodoVacio(): CargoTransitorioPeriodoForm {
+  return { key: nuevaKey(), cargo: '', calidadJuridica: '', destino: '', desde: '', hasta: '' }
+}
+
 function toFormPeriodos(p: Persona, tribunales: FichaTribunal[]): CargoTransitorioPeriodoForm[] {
+  if (p.cargosTransitorios.length === 0) return [periodoVacio()]
   return p.cargosTransitorios.map((per) => ({
     key: per.id,
     cargo: per.cargo ?? '',
@@ -62,11 +67,7 @@ export function CargoTransitorioModal({
   const setPeriodo = <K extends keyof CargoTransitorioPeriodoForm>(key: string, campo: K, valor: CargoTransitorioPeriodoForm[K]) =>
     setPeriodos((prev) => prev.map((per) => (per.key === key ? { ...per, [campo]: valor } : per)))
 
-  const agregarPeriodo = () =>
-    setPeriodos((prev) => [
-      ...prev,
-      { key: nuevaKey(), cargo: '', calidadJuridica: '', destino: '', desde: '', hasta: '' },
-    ])
+  const agregarPeriodo = () => setPeriodos((prev) => [...prev, periodoVacio()])
 
   const eliminarPeriodo = (key: string) => {
     if (!window.confirm('¿Eliminar este período de cargo transitorio? Esta acción no se puede deshacer.')) return

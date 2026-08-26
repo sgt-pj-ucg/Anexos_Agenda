@@ -53,6 +53,13 @@ export interface GroupContact {
   cargo: string | null
 }
 
+// El correo "representativo" de una persona para armar grupos de envío: el
+// institucional (@pjud.cl) si tiene, si no el primero de la lista.
+export function personaCorreoPrincipal(p: Persona): string | null {
+  if (p.vacante || p.correos.length === 0) return null
+  return p.correos.find((e) => e.endsWith('@pjud.cl')) ?? p.correos[0]
+}
+
 export function collectGroupContacts(people: Persona[]): GroupContact[] {
   // Se ordena por nombre antes de extraer los correos para que, al revisar
   // los destinatarios en el cliente de correo, sea fácil comprobar cada
@@ -61,10 +68,8 @@ export function collectGroupContacts(people: Persona[]): GroupContact[] {
   const vistos = new Set<string>()
   const out: GroupContact[] = []
   for (const p of ordenados) {
-    if (p.vacante || p.correos.length === 0) continue
-    const institucional = p.correos.find((e) => e.endsWith('@pjud.cl'))
-    const correo = institucional ?? p.correos[0]
-    if (vistos.has(correo)) continue
+    const correo = personaCorreoPrincipal(p)
+    if (!correo || vistos.has(correo)) continue
     vistos.add(correo)
     out.push({ id: p.id, nombre: p.nombre, correo, unidad: p.unidad, cargo: p.cargo })
   }

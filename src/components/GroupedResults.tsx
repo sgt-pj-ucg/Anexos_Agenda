@@ -1,6 +1,7 @@
 import { UserPlus, Users } from 'lucide-react'
 import { useState } from 'react'
 import type { FichaTribunal, Persona } from '../types'
+import { personaCorreoPrincipal } from '../lib/mailto'
 import { PersonCard } from './PersonCard'
 import { TribunalFichaCard } from './TribunalFichaCard'
 import { GroupEmailButton } from './GroupEmailButton'
@@ -26,6 +27,8 @@ interface Props {
   onAusentismoPerson?: (p: Persona) => void
   isFavorite?: (id: string) => boolean
   onToggleFavorite?: (id: string) => void
+  correosSeleccionados?: Set<string>
+  onToggleCorreo?: (correo: string) => void
 }
 
 export function GroupedResults({
@@ -41,6 +44,8 @@ export function GroupedResults({
   onAusentismoPerson,
   isFavorite,
   onToggleFavorite,
+  correosSeleccionados,
+  onToggleCorreo,
 }: Props) {
   const isAdmin = useIsAdmin()
   // Los grupos colapsables (tribunales) empiezan siempre contraídos; solo se
@@ -94,19 +99,24 @@ export function GroupedResults({
             )}
             {!isCollapsed && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {g.people.map((p) => (
-                  <PersonCard
-                    key={p.id}
-                    p={p}
-                    onEdit={onEditPerson ? () => onEditPerson(p) : undefined}
-                    onDelete={onDeletePerson ? () => onDeletePerson(p) : undefined}
-                    onReport={onReportPerson ? () => onReportPerson(p) : undefined}
-                    onCargoTransitorio={onCargoTransitorioPerson ? () => onCargoTransitorioPerson(p) : undefined}
-                    onAusentismo={onAusentismoPerson ? () => onAusentismoPerson(p) : undefined}
-                    isFavorite={isFavorite?.(p.id)}
-                    onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(p.id) : undefined}
-                  />
-                ))}
+                {g.people.map((p) => {
+                  const correo = onToggleCorreo ? personaCorreoPrincipal(p) : null
+                  return (
+                    <PersonCard
+                      key={p.id}
+                      p={p}
+                      onEdit={onEditPerson ? () => onEditPerson(p) : undefined}
+                      onDelete={onDeletePerson ? () => onDeletePerson(p) : undefined}
+                      onReport={onReportPerson ? () => onReportPerson(p) : undefined}
+                      onCargoTransitorio={onCargoTransitorioPerson ? () => onCargoTransitorioPerson(p) : undefined}
+                      onAusentismo={onAusentismoPerson ? () => onAusentismoPerson(p) : undefined}
+                      isFavorite={isFavorite?.(p.id)}
+                      onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(p.id) : undefined}
+                      seleccionado={correo ? correosSeleccionados?.has(correo) : false}
+                      onToggleSeleccionar={correo ? () => onToggleCorreo?.(correo) : undefined}
+                    />
+                  )
+                })}
               </div>
             )}
           </section>

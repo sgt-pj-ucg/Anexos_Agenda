@@ -20,6 +20,8 @@ interface Props {
   onAusentismo?: () => void
   isFavorite?: boolean
   onToggleFavorite?: () => void
+  seleccionado?: boolean
+  onToggleSeleccionar?: () => void
 }
 
 export function PersonCard({
@@ -32,6 +34,8 @@ export function PersonCard({
   onAusentismo,
   isFavorite,
   onToggleFavorite,
+  seleccionado,
+  onToggleSeleccionar,
 }: Props) {
   const isAdmin = useIsAdmin()
   const [shareOpen, setShareOpen] = useState(false)
@@ -165,7 +169,7 @@ export function PersonCard({
   return (
     <>
     <div
-      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${onToggleSeleccionar ? 'pb-10' : ''} ${
         vigenciaVencida
           ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
           : ausente
@@ -269,6 +273,25 @@ export function PersonCard({
 
       {!cumpleHoy && cumpleParsed && (
         <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">🎂 {p.cumpleanos}</p>
+      )}
+
+      {onToggleSeleccionar && (
+        <label
+          title="Seleccionar para armar un grupo de correo"
+          className={`absolute right-3 bottom-3 flex cursor-pointer items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors ${
+            seleccionado
+              ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
+              : 'border-slate-200 bg-white text-slate-400 hover:border-emerald-300 hover:text-emerald-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={seleccionado ?? false}
+            onChange={onToggleSeleccionar}
+            className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-400 dark:border-slate-600"
+          />
+          Enviar
+        </label>
       )}
     </div>
     {shareOpen && <ShareContactModal p={p} onClose={() => setShareOpen(false)} />}
