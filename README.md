@@ -1,45 +1,31 @@
-# Directorio Judicial · Corte de Apelaciones de La Serena
+# Tesorería Iglesia 2026 — Fase 1
 
-Plataforma web para buscar y consultar rápidamente contactos, correos y
-anexos telefónicos de la Corte de Apelaciones de La Serena, sus unidades
-especializadas (Insolvencia, CINJ, ULE, CSMP, CAPJ Zonal) y los 26
-tribunales de primera instancia de la IV Región de Coquimbo.
+Proyecto Next.js inicial con navegación, presupuesto y modelo relacional PostgreSQL/Prisma.
 
-## Características
+## Ejecutar
 
-- **Búsqueda global instantánea** por nombre, cargo, unidad, tribunal,
-  correo, anexo o RUT (sin distinguir mayúsculas/acentos).
-- **Navegación por secciones**: Corte de Apelaciones, Tribunales de la
-  Jurisdicción, Insolvencia, CINJ, ULE, CSMP y CAPJ Zonal.
-- **Filtro por comuna** dentro de Tribunales (La Serena, Coquimbo, Ovalle,
-  Illapel, Vicuña, Combarbalá, Los Vilos, Andacollo).
-- **Ficha rápida por tribunal**: correo general, teléfono, ministro(a)
-  visitador(a) y competencias (Civil, Laboral, Familia, Penal, etc.).
-- Copiado de correo/anexo con un clic, enlaces `mailto:`/`tel:`.
-- Aviso de cumpleaños del día y modo oscuro/claro.
+En esta carpeta: `npm install` y después `npm run dev`. Abra `http://localhost:3000`.
 
-## Desarrollo
+## Supabase
 
-```bash
-npm install
-npm run dev
-```
+Copie `.env.example` como `.env.local` y complete las variables. Ejecute primero `supabase/migrations/20260823_initial_schema.sql` en el SQL Editor de Supabase. La migración crea las tablas, activa RLS, revoca todo acceso de `anon`/`authenticated` y crea un bucket privado para cartolas. Las políticas y la autenticación se habilitarán junto con el módulo de usuarios; hasta entonces, el acceso está denegado por defecto.
 
-## Actualizar los datos
+## Fuentes verificadas
 
-Los contactos se generan a partir del Excel fuente en
-`data/source/agenda-corte.xlsx` (pestañas *Anexos*, *Dotación*,
-*Jurisdicción* y *correos tribunales*). Para regenerar
-`src/data/directorio.json` tras actualizar ese archivo:
+- `Presupuesto año 2026.xlsx`: una hoja (`Ppto. 2026`), 26 partidas operativas y cinco categorías. Se preservan los montos mensuales; no se redistribuyen anualmente. Sus filas de subtotal muestran importes con decimales que no se pueden reproducir solo a partir de las partidas visibles; por exactitud, la interfaz suma las partidas operativas y conserva aquellos subtotales como información de origen que debe aclararse antes de una aprobación anual.
+- `CARTOLA BANCO ENERO 2026.pdf`: 5 páginas; cargos declarados CLP 4.901.066 y abonos CLP 4.081.007.
+- `FINAL CARTOLA ENERO 2026 CONCEPTOS (1).xlsx`: referencia de clasificación humana; no reemplaza la fuente bancaria.
 
-```bash
-pip install -r scripts/requirements.txt
-python3 scripts/build_data.py
-```
+## Diseño de conciliación para Fase 2
 
-## Build de producción
+Al cargar el PDF se guarda un hash de origen y se calcula un fingerprint por movimiento usando fecha, descripción, cargo/abono, monto y documento. El sistema compara sumas enteras extraídas con los totales declarados. Solo `RECONCILED` habilita un cierre mensual.
 
-```bash
-npm run build   # genera dist/
-npm run preview
-```
+## Riesgos técnicos del PDF
+
+Las descripciones se dividen entre líneas y algunas filas cambian de página; por ello, el extractor debe trabajar con coordenadas, continuar filas partidas y dejar el período en revisión si no concilia exactamente.
+
+## Criterios de aceptación
+
+**Fase 1:** importa categorías, partidas y montos mensuales con enteros CLP; permite ver cada mes y el acumulado; el modelo separa presupuesto mensual, transacción bancaria y clasificación.
+
+**Fase 2:** guarda el PDF; bloquea duplicados; extrae fecha, descripción, canal, documento, cargo, abono y saldo sin alterar el original; y para enero exige la conciliación de CLP 4.901.066 en cargos y CLP 4.081.007 en abonos antes del cierre.
