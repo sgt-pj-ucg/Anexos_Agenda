@@ -28,6 +28,7 @@
     "src/components/auth-gate.tsx",
     "src/lib/bank-statement-parser.ts",
     "src/lib/local-statement-store.ts",
+    "src/lib/statement-types.ts",
     "src/lib/supabase"
   ]
 }
