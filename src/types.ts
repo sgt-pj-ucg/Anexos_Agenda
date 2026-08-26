@@ -39,18 +39,12 @@ export interface Persona {
   fuente?: string
   vigenciaDesde: string | null
   vigenciaHasta: string | null
-  // Cargo transitorio (comisión de servicio en otro tribunal o unidad de la
-  // Corte): mientras está vigente, estos datos reemplazan a los de arriba en
-  // toda la plataforma (buscador, grupos, organigrama); al pasar
-  // "transitorioHasta" la persona vuelve sola a su tribunal de origen.
-  cargoTransitorio: string | null
-  calidadJuridicaTransitoria: string | null
-  tribunalTransitorio: string | null
-  unidadTransitorio: string | null
-  seccionTransitorio: Seccion | null
-  comunaTransitorio: string | null
-  transitorioDesde: string | null
-  transitorioHasta: string | null
+  // Cargos transitorios (comisiones de servicio en otro tribunal o unidad
+  // de la Corte): un funcionario puede tener varios períodos, uno por cada
+  // vez que rota. Mientras el de hoy está vigente, sus datos reemplazan a
+  // los de arriba en toda la plataforma (buscador, grupos, organigrama);
+  // fuera de todo período, la persona vuelve sola a su tribunal de origen.
+  cargosTransitorios: CargoTransitorioPeriodo[]
   // Ausentismo (licencia médica, feriado legal, permiso, etc.): no mueve a
   // la persona de tribunal, solo la marca como ausente mientras está
   // vigente; al pasar "ausenteHasta" vuelve sola a la normalidad.
@@ -65,7 +59,20 @@ export interface Persona {
   origenUnidad?: string
   origenTribunal?: string | null
   origenCalidadJuridica?: string | null
+  periodoActivo?: CargoTransitorioPeriodo
   ausente?: boolean
+}
+
+export interface CargoTransitorioPeriodo {
+  id: string
+  cargo: string | null
+  calidadJuridica: string | null
+  tribunal: string | null
+  unidad: string | null
+  seccion: Seccion | null
+  comuna: string | null
+  desde: string | null
+  hasta: string | null
 }
 
 export type CategoriaExterna =

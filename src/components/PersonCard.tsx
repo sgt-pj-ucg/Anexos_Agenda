@@ -217,12 +217,12 @@ export function PersonCard({
           )}
           {enComision && (
             <p
-              title={`Cargo transitorio${p.origenTribunal ? ` · titular en ${p.origenTribunal}` : ''}${p.transitorioHasta ? ` · vuelve el ${formatFecha(addDiasIso(p.transitorioHasta, 1))}` : ''}`}
+              title={`Cargo transitorio${p.origenTribunal ? ` · titular en ${p.origenTribunal}` : ''}${p.periodoActivo?.hasta ? ` · vuelve el ${formatFecha(addDiasIso(p.periodoActivo.hasta, 1))}` : ''}`}
               className="mt-0.5 truncate text-xs font-medium text-sky-600 dark:text-sky-400"
             >
               Cargo transitorio{p.origenTribunal && <> · titular en {p.origenTribunal}</>}
               {/* "hasta" es el último día vigente: vuelve recién al día siguiente. */}
-              {p.transitorioHasta && <> · vuelve el {formatFecha(addDiasIso(p.transitorioHasta, 1))}</>}
+              {p.periodoActivo?.hasta && <> · vuelve el {formatFecha(addDiasIso(p.periodoActivo.hasta, 1))}</>}
             </p>
           )}
           {ausente && (

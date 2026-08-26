@@ -9,6 +9,7 @@ import { aplicarAusentismo } from '../lib/ausentismo'
 import { useIsAdmin } from '../context/RoleContext'
 import type {
   Cambio,
+  CargoTransitorioPeriodo,
   CategoriaExterna,
   ContactoExterno,
   FichaTribunal,
@@ -36,20 +37,25 @@ interface PersonaRow {
   comuna: string | null
   vigencia_desde: string | null
   vigencia_hasta: string | null
-  cargo_transitorio: string | null
-  calidad_juridica_transitoria: string | null
-  tribunal_transitorio: string | null
-  unidad_transitorio: string | null
-  seccion_transitorio: Seccion | null
-  comuna_transitorio: string | null
-  transitorio_desde: string | null
-  transitorio_hasta: string | null
   ausente_tipo: string | null
   ausente_motivo: string | null
   ausente_desde: string | null
   ausente_hasta: string | null
   orden: number
   updated_at: string
+}
+
+interface CargoTransitorioRow {
+  id: string
+  persona_id: string
+  cargo: string | null
+  calidad_juridica: string | null
+  tribunal: string | null
+  unidad: string | null
+  seccion: Seccion | null
+  comuna: string | null
+  desde: string | null
+  hasta: string | null
 }
 
 interface TribunalRow {
@@ -102,7 +108,7 @@ interface ReporteRow {
   resolved_at: string | null
 }
 
-function rowToPersona(row: PersonaRow): Persona {
+function rowToPersona(row: PersonaRow, cargosTransitorios: CargoTransitorioRow[]): Persona {
   return {
     id: row.id,
     nombre: row.nombre,
@@ -121,18 +127,25 @@ function rowToPersona(row: PersonaRow): Persona {
     comuna: row.comuna,
     vigenciaDesde: row.vigencia_desde,
     vigenciaHasta: row.vigencia_hasta,
-    cargoTransitorio: row.cargo_transitorio,
-    calidadJuridicaTransitoria: row.calidad_juridica_transitoria,
-    tribunalTransitorio: row.tribunal_transitorio,
-    unidadTransitorio: row.unidad_transitorio,
-    seccionTransitorio: row.seccion_transitorio,
-    comunaTransitorio: row.comuna_transitorio,
-    transitorioDesde: row.transitorio_desde,
-    transitorioHasta: row.transitorio_hasta,
+    cargosTransitorios: cargosTransitorios.map(rowToCargoTransitorio),
     ausenteTipo: row.ausente_tipo,
     ausenteMotivo: row.ausente_motivo,
     ausenteDesde: row.ausente_desde,
     ausenteHasta: row.ausente_hasta,
+  }
+}
+
+function rowToCargoTransitorio(row: CargoTransitorioRow): CargoTransitorioPeriodo {
+  return {
+    id: row.id,
+    cargo: row.cargo,
+    calidadJuridica: row.calidad_juridica,
+    tribunal: row.tribunal,
+    unidad: row.unidad,
+    seccion: row.seccion,
+    comuna: row.comuna,
+    desde: row.desde,
+    hasta: row.hasta,
   }
 }
 
@@ -228,9 +241,10 @@ export function useDirectorioData() {
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const [personasRes, tribunalesRes] = await Promise.all([
+    const [personasRes, tribunalesRes, cargosRes] = await Promise.all([
       supabase.from('personas').select('*').order('orden', { ascending: true }),
       supabase.from('tribunales').select('*'),
+      supabase.from('cargos_transitorios').select('*'),
     ])
 
     if (personasRes.error || tribunalesRes.error) {
@@ -242,8 +256,16 @@ export function useDirectorioData() {
 
     const personaRows = (personasRes.data ?? []) as PersonaRow[]
     const tribunalRows = (tribunalesRes.data ?? []) as TribunalRow[]
+    // Tabla nueva: si todavía no se corrió su migración, se sigue
+    // funcionando sin cargos transitorios en vez de romper el directorio.
+    const cargoRows = (cargosRes.data ?? []) as CargoTransitorioRow[]
+    const cargosPorPersona = new Map<string, CargoTransitorioRow[]>()
+    for (const c of cargoRows) {
+      if (!cargosPorPersona.has(c.persona_id)) cargosPorPersona.set(c.persona_id, [])
+      cargosPorPersona.get(c.persona_id)!.push(c)
+    }
 
-    setPeople(personaRows.map(rowToPersona))
+    setPeople(personaRows.map((row) => rowToPersona(row, cargosPorPersona.get(row.id) ?? [])))
     setTribunales(tribunalRows.map(rowToFicha))
 
     const latest = [...personaRows, ...tribunalRows]
@@ -303,6 +325,7 @@ export function useDirectorioData() {
       .channel('directorio-cambios')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'personas' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tribunales' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cargos_transitorios' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cambios' }, () => loadCambios())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contactos_externos' }, () =>
         loadContactosExternos(),
@@ -337,6 +360,20 @@ export function useDirectorioData() {
     const existing = new Set(peopleRaw.map((p) => p.id))
     const id = uniqueId(`${draft.nombre}-${draft.unidad}`, existing)
     await writePersona({ ...draft, id })
+  }
+
+  // Reemplaza de una vez todos los períodos de cargo transitorio de una
+  // persona (la ventana emergente maneja la lista completa localmente y
+  // guarda todo junto al hacer clic en "Guardar").
+  const setCargosTransitorios = async (personaId: string, periodos: Omit<CargoTransitorioPeriodo, 'id'>[]) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_set_cargos_transitorios', {
+      admin_password,
+      p_persona_id: personaId,
+      periodos,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await load()
   }
 
   const deletePerson = async (id: string) => {
@@ -452,6 +489,7 @@ export function useDirectorioData() {
     updatePerson,
     createPerson,
     deletePerson,
+    setCargosTransitorios,
     updateFicha,
     createContactoExterno,
     updateContactoExterno,

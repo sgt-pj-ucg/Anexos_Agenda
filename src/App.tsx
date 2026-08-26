@@ -25,7 +25,7 @@ import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from '
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
-import type { CargoTransitorioFormValues } from './components/CargoTransitorioModal'
+import type { CargoTransitorioPeriodoForm } from './components/CargoTransitorioModal'
 import type { AusentismoFormValues } from './components/AusentismoModal'
 import type { TribunalFormValues } from './components/TribunalEditModal'
 import type { ContactoExternoFormValues } from './components/ContactoExternoEditModal'
@@ -85,6 +85,7 @@ export default function App() {
     updatePerson,
     createPerson,
     deletePerson,
+    setCargosTransitorios,
     updateFicha,
     createContactoExterno,
     updateContactoExterno,
@@ -517,14 +518,7 @@ export default function App() {
           comuna: sample?.comuna ?? null,
           vigenciaDesde,
           vigenciaHasta,
-          cargoTransitorio: null,
-          calidadJuridicaTransitoria: null,
-          tribunalTransitorio: null,
-          unidadTransitorio: null,
-          seccionTransitorio: null,
-          comunaTransitorio: null,
-          transitorioDesde: null,
-          transitorioHasta: null,
+          cargosTransitorios: [],
           ausenteTipo: null,
           ausenteMotivo: null,
           ausenteDesde: null,
@@ -537,27 +531,23 @@ export default function App() {
     }
   }
 
-  const handleSubmitCargoTransitorio = async (values: CargoTransitorioFormValues) => {
+  const handleSubmitCargoTransitorio = async (periodosForm: CargoTransitorioPeriodoForm[]) => {
     if (!cargoTransitorioTarget) return
-    const patch: Partial<Persona> = {
-      cargoTransitorio: values.cargo.trim() || null,
-      calidadJuridicaTransitoria: values.calidadJuridica.trim() || null,
-      transitorioDesde: values.desde.trim() || null,
-      transitorioHasta: values.hasta.trim() || null,
-      tribunalTransitorio: null,
-      unidadTransitorio: null,
-      seccionTransitorio: null,
-      comunaTransitorio: null,
-    }
-    const destino = resolverDestino(values.destino, tribunales, corteUnidadSeccion)
-    if (destino) {
-      patch.seccionTransitorio = destino.seccion
-      patch.tribunalTransitorio = destino.tribunal
-      patch.unidadTransitorio = destino.unidad
-      patch.comunaTransitorio = destino.comuna
-    }
+    const periodos = periodosForm.map((per) => {
+      const destino = resolverDestino(per.destino, tribunales, corteUnidadSeccion)
+      return {
+        cargo: per.cargo.trim() || null,
+        calidadJuridica: per.calidadJuridica.trim() || null,
+        tribunal: destino?.tribunal ?? null,
+        unidad: destino?.unidad ?? null,
+        seccion: destino?.seccion ?? null,
+        comuna: destino?.comuna ?? null,
+        desde: per.desde.trim() || null,
+        hasta: per.hasta.trim() || null,
+      }
+    })
     try {
-      await updatePerson(patch, cargoTransitorioTarget.id)
+      await setCargosTransitorios(cargoTransitorioTarget.id, periodos)
       setCargoTransitorioTarget(null)
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'No se pudo guardar el cargo transitorio.')
