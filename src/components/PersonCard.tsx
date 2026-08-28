@@ -206,7 +206,7 @@ export function PersonCard({
       {totalProgramados > 0 && (
         <span
           title={tooltipProgramados}
-          className="absolute top-2.5 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-[11px] font-semibold leading-none text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300"
+          className="animate-pulse-ring absolute top-2.5 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-[11px] font-semibold leading-none text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300"
         >
           <CalendarClock size={12} />
           {totalProgramados > 1 ? `${totalProgramados} programados` : 'Programado'}
