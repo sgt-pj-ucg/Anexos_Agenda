@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Cake, CalendarX, Flag, Mail, Pencil, Phone, Route, Share2, Star, Trash2 } from 'lucide-react'
+import { Cake, CalendarClock, CalendarX, Flag, Mail, Pencil, Phone, Route, Share2, Star, Trash2 } from 'lucide-react'
 import type { Persona } from '../types'
 import { anexoDigits, avatarPalette, initials } from '../lib/format'
 import { isToday, parseCumple } from '../lib/cumpleanos'
 import { esVigenciaFutura, esVigenciaVencida, formatFecha } from '../lib/vigencia'
 import { addDiasIso } from '../lib/fechaChile'
-import { ausenteTipoLabel } from '../lib/ausentismo'
+import { ausenteTipoLabel, ausentismoFuturo } from '../lib/ausentismo'
+import { periodosFuturos } from '../lib/cargoTransitorio'
 import { CopyChip } from './CopyChip'
 import { ShareContactModal } from './ShareContactModal'
 import { useIsAdmin } from '../context/RoleContext'
@@ -51,6 +52,26 @@ export function PersonCard({
   // vencer p.transitorioHasta.
   const enComision = p.enComision === true
   const ausente = p.ausente === true
+
+  // Cargos transitorios o ausencias ya cargados con fecha "desde" futura:
+  // todavía no se reflejan para nadie, pero el admin necesita poder
+  // confirmar de un vistazo que ya quedaron ingresados.
+  const periodosCTProgramados = isAdmin ? periodosFuturos(p.cargosTransitorios) : []
+  const ausenciaProgramada = isAdmin && ausentismoFuturo(p)
+  const totalProgramados = periodosCTProgramados.length + (ausenciaProgramada ? 1 : 0)
+  const tooltipProgramados = [
+    ...periodosCTProgramados.map((per) => {
+      const destino = per.unidad || per.tribunal || 'destino sin especificar'
+      const cargo = [per.cargo, per.calidadJuridica].filter(Boolean).join(' · ') || 'Cargo transitorio'
+      const rango = per.desde && per.hasta ? `desde el ${formatFecha(per.desde)} hasta el ${formatFecha(per.hasta)}` : ''
+      return `Cargo Transitorio programado: ${cargo} en ${destino} · ${rango}`
+    }),
+    ...(ausenciaProgramada
+      ? [
+          `Ausencia programada: ${ausenteTipoLabel(p.ausenteTipo, p.ausenteMotivo)}${p.ausenteHasta ? ` · desde el ${formatFecha(p.ausenteDesde!)} hasta el ${formatFecha(p.ausenteHasta)}` : ` · desde el ${formatFecha(p.ausenteDesde!)}`}`,
+        ]
+      : []),
+  ].join('\n')
 
   const cornerControls = (
     <div className="absolute top-3 right-3 flex items-center gap-1">
@@ -169,7 +190,7 @@ export function PersonCard({
   return (
     <>
     <div
-      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${onToggleSeleccionar ? 'pb-10' : ''} ${
+      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${onToggleSeleccionar ? 'pb-10' : ''} ${totalProgramados > 0 ? 'pt-9' : ''} ${
         vigenciaVencida
           ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
           : ausente
@@ -182,6 +203,15 @@ export function PersonCard({
       }`}
     >
       {cornerControls}
+      {totalProgramados > 0 && (
+        <span
+          title={tooltipProgramados}
+          className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-[11px] font-semibold text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300"
+        >
+          <CalendarClock size={12} />
+          {totalProgramados > 1 ? `${totalProgramados} programados` : 'Programado'}
+        </span>
+      )}
       <div className="flex items-start gap-3">
         <div
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarPalette(p.id)}`}
