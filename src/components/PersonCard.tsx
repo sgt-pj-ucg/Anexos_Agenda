@@ -190,7 +190,7 @@ export function PersonCard({
   return (
     <>
     <div
-      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${onToggleSeleccionar ? 'pb-10' : ''} ${totalProgramados > 0 ? 'pt-9' : ''} ${
+      className={`group relative rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${onToggleSeleccionar ? 'pb-10' : ''} ${totalProgramados > 0 ? 'pt-11' : ''} ${
         vigenciaVencida
           ? 'border-orange-400 bg-orange-50/40 dark:border-orange-500/60 dark:bg-orange-500/5'
           : ausente
@@ -206,7 +206,7 @@ export function PersonCard({
       {totalProgramados > 0 && (
         <span
           title={tooltipProgramados}
-          className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-[11px] font-semibold text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300"
+          className="absolute top-2.5 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-fuchsia-100 px-2 py-1 text-[11px] font-semibold leading-none text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300"
         >
           <CalendarClock size={12} />
           {totalProgramados > 1 ? `${totalProgramados} programados` : 'Programado'}
