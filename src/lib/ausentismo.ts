@@ -19,6 +19,13 @@ export function ausentismoActivo(p: Persona): boolean {
   return !!(p.ausenteDesde && p.ausenteHasta && p.ausenteDesde <= hoy && p.ausenteHasta >= hoy)
 }
 
+// Ya quedó cargada, pero su fecha "desde" todavía no llega: solo para que
+// el admin pueda confirmar de un vistazo que ya la cargó.
+export function ausentismoFuturo(p: Persona): boolean {
+  const hoy = hoyChile()
+  return !!(p.ausenteDesde && p.ausenteDesde > hoy)
+}
+
 // A diferencia del cargo transitorio, el ausentismo no traslada a la
 // persona de tribunal: solo la marca como ausente mientras está vigente. Al
 // pasar "ausenteHasta" deja de aplicar sola, sin que nadie tenga que
