@@ -6,6 +6,16 @@ export function periodoActivo(periodos: CargoTransitorioPeriodo[]): CargoTransit
   return periodos.find((per) => per.desde && per.hasta && per.desde <= hoy && per.hasta >= hoy) ?? null
 }
 
+// Períodos que todavía no empiezan (fecha "desde" posterior a hoy): ya
+// quedaron guardados, pero el traslado aún no se refleja para nadie. Solo
+// para que el admin pueda confirmar de un vistazo que ya los cargó.
+export function periodosFuturos(periodos: CargoTransitorioPeriodo[]): CargoTransitorioPeriodo[] {
+  const hoy = hoyChile()
+  return periodos
+    .filter((per) => per.desde && per.desde > hoy)
+    .sort((a, b) => (a.desde ?? '').localeCompare(b.desde ?? ''))
+}
+
 export function periodosSeSuperponen(
   a: { desde: string; hasta: string },
   b: { desde: string; hasta: string },
