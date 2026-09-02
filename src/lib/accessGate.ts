@@ -30,6 +30,13 @@ export function otorgarAccesoGeneral(): void {
   sessionStorage.setItem(BIENVENIDA_KEY, '1')
 }
 
+// Cierra la sesión de acceso general: solo se llama cuando el funcionario lo
+// pide explícitamente (botón "Cerrar sesión"), nunca automáticamente. Tras
+// esto hace falta recargar para que el portón vuelva a aparecer.
+export function cerrarAccesoGeneral(): void {
+  localStorage.removeItem(ACCESO_KEY)
+}
+
 // Consulta pura, sin efecto secundario: puede llamarse varias veces (por
 // ejemplo, en cada remontaje del portón) sin "gastar" la bienvenida antes de
 // que realmente se haya mostrado.
