@@ -22,8 +22,8 @@ export function WelcomeScreen({ onElegir }: { onElegir: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-[radial-gradient(circle_at_22%_15%,#1a2352,#060814_62%)] px-6 py-12">
-      <div className="relative mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5850ec] to-[#2c2578] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.22),inset_0_-6px_12px_rgba(0,0,0,.22),0_0_0_1px_rgba(255,255,255,.08)]">
-        <div className="pointer-events-none absolute -inset-5 -z-10 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,.4),transparent_70%)] blur-[5px]" />
+      <div className="animate-logo-entra relative mb-5 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5850ec] to-[#2c2578] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.22),inset_0_-6px_12px_rgba(0,0,0,.22),0_0_0_1px_rgba(255,255,255,.08)]">
+        <div className="animate-glow-respira pointer-events-none absolute -inset-5 -z-10 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,.4),transparent_70%)] blur-[5px]" />
         <img
           src={`${import.meta.env.BASE_URL}escudo-poder-judicial.png`}
           alt="Escudo del Poder Judicial de Chile"
