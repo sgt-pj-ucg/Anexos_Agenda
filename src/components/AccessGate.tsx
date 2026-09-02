@@ -71,18 +71,18 @@ export function AccessGate({ children }: { children: ReactNode }) {
     'w-full rounded-xl border py-3 pr-3 pl-10 text-sm text-white placeholder:text-slate-500 outline-none transition-colors bg-white/5 border-white/15 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/20'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[radial-gradient(circle_at_22%_15%,#1a2352,#060814_62%)] px-4 py-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[radial-gradient(circle_at_18%_12%,rgba(99,102,241,.4),transparent_45%),radial-gradient(circle_at_85%_88%,rgba(168,85,247,.3),transparent_50%),linear-gradient(155deg,#1c2160_0%,#12163a_55%,#080a1c_100%)] px-4 py-10">
       <form
         onSubmit={mostrarAdmin ? entrarComoAdmin : entrar}
-        className="animate-fade-in w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.045] p-9 pt-10 text-center backdrop-blur-md"
+        className="animate-fade-in w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.06] p-9 pt-10 text-center shadow-[0_25px_70px_-20px_rgba(79,70,229,.45)] backdrop-blur-md"
       >
-        <div className="relative mx-auto mb-6 flex h-[88px] w-[88px] items-center justify-center rounded-3xl bg-gradient-to-br from-[#5850ec] to-[#2c2578] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.22),inset_0_-8px_16px_rgba(0,0,0,.22),0_0_0_1px_rgba(255,255,255,.08),0_20px_34px_-14px_rgba(79,70,229,.65)]">
-          <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,.45),transparent_70%)] blur-[6px]" />
+        <div className="animate-logo-entra relative mx-auto mb-6 flex h-[88px] w-[88px] items-center justify-center rounded-3xl bg-gradient-to-br from-[#6d63f4] to-[#2c2578] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.22),inset_0_-8px_16px_rgba(0,0,0,.22),0_0_0_1px_rgba(255,255,255,.08),0_20px_34px_-14px_rgba(99,102,241,.75)]">
+          <div className="animate-glow-respira pointer-events-none absolute -inset-9 -z-10 rounded-full bg-[radial-gradient(circle,rgba(129,140,248,.55),transparent_70%)] blur-[8px]" />
           <img
             src={`${import.meta.env.BASE_URL}escudo-poder-judicial.png`}
             alt="Escudo del Poder Judicial de Chile"
             className="h-full w-full object-contain drop-shadow-[0_3px_10px_rgba(0,0,0,.4)]"
-            style={{ filter: 'drop-shadow(0 0 18px rgba(165,180,252,.5))' }}
+            style={{ filter: 'drop-shadow(0 0 18px rgba(196,181,253,.55))' }}
           />
         </div>
         <h1 className="mb-1 text-lg font-bold text-white">Directorio Jurisdiccional</h1>
@@ -161,21 +161,21 @@ export function AccessGate({ children }: { children: ReactNode }) {
         <button
           type="submit"
           disabled={verificando || (mostrarAdmin ? !rut || !passwordAdmin : !clave)}
-          className="mt-5 w-full rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-800 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_-10px_rgba(99,102,241,.6)] transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_-10px_rgba(99,102,241,.6)] transition-all hover:brightness-110 hover:shadow-[0_18px_36px_-10px_rgba(139,92,246,.7)] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:brightness-100"
         >
           {verificando ? 'Verificando…' : 'Entrar'}
         </button>
 
-        <div className="mt-5 border-t border-dashed border-white/10 pt-4">
+        <div className="mt-6 flex justify-center border-t border-dashed border-white/10 pt-5">
           <button
             type="button"
             onClick={() => {
               setMostrarAdmin((v) => !v)
               setError('')
             }}
-            className="inline-flex items-center gap-1.5 text-xs text-indigo-100/70 hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-400/10 px-3.5 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:border-amber-400/50 hover:bg-amber-400/20 hover:text-amber-100"
           >
-            <ShieldCheck size={13} className="text-amber-400" />
+            <ShieldCheck size={13} />
             {mostrarAdmin ? 'Volver a la clave general' : '¿Eres administrador? Ingresa con tu RUT'}
           </button>
         </div>
