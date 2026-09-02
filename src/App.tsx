@@ -21,6 +21,7 @@ import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
 import { resolverDestino } from './lib/destinoTribunal'
+import { tomarDestinoInicial } from './lib/accessGate'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
@@ -97,16 +98,23 @@ export default function App() {
   const { favorites, toggle: toggleFavorite } = useFavorites()
   const isAdmin = useIsAdmin()
 
+  // Si se viene eligiendo una tarjeta en la bienvenida del portón de acceso
+  // (ver AccessGate/WelcomeScreen), esto trae adónde ir apenas carga la app;
+  // se consume una sola vez y no vuelve a aplicarse en renders posteriores.
+  const [destinoInicial] = useState(() => tomarDestinoInicial())
+
   const [query, setQuery] = useState('')
-  const [section, setSection] = useState<SeccionKey>('todos')
+  const [section, setSection] = useState<SeccionKey>(() => (destinoInicial?.section as SeccionKey) ?? 'todos')
   const [comuna, setComuna] = useState<string | null>(null)
   const [materia, setMateria] = useState<string | null>(null)
   const [favoritesMode, setFavoritesMode] = useState(false)
   const [organigramaMode, setOrganigramaMode] = useState(false)
   const [contactosMode, setContactosMode] = useState(false)
-  const [externosMode, setExternosMode] = useState(false)
+  const [externosMode, setExternosMode] = useState(() => destinoInicial?.externo ?? false)
   const [externosPickerOpen, setExternosPickerOpen] = useState(false)
-  const [categoriaExterna, setCategoriaExterna] = useState<CategoriaExterna>(CATEGORIA_ORDER[0])
+  const [categoriaExterna, setCategoriaExterna] = useState<CategoriaExterna>(
+    () => (destinoInicial?.categoriaExterna as CategoriaExterna) ?? CATEGORIA_ORDER[0],
+  )
   const [modal, setModal] = useState<ModalState>(null)
   const [cargoTransitorioTarget, setCargoTransitorioTarget] = useState<Persona | null>(null)
   const [ausentismoTarget, setAusentismoTarget] = useState<Persona | null>(null)
