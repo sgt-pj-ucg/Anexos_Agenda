@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Bell, Flag, Lock, LogOut, Moon, ShieldCheck, Sun } from 'lucide-react'
+import { Bell, Flag, Lock, LogOut, Moon, Power, ShieldCheck, Sun } from 'lucide-react'
 import { getAdminNombre, lock } from '../lib/auth'
+import { cerrarAccesoGeneral } from '../lib/accessGate'
 import { useIsAdmin } from '../context/RoleContext'
 import { AdminAccessModal } from './AdminAccessModal'
 
@@ -116,6 +117,17 @@ export function Header({
             <Lock size={17} />
           </button>
         )}
+        <button
+          onClick={() => {
+            if (isAdmin) lock()
+            cerrarAccesoGeneral()
+            window.location.reload()
+          }}
+          className="shrink-0 rounded-full border border-slate-200 p-2.5 text-slate-500 hover:border-rose-200 hover:text-rose-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-rose-900 dark:hover:text-rose-400"
+          title="Cerrar sesión"
+        >
+          <Power size={17} />
+        </button>
       </div>
 
       {showAdminLogin && <AdminAccessModal onClose={() => setShowAdminLogin(false)} />}
