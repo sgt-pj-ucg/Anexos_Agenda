@@ -95,7 +95,11 @@ export default function App() {
     submitReport,
     setReporteEstado,
   } = useDirectorioData()
-  const { favorites, toggle: toggleFavorite } = useFavorites()
+  const validPersonIds = useMemo(
+    () => (loading ? undefined : new Set(people.map((p) => p.id))),
+    [loading, people],
+  )
+  const { favorites, toggle: toggleFavorite } = useFavorites(validPersonIds)
   const isAdmin = useIsAdmin()
 
   // Si se viene eligiendo una tarjeta en la bienvenida del portón de acceso
