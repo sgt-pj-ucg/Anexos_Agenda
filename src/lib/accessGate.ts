@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient'
+
 // Portón de acceso general del Directorio: una clave compartida para el
 // público (independiente del sistema de administradores en auth.ts, que
 // sigue funcionando exactamente igual). Se guarda en localStorage para que
@@ -28,6 +30,20 @@ export function claveAccesoGeneralValida(clave: string): boolean {
 export function otorgarAccesoGeneral(): void {
   localStorage.setItem(ACCESO_KEY, 'ok')
   sessionStorage.setItem(BIENVENIDA_KEY, '1')
+}
+
+// Registra una visita (contador de uso, ver panel de administrador): se
+// llama justo al entrar exitosamente por el portón, una vez por cada clave
+// ingresada, nunca en cada recarga. Si falla (por ejemplo, sin conexión), no
+// debe bloquear el ingreso — por eso nunca se espera ni se propaga el error.
+export function registrarVisita(rol: 'viewer' | 'admin'): void {
+  supabase
+    .from('visitas')
+    .insert({ rol })
+    .then(
+      () => {},
+      () => {},
+    )
 }
 
 // Cierra la sesión de acceso general: solo se llama cuando el funcionario lo
