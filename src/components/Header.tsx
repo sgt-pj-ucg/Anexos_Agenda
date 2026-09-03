@@ -3,6 +3,7 @@ import { Bell, Flag, Lock, LogOut, Moon, Power, ShieldCheck, Sun } from 'lucide-
 import { getAdminNombre, lock } from '../lib/auth'
 import { cerrarAccesoGeneral } from '../lib/accessGate'
 import { useIsAdmin } from '../context/RoleContext'
+import { useVisitas } from '../hooks/useVisitas'
 import { AdminAccessModal } from './AdminAccessModal'
 
 export function Header({
@@ -27,6 +28,7 @@ export function Header({
   const isAdmin = useIsAdmin()
   const [showAdminLogin, setShowAdminLogin] = useState(false)
   const adminNombre = isAdmin ? getAdminNombre() : null
+  const totalVisitas = useVisitas(isAdmin)
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80">
@@ -63,6 +65,18 @@ export function Header({
             <p className="text-base font-semibold text-slate-900 dark:text-white">{totalTribunales}</p>
             <p>tribunales</p>
           </div>
+          {isAdmin && totalVisitas !== null && (
+            <div title="Visitas: cada vez que alguien entró por el portón de acceso">
+              <p className="flex items-center justify-end gap-1.5 text-base font-semibold text-slate-900 dark:text-white">
+                {totalVisitas}
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+              </p>
+              <p>visitas</p>
+            </div>
+          )}
         </div>
         {isAdmin && (
           <button
