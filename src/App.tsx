@@ -112,7 +112,7 @@ export default function App() {
     registrarVisitaSiCorresponde(isAdmin ? 'admin' : 'viewer')
   }, [isAdmin])
   useLatidoPropio(isAdmin ? 'admin' : 'viewer')
-  const usuariosActivos = useSesionesActivas(isAdmin)
+  const usuariosActivos = useSesionesActivas(true)
 
   // Si se viene eligiendo una tarjeta en la bienvenida del portón de acceso
   // (ver AccessGate/WelcomeScreen), esto trae adónde ir apenas carga la app;
