@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { IdCard, Lock, ShieldCheck } from 'lucide-react'
 import { checkAdminLogin, getRole, setAdmin } from '../lib/auth'
-import { hayBienvenidaPendiente, claveAccesoGeneralValida, marcarBienvenidaMostrada, otorgarAccesoGeneral, registrarVisita, tieneAccesoGeneral } from '../lib/accessGate'
+import { hayBienvenidaPendiente, claveAccesoGeneralValida, marcarBienvenidaMostrada, otorgarAccesoGeneral, tieneAccesoGeneral } from '../lib/accessGate'
 import { formatRut } from '../lib/rut'
 import { WelcomeScreen } from './WelcomeScreen'
 
@@ -42,7 +42,6 @@ export function AccessGate({ children }: { children: ReactNode }) {
     e.preventDefault()
     if (claveAccesoGeneralValida(clave)) {
       otorgarAccesoGeneral()
-      registrarVisita('viewer')
       setPantalla('bienvenida')
     } else {
       setError('Clave incorrecta.')
@@ -58,7 +57,6 @@ export function AccessGate({ children }: { children: ReactNode }) {
       if (nombre) {
         setAdmin(passwordAdmin, nombre)
         otorgarAccesoGeneral()
-        registrarVisita('admin')
         setPantalla('bienvenida')
       } else {
         setError('RUT o clave incorrectos.')
