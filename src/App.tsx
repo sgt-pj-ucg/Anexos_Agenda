@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BookOpenText, BookUser, Briefcase, Landmark, Scale, UserCog, Users, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
+import { useLatidoPropio, useSesionesActivas } from './hooks/useSesionesActivas'
 import { useIsAdmin } from './context/RoleContext'
 import { buildSearchIndex, searchPeople } from './lib/search'
 import { isToday } from './lib/cumpleanos'
@@ -21,7 +22,8 @@ import { buildGroups } from './lib/groups'
 import { getLastSeen, markSeen } from './lib/novedades'
 import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sections'
 import { resolverDestino } from './lib/destinoTribunal'
-import { tomarDestinoInicial } from './lib/accessGate'
+import { registrarVisitaSiCorresponde, tomarDestinoInicial } from './lib/accessGate'
+import { listarVigenciasVencidas } from './lib/vigenciaVencidos'
 import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
@@ -101,6 +103,16 @@ export default function App() {
   )
   const { favorites, toggle: toggleFavorite } = useFavorites(validPersonIds)
   const isAdmin = useIsAdmin()
+
+  // Cuenta esta apertura del sitio como una visita (una sola vez por
+  // pestaña, ver accessGate.ts) y avisa que esta sesión sigue activa
+  // mientras la pestaña esté abierta (ver useSesionesActivas), para que el
+  // contador de "usuarios activos ahora" del administrador sea real.
+  useEffect(() => {
+    registrarVisitaSiCorresponde(isAdmin ? 'admin' : 'viewer')
+  }, [isAdmin])
+  useLatidoPropio(isAdmin ? 'admin' : 'viewer')
+  const usuariosActivos = useSesionesActivas(isAdmin)
 
   // Si se viene eligiendo una tarjeta en la bienvenida del portón de acceso
   // (ver AccessGate/WelcomeScreen), esto trae adónde ir apenas carga la app;
@@ -211,9 +223,14 @@ export default function App() {
     return cambios.filter((c) => c.createdAt > lastSeen).length
   }, [cambios, lastSeen])
 
+  const vigenciasVencidas = useMemo(
+    () => listarVigenciasVencidas(people, contactosExternos),
+    [people, contactosExternos],
+  )
+
   const reportesCount = useMemo(
-    () => reportes.filter((r) => r.estado === 'pendiente').length,
-    [reportes],
+    () => reportes.filter((r) => r.estado === 'pendiente').length + vigenciasVencidas.length,
+    [reportes, vigenciasVencidas],
   )
 
   const filteredResults = useMemo(() => {
@@ -628,6 +645,7 @@ export default function App() {
         onOpenNovedades={openNovedades}
         reportesCount={reportesCount}
         onOpenReportes={() => setReportesOpen(true)}
+        usuariosActivos={usuariosActivos}
       />
 
       {error && (
@@ -1030,6 +1048,7 @@ export default function App() {
       {reportesOpen && (
         <ReportesPanel
           reportes={reportes}
+          vigenciasVencidas={vigenciasVencidas}
           onSetEstado={handleSetReporteEstado}
           onClose={() => setReportesOpen(false)}
         />
