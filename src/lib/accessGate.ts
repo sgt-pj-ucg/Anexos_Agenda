@@ -13,6 +13,8 @@ const BIENVENIDA_KEY = 'pj-la-serena-directorio-bienvenida-pendiente'
 // A qué sección (y, si corresponde, qué categoría externa) llevar apenas
 // entra la app, cuando el visitante eligió una tarjeta en la bienvenida.
 const DESTINO_KEY = 'pj-la-serena-directorio-destino-inicial'
+// Evita registrar más de una visita por pestaña (ver registrarVisitaSiCorresponde).
+const VISITA_KEY = 'pj-la-serena-directorio-visita-registrada'
 
 const CLAVE_ACCESO_GENERAL = '0212'
 
@@ -32,11 +34,17 @@ export function otorgarAccesoGeneral(): void {
   sessionStorage.setItem(BIENVENIDA_KEY, '1')
 }
 
-// Registra una visita (contador de uso, ver panel de administrador): se
-// llama justo al entrar exitosamente por el portón, una vez por cada clave
-// ingresada, nunca en cada recarga. Si falla (por ejemplo, sin conexión), no
-// debe bloquear el ingreso — por eso nunca se espera ni se propaga el error.
-export function registrarVisita(rol: 'viewer' | 'admin'): void {
+// Registra una visita (contador de uso, ver panel de administrador). Se
+// llama una vez que la app ya está cargada (ver App.tsx), sin importar si el
+// acceso venía de antes (localStorage) o se acaba de otorgar recién — así el
+// contador sigue subiendo con cada apertura nueva del sitio, no solo la
+// primera vez que alguien escribió la clave en ese navegador. sessionStorage
+// evita contar de nuevo si la misma pestaña se recarga varias veces.
+// Si falla (por ejemplo, sin conexión), no debe bloquear nada — por eso
+// nunca se espera ni se propaga el error.
+export function registrarVisitaSiCorresponde(rol: 'viewer' | 'admin'): void {
+  if (sessionStorage.getItem(VISITA_KEY)) return
+  sessionStorage.setItem(VISITA_KEY, '1')
   supabase
     .from('visitas')
     .insert({ rol })
