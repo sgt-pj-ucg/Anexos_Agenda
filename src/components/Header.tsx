@@ -30,7 +30,7 @@ export function Header({
   const isAdmin = useIsAdmin()
   const [showAdminLogin, setShowAdminLogin] = useState(false)
   const adminNombre = isAdmin ? getAdminNombre() : null
-  const totalVisitas = useVisitas(isAdmin)
+  const totalVisitas = useVisitas(true)
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80">
@@ -67,7 +67,7 @@ export function Header({
             <p className="text-base font-semibold text-slate-900 dark:text-white">{totalTribunales}</p>
             <p>tribunales</p>
           </div>
-          {isAdmin && totalVisitas !== null && (
+          {totalVisitas !== null && (
             <div title="Visitas: cada vez que alguien entró por el portón de acceso">
               <p className="flex items-center justify-end gap-1.5 text-base font-semibold text-slate-900 dark:text-white">
                 {totalVisitas}
@@ -79,7 +79,7 @@ export function Header({
               <p>visitas</p>
             </div>
           )}
-          {isAdmin && usuariosActivos !== null && (
+          {usuariosActivos !== null && (
             <div title="Usuarios usando el directorio en este momento">
               <p className="flex items-center justify-end gap-1.5 text-base font-semibold text-slate-900 dark:text-white">
                 {usuariosActivos}
