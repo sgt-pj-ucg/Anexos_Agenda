@@ -15,6 +15,7 @@ export function Header({
   onOpenNovedades,
   reportesCount,
   onOpenReportes,
+  usuariosActivos,
 }: {
   theme: 'light' | 'dark'
   onToggleTheme: () => void
@@ -24,6 +25,7 @@ export function Header({
   onOpenNovedades: () => void
   reportesCount: number
   onOpenReportes: () => void
+  usuariosActivos: number | null
 }) {
   const isAdmin = useIsAdmin()
   const [showAdminLogin, setShowAdminLogin] = useState(false)
@@ -75,6 +77,18 @@ export function Header({
                 </span>
               </p>
               <p>visitas</p>
+            </div>
+          )}
+          {isAdmin && usuariosActivos !== null && (
+            <div title="Usuarios usando el directorio en este momento">
+              <p className="flex items-center justify-end gap-1.5 text-base font-semibold text-slate-900 dark:text-white">
+                {usuariosActivos}
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500" />
+                </span>
+              </p>
+              <p>activos</p>
             </div>
           )}
         </div>
