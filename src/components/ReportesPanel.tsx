@@ -1,19 +1,23 @@
 import { useState } from 'react'
-import { Check, Flag, RotateCcw, X } from 'lucide-react'
+import { AlertTriangle, Check, Flag, RotateCcw, X } from 'lucide-react'
 import type { Reporte, ReporteEstado } from '../types'
+import type { VigenciaVencidaItem } from '../lib/vigenciaVencidos'
+import { formatFecha } from '../lib/vigencia'
 import { timeAgo } from '../lib/timeAgo'
 
 interface Props {
   reportes: Reporte[]
+  vigenciasVencidas: VigenciaVencidaItem[]
   onSetEstado: (id: number, estado: ReporteEstado) => void
   onClose: () => void
 }
 
-export function ReportesPanel({ reportes, onSetEstado, onClose }: Props) {
+export function ReportesPanel({ reportes, vigenciasVencidas, onSetEstado, onClose }: Props) {
   const [tab, setTab] = useState<ReporteEstado>('pendiente')
   const pendientes = reportes.filter((r) => r.estado === 'pendiente')
   const resueltos = reportes.filter((r) => r.estado === 'resuelto')
   const filtrados = tab === 'pendiente' ? pendientes : resueltos
+  const totalPendientes = pendientes.length + vigenciasVencidas.length
 
   return (
     <div
@@ -47,7 +51,7 @@ export function ReportesPanel({ reportes, onSetEstado, onClose }: Props) {
                   : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
               }`}
             >
-              Pendientes ({pendientes.length})
+              Pendientes ({totalPendientes})
             </button>
             <button
               type="button"
@@ -62,12 +66,32 @@ export function ReportesPanel({ reportes, onSetEstado, onClose }: Props) {
             </button>
           </div>
         </div>
-        {filtrados.length === 0 ? (
+        {filtrados.length === 0 && (tab === 'resuelto' || vigenciasVencidas.length === 0) ? (
           <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-400">
             {tab === 'pendiente' ? 'No hay reportes pendientes.' : 'Todavía no hay reportes resueltos.'}
           </p>
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
+            {tab === 'pendiente' &&
+              vigenciasVencidas.map((v) => (
+                <li key={v.id} className="flex items-start gap-2 bg-orange-50/50 px-4 py-3 dark:bg-orange-500/5">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0 text-orange-500" />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {v.nombre}
+                      <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+                        Vigencia vencida
+                      </span>
+                    </p>
+                    {v.contexto && (
+                      <p className="text-xs text-slate-400 dark:text-slate-400">{v.contexto}</p>
+                    )}
+                    <p className="mt-1 text-xs text-orange-700/80 dark:text-orange-300/70">
+                      Venció el {formatFecha(v.hasta)} · se resuelve al actualizar la vigencia
+                    </p>
+                  </div>
+                </li>
+              ))}
             {filtrados.map((r) => (
               <li key={r.id} className="px-4 py-3">
                 <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{r.entidad}</p>
