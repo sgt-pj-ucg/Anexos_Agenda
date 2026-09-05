@@ -16,12 +16,12 @@ export interface ContactoExternoFormValues {
   vigenciaHasta: string
 }
 
-function toFormValues(c?: ContactoExterno): ContactoExternoFormValues {
+function toFormValues(c?: ContactoExterno, comunaInicial?: string): ContactoExternoFormValues {
   return {
-    institucion: c?.institucion ?? '',
+    institucion: c?.institucion ?? comunaInicial ?? '',
     nombre: c?.nombre ?? '',
     cargo: c?.cargo ?? '',
-    comuna: c?.comuna ?? '',
+    comuna: c?.comuna ?? comunaInicial ?? '',
     correos: c?.correos.join(', ') ?? '',
     telefonos: c?.telefonos.join(', ') ?? '',
     direccion: c?.direccion ?? '',
@@ -36,12 +36,13 @@ interface Props {
   title: string
   categoriaLabel: string
   initial?: ContactoExterno
+  comunaInicial?: string
   onCancel: () => void
   onSubmit: (values: ContactoExternoFormValues) => void
 }
 
-export function ContactoExternoEditModal({ title, categoriaLabel, initial, onCancel, onSubmit }: Props) {
-  const [values, setValues] = useState<ContactoExternoFormValues>(() => toFormValues(initial))
+export function ContactoExternoEditModal({ title, categoriaLabel, initial, comunaInicial, onCancel, onSubmit }: Props) {
+  const [values, setValues] = useState<ContactoExternoFormValues>(() => toFormValues(initial, comunaInicial))
 
   const set = <K extends keyof ContactoExternoFormValues>(key: K, value: ContactoExternoFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }))
