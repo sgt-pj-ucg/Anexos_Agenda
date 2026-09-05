@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BookOpenText, BookUser, Briefcase, Landmark, Scale, UserCog, Users, Workflow } from 'lucide-react'
+import { BookOpenText, BookUser, Briefcase, Landmark, Mail, Scale, UserCog, Users, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
@@ -24,7 +24,7 @@ import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sec
 import { resolverDestino } from './lib/destinoTribunal'
 import { registrarVisitaSiCorresponde, tomarDestinoInicial } from './lib/accessGate'
 import { listarVigenciasVencidas } from './lib/vigenciaVencidos'
-import type { CategoriaExterna, ContactoExterno, FichaTribunal, Persona } from './types'
+import type { CategoriaExterna, ContactoExterno, FichaTribunal, GrupoCorreo, Persona } from './types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
@@ -65,13 +65,16 @@ import { ContactoExternoPickerModal } from './components/ContactoExternoPickerMo
 import { ContactoExternoEditModal } from './components/ContactoExternoEditModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 import { VigenciaAlertBanner } from './components/VigenciaAlertBanner'
+import { GruposCorreoModal } from './components/GruposCorreoModal'
+import { GrupoCorreoEditorModal } from './components/GrupoCorreoEditorModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ContactoExternoModalState =
   | { mode: 'edit'; contacto: ContactoExterno }
-  | { mode: 'add'; categoria: CategoriaExterna }
+  | { mode: 'add'; categoria: CategoriaExterna; comunaInicial?: string }
   | null
 type ReportTarget = { subject: string; contexto: string[] } | null
+type GrupoCorreoEditorState = { mode: 'crear' } | { mode: 'editar'; grupo: GrupoCorreo } | null
 
 export default function App() {
   const { theme, toggle } = useTheme()
@@ -82,6 +85,7 @@ export default function App() {
     cambios,
     reportes,
     contactosExternos,
+    gruposCorreo,
     correoGeneralSeccion,
     generatedAt,
     loading,
@@ -96,6 +100,8 @@ export default function App() {
     deleteContactoExterno,
     submitReport,
     setReporteEstado,
+    upsertGrupoCorreo,
+    deleteGrupoCorreo,
   } = useDirectorioData()
   const validPersonIds = useMemo(
     () => (loading ? undefined : new Set(people.map((p) => p.id))),
@@ -140,6 +146,8 @@ export default function App() {
   const [novedadesOpen, setNovedadesOpen] = useState(false)
   const [reportesOpen, setReportesOpen] = useState(false)
   const [funcionariosModalOpen, setFuncionariosModalOpen] = useState(false)
+  const [gruposCorreoOpen, setGruposCorreoOpen] = useState(false)
+  const [grupoCorreoEditor, setGrupoCorreoEditor] = useState<GrupoCorreoEditorState>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(() => getLastSeen())
 
   const searchIndex = useMemo(() => buildSearchIndex(people), [people])
@@ -692,25 +700,36 @@ export default function App() {
                 onChange={handleSelectSection}
                 counts={sectionCounts}
                 trailing={
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (externosMode) {
-                        setExternosMode(false)
-                      } else {
-                        setExternosPickerOpen(true)
-                      }
-                    }}
-                    title="Academia Judicial, CBR y Notarías, Cortes del país, Receptores/Procuradores y Policía Local"
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
-                      externosMode
-                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-800'
-                    }`}
-                  >
-                    <BookUser size={15} />
-                    {externosMode ? 'Ver directorio interno' : 'Externo'}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (externosMode) {
+                          setExternosMode(false)
+                        } else {
+                          setExternosPickerOpen(true)
+                        }
+                      }}
+                      title="Academia Judicial, CBR y Notarías, Cortes del país, Receptores/Procuradores y Policía Local"
+                      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+                        externosMode
+                          ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-800'
+                      }`}
+                    >
+                      <BookUser size={15} />
+                      {externosMode ? 'Ver directorio interno' : 'Externo'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGruposCorreoOpen(true)}
+                      title="Listas de correo para envíos que se repiten seguido"
+                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-2 text-sm font-medium text-violet-700 transition-colors hover:border-violet-300 hover:bg-violet-100 dark:border-violet-900/40 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/15"
+                    >
+                      <Mail size={15} />
+                      Grupos de Correos
+                    </button>
+                  </>
                 }
               />
             )}
@@ -782,7 +801,7 @@ export default function App() {
                 onReportContacto={(c) =>
                   openReport(c.nombre ?? c.institucion ?? 'Contacto externo', [c.institucion ?? '', c.cargo ?? ''])
                 }
-                onAddContacto={(cat) => setContactoExternoModal({ mode: 'add', categoria: cat })}
+                onAddContacto={(cat, comunaInicial) => setContactoExternoModal({ mode: 'add', categoria: cat, comunaInicial })}
               />
             ) : contactosMode ? (
               <TribunalContactosView
@@ -1000,6 +1019,7 @@ export default function App() {
             ].label
           }
           initial={contactoExternoModal.mode === 'edit' ? contactoExternoModal.contacto : undefined}
+          comunaInicial={contactoExternoModal.mode === 'add' ? contactoExternoModal.comunaInicial : undefined}
           onCancel={() => setContactoExternoModal(null)}
           onSubmit={handleSubmitContactoExterno}
         />
@@ -1058,6 +1078,38 @@ export default function App() {
         <FuncionariosCorteModal
           grupos={funcionariosCorteGrupos}
           onClose={() => setFuncionariosModalOpen(false)}
+        />
+      )}
+
+      {gruposCorreoOpen && (
+        <GruposCorreoModal
+          grupos={gruposCorreo}
+          isAdmin={isAdmin}
+          onClose={() => setGruposCorreoOpen(false)}
+          onCrear={() => setGrupoCorreoEditor({ mode: 'crear' })}
+          onEditar={(grupo) => setGrupoCorreoEditor({ mode: 'editar', grupo })}
+          onEliminar={(grupo) => {
+            deleteGrupoCorreo(grupo.id).catch((err) =>
+              window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el grupo de correos.'),
+            )
+          }}
+        />
+      )}
+
+      {grupoCorreoEditor && (
+        <GrupoCorreoEditorModal
+          grupo={grupoCorreoEditor.mode === 'editar' ? grupoCorreoEditor.grupo : undefined}
+          people={people}
+          tribunales={tribunales}
+          onCancel={() => setGrupoCorreoEditor(null)}
+          onSubmit={async (values) => {
+            try {
+              await upsertGrupoCorreo(values)
+              setGrupoCorreoEditor(null)
+            } catch (err) {
+              window.alert(err instanceof Error ? err.message : 'No se pudo guardar el grupo de correos.')
+            }
+          }}
         />
       )}
     </div>
