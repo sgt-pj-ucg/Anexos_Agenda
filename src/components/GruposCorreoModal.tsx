@@ -58,14 +58,26 @@ function ListaGrupos({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          title="Cerrar"
-          className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={onCrear}
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:border-violet-400 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/15"
+            >
+              <Plus size={13} />
+              Crear grupo
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            title="Cerrar"
+            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       {grupos.length > 1 && (
@@ -83,17 +95,6 @@ function ListaGrupos({
       )}
 
       <div className="flex-1 overflow-y-auto p-4">
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={onCrear}
-            className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-violet-300 py-3 text-sm font-semibold text-violet-700 hover:border-violet-400 hover:bg-violet-50/60 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-500/10"
-          >
-            <Plus size={15} />
-            Crear grupo
-          </button>
-        )}
-
         {grupos.length === 0 ? (
           <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
             Todavía no hay grupos de correos especiales.
@@ -107,41 +108,41 @@ function ListaGrupos({
             {gruposFiltrados.map((g) => (
               <div
                 key={g.id}
-                className="group relative flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_14px_28px_-16px_rgba(124,58,237,.5)] dark:border-violet-900/40 dark:bg-violet-500/5"
+                className="group relative flex flex-col gap-2 rounded-2xl border border-violet-100 bg-violet-50/50 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_14px_28px_-16px_rgba(124,58,237,.5)] dark:border-violet-900/40 dark:bg-violet-500/5"
               >
-                <button type="button" onClick={() => onAbrir(g)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                <button type="button" onClick={() => onAbrir(g)} className="flex min-w-0 items-center gap-3 text-left">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white">
                     <Users size={17} />
                   </span>
-                  <span className="min-w-0">
-                    <span title={g.nombre} className="block truncate font-semibold text-slate-900 dark:text-white">
-                      {g.nombre}
-                    </span>
-                    <span className="mt-1 inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-                      {g.miembros.length} {g.miembros.length === 1 ? 'correo' : 'correos'}
-                    </span>
+                  <span title={g.nombre} className="min-w-0 flex-1 truncate font-semibold text-slate-900 dark:text-white">
+                    {g.nombre}
                   </span>
                 </button>
-                {isAdmin && (
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      type="button"
-                      onClick={() => onEditar(g)}
-                      title="Editar grupo"
-                      className="rounded-full p-1.5 text-violet-400 hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-violet-500/15"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onEliminar(g)}
-                      title="Eliminar grupo"
-                      className="rounded-full p-1.5 text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center justify-between pl-[52px]">
+                  <span className="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                    {g.miembros.length} {g.miembros.length === 1 ? 'correo' : 'correos'}
+                  </span>
+                  {isAdmin && (
+                    <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => onEditar(g)}
+                        title="Editar grupo"
+                        className="rounded-full p-1.5 text-violet-400 hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-violet-500/15"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onEliminar(g)}
+                        title="Eliminar grupo"
+                        className="rounded-full p-1.5 text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
