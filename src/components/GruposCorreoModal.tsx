@@ -94,7 +94,7 @@ function ListaGrupos({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="max-h-[580px] flex-1 overflow-y-auto p-4">
         {grupos.length === 0 ? (
           <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
             Todavía no hay grupos de correos especiales.
@@ -356,7 +356,7 @@ export function GruposCorreoModal({
     >
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        className={`animate-fade-in relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-[max-width] duration-300 dark:border-slate-700 dark:bg-slate-900 ${
+        className={`animate-fade-in relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-[max-width] duration-300 dark:border-slate-700 dark:bg-slate-900 ${
           grupoAbierto ? 'max-w-2xl' : 'max-w-4xl'
         }`}
       >
