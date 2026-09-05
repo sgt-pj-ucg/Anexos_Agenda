@@ -1,4 +1,4 @@
-import { Bell, BookUser, Landmark, Pencil, UserMinus, UserPlus, X, type LucideIcon } from 'lucide-react'
+import { Bell, BookUser, Landmark, Mail, Pencil, UserMinus, UserPlus, X, type LucideIcon } from 'lucide-react'
 import type { Cambio } from '../types'
 import { timeAgo } from '../lib/timeAgo'
 
@@ -36,6 +36,21 @@ const TIPO_META: Record<Cambio['tipo'], { label: (c: Cambio) => string; icon: Lu
   contacto_externo_eliminado: {
     label: (c) => `Se eliminó el contacto externo ${c.entidad}`,
     icon: BookUser,
+    color: 'text-rose-500',
+  },
+  grupo_correo_creado: {
+    label: (c) => `Se creó el grupo de correos "${c.entidad}"${c.detalle ? ` (${c.detalle})` : ''}`,
+    icon: Mail,
+    color: 'text-violet-500',
+  },
+  grupo_correo_editado: {
+    label: (c) => `Se editó el grupo de correos "${c.entidad}"${c.detalle ? ` (${c.detalle})` : ''}`,
+    icon: Mail,
+    color: 'text-violet-500',
+  },
+  grupo_correo_eliminado: {
+    label: (c) => `Se eliminó el grupo de correos "${c.entidad}"`,
+    icon: Mail,
     color: 'text-rose-500',
   },
 }
