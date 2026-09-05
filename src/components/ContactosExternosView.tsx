@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { UserPlus } from 'lucide-react'
+import { Plus, UserPlus } from 'lucide-react'
 import type { CategoriaExterna, ContactoExterno } from '../types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
 import { ContactoExternoCard } from './ContactoExternoCard'
@@ -23,7 +23,7 @@ export function ContactosExternosView({
   onEditContacto?: (contacto: ContactoExterno) => void
   onDeleteContacto?: (contacto: ContactoExterno) => void
   onReportContacto?: (contacto: ContactoExterno) => void
-  onAddContacto?: (categoria: CategoriaExterna) => void
+  onAddContacto?: (categoria: CategoriaExterna, comunaInicial?: string) => void
 }) {
   const isAdmin = useIsAdmin()
   const counts = useMemo(() => {
@@ -105,12 +105,25 @@ export function ContactosExternosView({
         <div className="space-y-4">
           {grupos.map(([grupo, items]) => (
             <div key={grupo} className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900/40 dark:bg-indigo-500/5">
-              <p className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
-                {grupo}
-                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
-                  {items.length}
-                </span>
-              </p>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                  {grupo}
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
+                    {items.length}
+                  </span>
+                </p>
+                {isAdmin && onAddContacto && (
+                  <button
+                    type="button"
+                    onClick={() => onAddContacto(categoria, grupo === 'Otros' ? undefined : grupo)}
+                    title={`Agregar contacto en ${grupo}`}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-white px-2 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                  >
+                    <Plus size={11} />
+                    Agregar
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {items.map((c) => (
                   <ContactoExternoCard
