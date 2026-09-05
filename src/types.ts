@@ -107,6 +107,9 @@ export type CambioTipo =
   | 'contacto_externo_agregado'
   | 'contacto_externo_editado'
   | 'contacto_externo_eliminado'
+  | 'grupo_correo_creado'
+  | 'grupo_correo_editado'
+  | 'grupo_correo_eliminado'
 
 export interface Cambio {
   id: number
@@ -127,6 +130,21 @@ export interface Reporte {
   descripcion: string
   estado: ReporteEstado
   resolvedAt: string | null
+}
+
+// Grupos de correo especiales: listas armadas a mano por un administrador
+// para envíos que se repiten seguido (ver GruposCorreoModal). "nombre" en un
+// integrante es opcional: puede ser un correo institucional genérico (ej. un
+// juzgado) sin una persona asociada.
+export interface GrupoCorreoMiembro {
+  correo: string
+  nombre: string | null
+}
+
+export interface GrupoCorreo {
+  id: string
+  nombre: string
+  miembros: GrupoCorreoMiembro[]
 }
 
 export interface Directorio {
