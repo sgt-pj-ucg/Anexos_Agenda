@@ -13,6 +13,8 @@ import type {
   CategoriaExterna,
   ContactoExterno,
   FichaTribunal,
+  GrupoCorreo,
+  GrupoCorreoMiembro,
   Persona,
   Reporte,
   ReporteEstado,
@@ -106,6 +108,18 @@ interface ReporteRow {
   descripcion: string
   estado: ReporteEstado
   resolved_at: string | null
+}
+
+interface GrupoCorreoRow {
+  id: string
+  nombre: string
+}
+
+interface GrupoCorreoMiembroRow {
+  grupo_id: string
+  correo: string
+  nombre: string | null
+  orden: number
 }
 
 function rowToPersona(row: PersonaRow, cargosTransitorios: CargoTransitorioRow[]): Persona {
@@ -206,6 +220,16 @@ function rowToReporte(row: ReporteRow): Reporte {
   }
 }
 
+function rowToGrupoCorreo(row: GrupoCorreoRow, miembros: GrupoCorreoMiembroRow[]): GrupoCorreo {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    miembros: [...miembros]
+      .sort((a, b) => a.orden - b.orden)
+      .map((m): GrupoCorreoMiembro => ({ correo: m.correo, nombre: m.nombre })),
+  }
+}
+
 function uniqueId(base: string, existing: Set<string>): string {
   let id = slugify(base) || 'contacto'
   let n = 1
@@ -236,6 +260,7 @@ export function useDirectorioData() {
   const [cambios, setCambios] = useState<Cambio[]>([])
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [contactosExternos, setContactosExternos] = useState<ContactoExterno[]>([])
+  const [gruposCorreo, setGruposCorreo] = useState<GrupoCorreo[]>([])
   const [generatedAt, setGeneratedAt] = useState(directorio.generatedAt)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -315,10 +340,30 @@ export function useDirectorioData() {
     setReportes(((data ?? []) as ReporteRow[]).map(rowToReporte))
   }, [])
 
+  const loadGruposCorreo = useCallback(async () => {
+    // Igual que "cambios": si la tabla aún no existe (no se ha corrido la
+    // migración de grupos de correo), se deja la lista vacía sin romper la
+    // app.
+    const [gruposRes, miembrosRes] = await Promise.all([
+      supabase.from('grupos_correo').select('id, nombre').order('created_at', { ascending: true }),
+      supabase.from('grupos_correo_miembros').select('*'),
+    ])
+    if (gruposRes.error || miembrosRes.error) return
+    const grupoRows = (gruposRes.data ?? []) as GrupoCorreoRow[]
+    const miembroRows = (miembrosRes.data ?? []) as GrupoCorreoMiembroRow[]
+    const miembrosPorGrupo = new Map<string, GrupoCorreoMiembroRow[]>()
+    for (const m of miembroRows) {
+      if (!miembrosPorGrupo.has(m.grupo_id)) miembrosPorGrupo.set(m.grupo_id, [])
+      miembrosPorGrupo.get(m.grupo_id)!.push(m)
+    }
+    setGruposCorreo(grupoRows.map((row) => rowToGrupoCorreo(row, miembrosPorGrupo.get(row.id) ?? [])))
+  }, [])
+
   useEffect(() => {
     load()
     loadCambios()
     loadContactosExternos()
+    loadGruposCorreo()
     if (isAdmin) loadReportes()
 
     const channel = supabase
@@ -330,6 +375,10 @@ export function useDirectorioData() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contactos_externos' }, () =>
         loadContactosExternos(),
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'grupos_correo' }, () => loadGruposCorreo())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'grupos_correo_miembros' }, () =>
+        loadGruposCorreo(),
+      )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reportes' }, () => {
         if (isAdmin) loadReportes()
       })
@@ -338,7 +387,7 @@ export function useDirectorioData() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [load, loadCambios, loadContactosExternos, loadReportes, isAdmin])
+  }, [load, loadCambios, loadContactosExternos, loadGruposCorreo, loadReportes, isAdmin])
 
   const writePersona = async (persona: Persona) => {
     const admin_password = requireAdminPassword()
@@ -441,6 +490,32 @@ export function useDirectorioData() {
     if (isAdmin) await loadReportes()
   }
 
+  // Reemplaza de una vez el nombre y TODOS los integrantes de un grupo de
+  // correos (la ventana emergente maneja la lista completa localmente y
+  // guarda todo junto al hacer clic en "Guardar"), igual que con los
+  // períodos de cargo transitorio. Sin "id" crea un grupo nuevo.
+  const upsertGrupoCorreo = async (grupo: { id?: string; nombre: string; miembros: GrupoCorreoMiembro[] }) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_upsert_grupo_correo', {
+      admin_password,
+      p_grupo_id: grupo.id ?? null,
+      p_nombre: grupo.nombre,
+      miembros: grupo.miembros,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadGruposCorreo()
+  }
+
+  const deleteGrupoCorreo = async (id: string) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_delete_grupo_correo', {
+      admin_password,
+      p_grupo_id: id,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadGruposCorreo()
+  }
+
   const setReporteEstado = async (id: number, estado: ReporteEstado) => {
     const admin_password = requireAdminPassword()
     const { error: rpcError } = await supabase.rpc('admin_set_reporte_estado', {
@@ -482,6 +557,7 @@ export function useDirectorioData() {
     cambios,
     reportes,
     contactosExternos,
+    gruposCorreo,
     correoGeneralSeccion: directorio.correoGeneralSeccion,
     generatedAt,
     loading,
@@ -496,5 +572,7 @@ export function useDirectorioData() {
     deleteContactoExterno,
     submitReport,
     setReporteEstado,
+    upsertGrupoCorreo,
+    deleteGrupoCorreo,
   }
 }
