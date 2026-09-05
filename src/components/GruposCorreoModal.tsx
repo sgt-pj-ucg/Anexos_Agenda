@@ -36,6 +36,14 @@ function ListaGrupos({
   onEliminar: (grupo: GrupoCorreo) => void
   onClose: () => void
 }) {
+  const [busqueda, setBusqueda] = useState('')
+
+  const gruposFiltrados = useMemo(() => {
+    const tokens = normalize(busqueda).split(/\s+/).filter(Boolean)
+    if (tokens.length === 0) return grupos
+    return grupos.filter((g) => tokens.every((t) => normalize(g.nombre).includes(t)))
+  }, [grupos, busqueda])
+
   return (
     <>
       <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5 dark:border-slate-800">
@@ -60,6 +68,20 @@ function ListaGrupos({
         </button>
       </div>
 
+      {grupos.length > 1 && (
+        <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" size={15} />
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar grupo por nombre…"
+              className="w-full rounded-xl border border-slate-200 py-2 pr-3 pl-9 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-violet-500/10"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4">
         {isAdmin && (
           <button
@@ -76,9 +98,13 @@ function ListaGrupos({
           <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
             Todavía no hay grupos de correos especiales.
           </p>
+        ) : gruposFiltrados.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
+            Ningún grupo coincide con "{busqueda}".
+          </p>
         ) : (
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {grupos.map((g) => (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {gruposFiltrados.map((g) => (
               <div
                 key={g.id}
                 className="group relative flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_14px_28px_-16px_rgba(124,58,237,.5)] dark:border-violet-900/40 dark:bg-violet-500/5"
@@ -91,7 +117,7 @@ function ListaGrupos({
                     <span title={g.nombre} className="block truncate font-semibold text-slate-900 dark:text-white">
                       {g.nombre}
                     </span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                    <span className="mt-1 inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
                       {g.miembros.length} {g.miembros.length === 1 ? 'correo' : 'correos'}
                     </span>
                   </span>
@@ -329,7 +355,9 @@ export function GruposCorreoModal({
     >
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-fade-in relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+        className={`animate-fade-in relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-[max-width] duration-300 dark:border-slate-700 dark:bg-slate-900 ${
+          grupoAbierto ? 'max-w-2xl' : 'max-w-4xl'
+        }`}
       >
         {grupoAbierto ? (
           <GrupoDetalle
