@@ -5,86 +5,129 @@ import type { CasillaInstitucional } from '../types'
 import { normalize } from '../lib/normalize'
 import { useCopy } from '../hooks/useCopy'
 
-function CasillaCard({
+function CasillaCard({ casilla, onAbrir }: { casilla: CasillaInstitucional; onAbrir: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      className="group flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50/50 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_14px_28px_-16px_rgba(14,165,233,.5)] dark:border-sky-900/40 dark:bg-sky-500/5"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white transition-transform group-hover:scale-105">
+        <Inbox size={17} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold text-slate-900 dark:text-white">{casilla.nombre}</span>
+        <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{casilla.correo}</span>
+      </span>
+    </button>
+  )
+}
+
+function CasillaDetalle({
   casilla,
   isAdmin,
+  onCerrar,
   onEditar,
   onEliminar,
 }: {
   casilla: CasillaInstitucional
   isAdmin: boolean
+  onCerrar: () => void
   onEditar: () => void
   onEliminar: () => void
 }) {
   const { copied, copy } = useCopy()
 
   return (
-    <div className="group relative flex flex-col gap-2.5 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_14px_28px_-16px_rgba(14,165,233,.5)] dark:border-sky-900/40 dark:bg-sky-500/5">
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white">
-          <Inbox size={17} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-slate-900 dark:text-white">{casilla.nombre}</p>
-          <div className="mt-0.5 flex items-center gap-1">
-            <a
-              href={`mailto:${casilla.correo}`}
-              className="truncate text-sm text-sky-700 hover:underline dark:text-sky-300"
-            >
-              {casilla.correo}
-            </a>
-            <button
-              type="button"
-              onClick={() => copy(casilla.correo)}
-              title="Copiar correo"
-              className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-500/15"
-            >
-              {copied === casilla.correo ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-            </button>
+    <div
+      className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+      onMouseDown={onCerrar}
+    >
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        className="animate-fade-in w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-sky-700 text-white">
+              <Inbox size={19} />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-bold text-slate-900 dark:text-white">{casilla.nombre}</p>
+              <div className="mt-0.5 flex items-center gap-1">
+                <a
+                  href={`mailto:${casilla.correo}`}
+                  className="truncate text-sm text-sky-700 hover:underline dark:text-sky-300"
+                >
+                  {casilla.correo}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => copy(casilla.correo)}
+                  title="Copiar correo"
+                  className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-500/15"
+                >
+                  {copied === casilla.correo ? (
+                    <Check size={12} className="text-emerald-500" />
+                  ) : (
+                    <Copy size={12} />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            title="Cerrar"
+            className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+          >
+            <X size={18} />
+          </button>
         </div>
+
+        <div className="space-y-4 p-5">
+          {casilla.descripcion && (
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{casilla.descripcion}</p>
+          )}
+
+          {casilla.pdfUrl ? (
+            <a
+              href={casilla.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/15"
+            >
+              <FileText size={14} />
+              Ver PDF de acceso rápido
+            </a>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-200 px-3 py-1.5 text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
+              <FileText size={14} />
+              Sin PDF adjunto
+            </span>
+          )}
+        </div>
+
         {isAdmin && (
-          <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="flex justify-end gap-2 border-t border-slate-100 p-4 dark:border-slate-700">
             <button
               type="button"
               onClick={onEditar}
-              title="Editar casilla"
-              className="rounded-full p-1.5 text-sky-400 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-500/15"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
             >
-              <Pencil size={13} />
+              <Pencil size={14} />
+              Editar
             </button>
             <button
               type="button"
               onClick={onEliminar}
-              title="Eliminar casilla"
-              className="rounded-full p-1.5 text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 px-3.5 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-500/10"
             >
-              <Trash2 size={13} />
+              <Trash2 size={14} />
+              Eliminar
             </button>
           </div>
-        )}
-      </div>
-
-      {casilla.descripcion && (
-        <p className="pl-[52px] text-sm text-slate-600 dark:text-slate-300">{casilla.descripcion}</p>
-      )}
-
-      <div className="pl-[52px]">
-        {casilla.pdfUrl ? (
-          <a
-            href={casilla.pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-white px-2.5 py-1 text-xs font-medium text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-sky-500/10"
-          >
-            <FileText size={12} />
-            Ver PDF de acceso rápido
-          </a>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-            <FileText size={12} />
-            Sin PDF adjunto
-          </span>
         )}
       </div>
     </div>
@@ -107,7 +150,9 @@ export function CasillasInstitucionalesModal({
   onEliminar: (casilla: CasillaInstitucional) => void
 }) {
   const [busqueda, setBusqueda] = useState('')
+  const [casillaAbiertaId, setCasillaAbiertaId] = useState<string | null>(null)
   const [casillaAEliminar, setCasillaAEliminar] = useState<CasillaInstitucional | null>(null)
+  const casillaAbierta = casillas.find((c) => c.id === casillaAbiertaId) ?? null
 
   const casillasFiltradas = useMemo(() => {
     const tokens = normalize(busqueda).split(/\s+/).filter(Boolean)
@@ -122,11 +167,12 @@ export function CasillasInstitucionalesModal({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== 'Escape') return
       if (casillaAEliminar) setCasillaAEliminar(null)
+      else if (casillaAbiertaId) setCasillaAbiertaId(null)
       else onClose()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, casillaAEliminar])
+  }, [onClose, casillaAbiertaId, casillaAEliminar])
 
   return createPortal(
     <div
@@ -195,23 +241,27 @@ export function CasillasInstitucionalesModal({
               Ninguna casilla coincide con "{busqueda}".
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {casillasFiltradas.map((c) => (
-                <CasillaCard
-                  key={c.id}
-                  casilla={c}
-                  isAdmin={isAdmin}
-                  onEditar={() => onEditar(c)}
-                  onEliminar={() => setCasillaAEliminar(c)}
-                />
+                <CasillaCard key={c.id} casilla={c} onAbrir={() => setCasillaAbiertaId(c.id)} />
               ))}
             </div>
           )}
         </div>
 
+        {casillaAbierta && !casillaAEliminar && (
+          <CasillaDetalle
+            casilla={casillaAbierta}
+            isAdmin={isAdmin}
+            onCerrar={() => setCasillaAbiertaId(null)}
+            onEditar={() => onEditar(casillaAbierta)}
+            onEliminar={() => setCasillaAEliminar(casillaAbierta)}
+          />
+        )}
+
         {casillaAEliminar && (
           <div
-            className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
             onMouseDown={() => setCasillaAEliminar(null)}
           >
             <div
@@ -235,6 +285,7 @@ export function CasillasInstitucionalesModal({
                   onClick={() => {
                     onEliminar(casillaAEliminar)
                     setCasillaAEliminar(null)
+                    setCasillaAbiertaId(null)
                   }}
                   className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
                 >
