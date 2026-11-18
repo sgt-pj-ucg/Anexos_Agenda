@@ -10,6 +10,7 @@ import { useIsAdmin } from '../context/RoleContext'
 import type {
   Cambio,
   CargoTransitorioPeriodo,
+  CasillaInstitucional,
   CategoriaExterna,
   ContactoExterno,
   FichaTribunal,
@@ -122,6 +123,15 @@ interface GrupoCorreoMiembroRow {
   orden: number
 }
 
+interface CasillaInstitucionalRow {
+  id: string
+  nombre: string
+  correo: string
+  descripcion: string | null
+  pdf_url: string | null
+  orden: number
+}
+
 function rowToPersona(row: PersonaRow, cargosTransitorios: CargoTransitorioRow[]): Persona {
   return {
     id: row.id,
@@ -230,6 +240,17 @@ function rowToGrupoCorreo(row: GrupoCorreoRow, miembros: GrupoCorreoMiembroRow[]
   }
 }
 
+function rowToCasilla(row: CasillaInstitucionalRow): CasillaInstitucional {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    correo: row.correo,
+    descripcion: row.descripcion,
+    pdfUrl: row.pdf_url,
+    orden: row.orden,
+  }
+}
+
 function uniqueId(base: string, existing: Set<string>): string {
   let id = slugify(base) || 'contacto'
   let n = 1
@@ -261,6 +282,7 @@ export function useDirectorioData() {
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [contactosExternos, setContactosExternos] = useState<ContactoExterno[]>([])
   const [gruposCorreo, setGruposCorreo] = useState<GrupoCorreo[]>([])
+  const [casillasInstitucionales, setCasillasInstitucionales] = useState<CasillaInstitucional[]>([])
   const [generatedAt, setGeneratedAt] = useState(directorio.generatedAt)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -359,11 +381,24 @@ export function useDirectorioData() {
     setGruposCorreo(grupoRows.map((row) => rowToGrupoCorreo(row, miembrosPorGrupo.get(row.id) ?? [])))
   }, [])
 
+  const loadCasillasInstitucionales = useCallback(async () => {
+    // Igual que "cambios": si la tabla aún no existe (no se ha corrido la
+    // migración de casillas institucionales), se deja la lista vacía sin
+    // romper el resto de la app.
+    const { data, error: casillasError } = await supabase
+      .from('casillas_institucionales')
+      .select('*')
+      .order('orden', { ascending: true })
+    if (casillasError) return
+    setCasillasInstitucionales(((data ?? []) as CasillaInstitucionalRow[]).map(rowToCasilla))
+  }, [])
+
   useEffect(() => {
     load()
     loadCambios()
     loadContactosExternos()
     loadGruposCorreo()
+    loadCasillasInstitucionales()
     if (isAdmin) loadReportes()
 
     const channel = supabase
@@ -379,6 +414,9 @@ export function useDirectorioData() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'grupos_correo_miembros' }, () =>
         loadGruposCorreo(),
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'casillas_institucionales' }, () =>
+        loadCasillasInstitucionales(),
+      )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reportes' }, () => {
         if (isAdmin) loadReportes()
       })
@@ -387,7 +425,15 @@ export function useDirectorioData() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [load, loadCambios, loadContactosExternos, loadGruposCorreo, loadReportes, isAdmin])
+  }, [
+    load,
+    loadCambios,
+    loadContactosExternos,
+    loadGruposCorreo,
+    loadCasillasInstitucionales,
+    loadReportes,
+    isAdmin,
+  ])
 
   const writePersona = async (persona: Persona) => {
     const admin_password = requireAdminPassword()
@@ -516,6 +562,42 @@ export function useDirectorioData() {
     await loadGruposCorreo()
   }
 
+  // Crea o edita una casilla institucional (sin "id" crea una nueva, con
+  // "id" actualiza la existente), igual que con contactos externos.
+  const upsertCasillaInstitucional = async (casilla: {
+    id?: string
+    nombre: string
+    correo: string
+    descripcion: string | null
+    pdfUrl: string | null
+  }) => {
+    const admin_password = requireAdminPassword()
+    const existing = new Set(casillasInstitucionales.map((c) => c.id))
+    const id = casilla.id ?? uniqueId(casilla.nombre, existing)
+    const { error: rpcError } = await supabase.rpc('admin_upsert_casilla', {
+      admin_password,
+      casilla_id: id,
+      patch: {
+        nombre: casilla.nombre,
+        correo: casilla.correo,
+        descripcion: casilla.descripcion,
+        pdfUrl: casilla.pdfUrl,
+      },
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadCasillasInstitucionales()
+  }
+
+  const deleteCasillaInstitucional = async (id: string) => {
+    const admin_password = requireAdminPassword()
+    const { error: rpcError } = await supabase.rpc('admin_delete_casilla', {
+      admin_password,
+      casilla_id: id,
+    })
+    if (rpcError) throw new Error(friendlyMessage(rpcError.message))
+    await loadCasillasInstitucionales()
+  }
+
   const setReporteEstado = async (id: number, estado: ReporteEstado) => {
     const admin_password = requireAdminPassword()
     const { error: rpcError } = await supabase.rpc('admin_set_reporte_estado', {
@@ -558,6 +640,7 @@ export function useDirectorioData() {
     reportes,
     contactosExternos,
     gruposCorreo,
+    casillasInstitucionales,
     correoGeneralSeccion: directorio.correoGeneralSeccion,
     generatedAt,
     loading,
@@ -574,5 +657,7 @@ export function useDirectorioData() {
     setReporteEstado,
     upsertGrupoCorreo,
     deleteGrupoCorreo,
+    upsertCasillaInstitucional,
+    deleteCasillaInstitucional,
   }
 }
