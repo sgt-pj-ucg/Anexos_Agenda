@@ -110,6 +110,9 @@ export type CambioTipo =
   | 'grupo_correo_creado'
   | 'grupo_correo_editado'
   | 'grupo_correo_eliminado'
+  | 'casilla_institucional_agregada'
+  | 'casilla_institucional_editada'
+  | 'casilla_institucional_eliminada'
 
 export interface Cambio {
   id: number
@@ -145,6 +148,18 @@ export interface GrupoCorreo {
   id: string
   nombre: string
   miembros: GrupoCorreoMiembro[]
+}
+
+// Casillas institucionales PJUD: correos institucionales compartidos (no
+// de una persona en particular) con una descripción de para qué sirven y,
+// opcionalmente, un PDF de acceso rápido (instructivo).
+export interface CasillaInstitucional {
+  id: string
+  nombre: string
+  correo: string
+  descripcion: string | null
+  pdfUrl: string | null
+  orden: number
 }
 
 export interface Directorio {
