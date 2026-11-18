@@ -1,4 +1,4 @@
-import { Bell, BookUser, Landmark, Mail, Pencil, UserMinus, UserPlus, X, type LucideIcon } from 'lucide-react'
+import { Bell, BookUser, Inbox, Landmark, Mail, Pencil, UserMinus, UserPlus, X, type LucideIcon } from 'lucide-react'
 import type { Cambio } from '../types'
 import { timeAgo } from '../lib/timeAgo'
 
@@ -51,6 +51,21 @@ const TIPO_META: Record<Cambio['tipo'], { label: (c: Cambio) => string; icon: Lu
   grupo_correo_eliminado: {
     label: (c) => `Se eliminó el grupo de correos "${c.entidad}"`,
     icon: Mail,
+    color: 'text-rose-500',
+  },
+  casilla_institucional_agregada: {
+    label: (c) => `Se agregó la casilla institucional "${c.entidad}"`,
+    icon: Inbox,
+    color: 'text-sky-500',
+  },
+  casilla_institucional_editada: {
+    label: (c) => `Se editó la casilla institucional "${c.entidad}"`,
+    icon: Inbox,
+    color: 'text-sky-500',
+  },
+  casilla_institucional_eliminada: {
+    label: (c) => `Se eliminó la casilla institucional "${c.entidad}"`,
+    icon: Inbox,
     color: 'text-rose-500',
   },
 }
