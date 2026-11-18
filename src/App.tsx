@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BookOpenText, BookUser, Briefcase, Landmark, Mail, Scale, UserCog, Users, Workflow } from 'lucide-react'
+import { BookOpenText, BookUser, Briefcase, Inbox, Landmark, Mail, Scale, UserCog, Users, Workflow } from 'lucide-react'
 import { useTheme } from './hooks/useTheme'
 import { useDirectorioData } from './hooks/useDirectorioData'
 import { useFavorites } from './hooks/useFavorites'
@@ -24,7 +24,14 @@ import { SECTION_META, perteneceASeccionCorte, type SeccionKey } from './lib/sec
 import { resolverDestino } from './lib/destinoTribunal'
 import { registrarVisitaSiCorresponde, tomarDestinoInicial } from './lib/accessGate'
 import { listarVigenciasVencidas } from './lib/vigenciaVencidos'
-import type { CategoriaExterna, ContactoExterno, FichaTribunal, GrupoCorreo, Persona } from './types'
+import type {
+  CasillaInstitucional,
+  CategoriaExterna,
+  ContactoExterno,
+  FichaTribunal,
+  GrupoCorreo,
+  Persona,
+} from './types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from './lib/contactosExternos'
 import type { Group } from './components/GroupedResults'
 import type { PersonFormValues } from './components/PersonEditModal'
@@ -67,6 +74,8 @@ import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 import { VigenciaAlertBanner } from './components/VigenciaAlertBanner'
 import { GruposCorreoModal } from './components/GruposCorreoModal'
 import { GrupoCorreoEditorModal } from './components/GrupoCorreoEditorModal'
+import { CasillasInstitucionalesModal } from './components/CasillasInstitucionalesModal'
+import { CasillaInstitucionalEditorModal } from './components/CasillaInstitucionalEditorModal'
 
 type ModalState = { mode: 'edit'; person: Persona } | { mode: 'add'; group: Group } | null
 type ContactoExternoModalState =
@@ -75,6 +84,10 @@ type ContactoExternoModalState =
   | null
 type ReportTarget = { subject: string; contexto: string[] } | null
 type GrupoCorreoEditorState = { mode: 'crear' } | { mode: 'editar'; grupo: GrupoCorreo } | null
+type CasillaInstitucionalEditorState =
+  | { mode: 'crear' }
+  | { mode: 'editar'; casilla: CasillaInstitucional }
+  | null
 
 export default function App() {
   const { theme, toggle } = useTheme()
@@ -86,6 +99,7 @@ export default function App() {
     reportes,
     contactosExternos,
     gruposCorreo,
+    casillasInstitucionales,
     correoGeneralSeccion,
     generatedAt,
     loading,
@@ -102,6 +116,8 @@ export default function App() {
     setReporteEstado,
     upsertGrupoCorreo,
     deleteGrupoCorreo,
+    upsertCasillaInstitucional,
+    deleteCasillaInstitucional,
   } = useDirectorioData()
   const validPersonIds = useMemo(
     () => (loading ? undefined : new Set(people.map((p) => p.id))),
@@ -148,6 +164,9 @@ export default function App() {
   const [funcionariosModalOpen, setFuncionariosModalOpen] = useState(false)
   const [gruposCorreoOpen, setGruposCorreoOpen] = useState(false)
   const [grupoCorreoEditor, setGrupoCorreoEditor] = useState<GrupoCorreoEditorState>(null)
+  const [casillasInstitucionalesOpen, setCasillasInstitucionalesOpen] = useState(false)
+  const [casillaInstitucionalEditor, setCasillaInstitucionalEditor] =
+    useState<CasillaInstitucionalEditorState>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(() => getLastSeen())
 
   const searchIndex = useMemo(() => buildSearchIndex(people), [people])
@@ -729,6 +748,15 @@ export default function App() {
                       <Mail size={15} />
                       Grupos de Correos
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setCasillasInstitucionalesOpen(true)}
+                      title="Correos institucionales, su finalidad y el instructivo de acceso rápido"
+                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-2 text-sm font-medium text-sky-700 transition-colors hover:border-sky-300 hover:bg-sky-100 dark:border-sky-900/40 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/15"
+                    >
+                      <Inbox size={15} />
+                      Casillas Institucionales
+                    </button>
                   </>
                 }
               />
@@ -1108,6 +1136,38 @@ export default function App() {
               setGrupoCorreoEditor(null)
             } catch (err) {
               window.alert(err instanceof Error ? err.message : 'No se pudo guardar el grupo de correos.')
+            }
+          }}
+        />
+      )}
+
+      {casillasInstitucionalesOpen && (
+        <CasillasInstitucionalesModal
+          casillas={casillasInstitucionales}
+          isAdmin={isAdmin}
+          onClose={() => setCasillasInstitucionalesOpen(false)}
+          onCrear={() => setCasillaInstitucionalEditor({ mode: 'crear' })}
+          onEditar={(casilla) => setCasillaInstitucionalEditor({ mode: 'editar', casilla })}
+          onEliminar={(casilla) => {
+            deleteCasillaInstitucional(casilla.id).catch((err) =>
+              window.alert(err instanceof Error ? err.message : 'No se pudo eliminar la casilla institucional.'),
+            )
+          }}
+        />
+      )}
+
+      {casillaInstitucionalEditor && (
+        <CasillaInstitucionalEditorModal
+          casilla={
+            casillaInstitucionalEditor.mode === 'editar' ? casillaInstitucionalEditor.casilla : undefined
+          }
+          onCancel={() => setCasillaInstitucionalEditor(null)}
+          onSubmit={async (values) => {
+            try {
+              await upsertCasillaInstitucional(values)
+              setCasillaInstitucionalEditor(null)
+            } catch (err) {
+              window.alert(err instanceof Error ? err.message : 'No se pudo guardar la casilla institucional.')
             }
           }}
         />
