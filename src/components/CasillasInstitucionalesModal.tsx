@@ -10,14 +10,14 @@ function CasillaCard({ casilla, onAbrir }: { casilla: CasillaInstitucional; onAb
     <button
       type="button"
       onClick={onAbrir}
-      className="group flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50/50 p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_14px_28px_-16px_rgba(14,165,233,.5)] dark:border-sky-900/40 dark:bg-sky-500/5"
+      className="group flex items-center gap-3.5 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_14px_28px_-16px_rgba(14,165,233,.5)] dark:border-sky-900/40 dark:bg-sky-500/5"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white transition-transform group-hover:scale-105">
-        <Inbox size={17} />
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white transition-transform group-hover:scale-105">
+        <Inbox size={19} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold text-slate-900 dark:text-white">{casilla.nombre}</span>
-        <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{casilla.correo}</span>
+        <span className="block font-semibold text-slate-900 dark:text-white">{casilla.nombre}</span>
+        <span className="block truncate text-sm text-slate-500 dark:text-slate-400">{casilla.correo}</span>
       </span>
     </button>
   )
@@ -241,7 +241,7 @@ export function CasillasInstitucionalesModal({
               Ninguna casilla coincide con "{busqueda}".
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
               {casillasFiltradas.map((c) => (
                 <CasillaCard key={c.id} casilla={c} onAbrir={() => setCasillaAbiertaId(c.id)} />
               ))}
