@@ -54,26 +54,7 @@ function CasillaDetalle({
             </span>
             <div className="min-w-0">
               <p className="text-xl font-bold text-slate-900 dark:text-white">{casilla.nombre}</p>
-              <div className="mt-1 flex items-center gap-1.5">
-                <a
-                  href={`mailto:${casilla.correo}`}
-                  className="truncate text-base text-sky-700 hover:underline dark:text-sky-300"
-                >
-                  {casilla.correo}
-                </a>
-                <button
-                  type="button"
-                  onClick={() => copy(casilla.correo)}
-                  title="Copiar correo"
-                  className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-500/15"
-                >
-                  {copied === casilla.correo ? (
-                    <Check size={14} className="text-emerald-500" />
-                  ) : (
-                    <Copy size={14} />
-                  )}
-                </button>
-              </div>
+              <p className="truncate text-sm text-slate-400 dark:text-slate-500">{casilla.correo}</p>
             </div>
           </div>
           <button
@@ -87,25 +68,44 @@ function CasillaDetalle({
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`mailto:${casilla.correo}`}
+              title={`Redactar un correo a ${casilla.correo}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-900/50 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
+            >
+              <Mail size={14} />
+              Enviar correo
+            </a>
+            <button
+              type="button"
+              onClick={() => copy(casilla.correo)}
+              title="Copiar la dirección de correo"
+              className="rounded-full border border-slate-200 p-2 text-slate-400 hover:bg-slate-50 hover:text-sky-600 dark:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-sky-400"
+            >
+              {copied === casilla.correo ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+            </button>
+
+            {casilla.pdfUrl ? (
+              <a
+                href={casilla.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-sky-800 dark:hover:bg-sky-500/10"
+              >
+                <FileText size={14} />
+                Ver PDF de acceso rápido
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-200 px-3.5 py-1.5 text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                <FileText size={14} />
+                Sin PDF adjunto
+              </span>
+            )}
+          </div>
+
           {casilla.descripcion && (
             <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">{casilla.descripcion}</p>
-          )}
-
-          {casilla.pdfUrl ? (
-            <a
-              href={casilla.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/15"
-            >
-              <FileText size={15} />
-              Ver PDF de acceso rápido
-            </a>
-          ) : (
-            <span className="inline-flex items-center gap-2 rounded-full border border-dashed border-slate-200 px-4 py-2 text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
-              <FileText size={15} />
-              Sin PDF adjunto
-            </span>
           )}
         </div>
 
