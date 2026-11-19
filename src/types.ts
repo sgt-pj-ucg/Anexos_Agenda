@@ -81,6 +81,7 @@ export type CategoriaExterna =
   | 'cortes_pais'
   | 'receptores_procuradores'
   | 'policia_local'
+  | 'comites_genero'
 
 export interface ContactoExterno {
   id: string
