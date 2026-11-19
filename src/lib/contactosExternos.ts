@@ -1,4 +1,4 @@
-import { Award, Gavel, Landmark, ScrollText, Users } from 'lucide-react'
+import { Award, Gavel, HeartHandshake, Landmark, ScrollText, Users } from 'lucide-react'
 import type { CategoriaExterna, ContactoExterno } from '../types'
 import { normalize } from './normalize'
 
@@ -16,6 +16,7 @@ export const CATEGORIA_ORDER: CategoriaExterna[] = [
   'receptores_procuradores',
   'cortes_pais',
   'academia_judicial',
+  'comites_genero',
 ]
 
 export const CATEGORIA_META: Record<CategoriaExterna, CategoriaMeta> = {
@@ -53,6 +54,13 @@ export const CATEGORIA_META: Record<CategoriaExterna, CategoriaMeta> = {
     short: 'Academia Judicial',
     description: 'Contactos de la Academia Judicial',
     icon: Award,
+  },
+  comites_genero: {
+    key: 'comites_genero',
+    label: 'Comités de Género',
+    short: 'Comités de Género',
+    description: 'Ministros/as encargados/as y secretarías de los Comités de Género de cada jurisdicción del país',
+    icon: HeartHandshake,
   },
 }
 
