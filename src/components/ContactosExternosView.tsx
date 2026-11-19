@@ -1,10 +1,87 @@
 import { useMemo } from 'react'
-import { Plus, UserPlus } from 'lucide-react'
+import { Check, Copy, Plus, Send, UserPlus } from 'lucide-react'
 import type { CategoriaExterna, ContactoExterno } from '../types'
 import { buscarContactosExternos, CATEGORIA_META, CATEGORIA_ORDER } from '../lib/contactosExternos'
 import { ContactoExternoCard } from './ContactoExternoCard'
 import { EmptyState } from './EmptyState'
 import { useIsAdmin } from '../context/RoleContext'
+import { useCopy } from '../hooks/useCopy'
+
+// Botones de copiado masivo exclusivos de "Comités de Género": separan a
+// los/as ministros/as encargados/as de las secretarías de cada comité, para
+// poder enviar un correo a todos los que cumplen un mismo rol sin tener que
+// ir jurisdicción por jurisdicción.
+function ComitesGeneroAcciones({ contactos }: { contactos: ContactoExterno[] }) {
+  const { copied, copy } = useCopy()
+
+  const ministros = useMemo(
+    () => contactos.filter((c) => c.cargo?.toLowerCase().includes('ministr')),
+    [contactos],
+  )
+  const comite = useMemo(
+    () => contactos.filter((c) => c.cargo?.toLowerCase().includes('secretari')),
+    [contactos],
+  )
+
+  const correosMinistros = useMemo(() => Array.from(new Set(ministros.flatMap((c) => c.correos))), [ministros])
+  const correosComite = useMemo(() => Array.from(new Set(comite.flatMap((c) => c.correos))), [comite])
+
+  if (correosMinistros.length === 0 && correosComite.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-3 dark:border-indigo-900/40 dark:bg-indigo-500/5">
+      <p className="mr-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Copiado masivo:</p>
+      {correosMinistros.length > 0 && (
+        <span className="inline-flex items-center gap-1">
+          <a
+            href={`mailto:${correosMinistros.join(',')}`}
+            title={`Redactar un correo a los ${correosMinistros.length} ministros/as encargados/as`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+          >
+            <Send size={12} />
+            Ministros/as encargados/as ({correosMinistros.length})
+          </a>
+          <button
+            type="button"
+            onClick={() => copy(correosMinistros.join(', '))}
+            title="Copiar las direcciones de los ministros/as"
+            className="rounded-full border border-indigo-200 p-1.5 text-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-500/10"
+          >
+            {copied === correosMinistros.join(', ') ? (
+              <Check size={12} className="text-emerald-500" />
+            ) : (
+              <Copy size={12} />
+            )}
+          </button>
+        </span>
+      )}
+      {correosComite.length > 0 && (
+        <span className="inline-flex items-center gap-1">
+          <a
+            href={`mailto:${correosComite.join(',')}`}
+            title={`Redactar un correo a las ${correosComite.length} secretarías de los comités`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+          >
+            <Send size={12} />
+            Correos del comité ({correosComite.length})
+          </a>
+          <button
+            type="button"
+            onClick={() => copy(correosComite.join(', '))}
+            title="Copiar las direcciones de los comités"
+            className="rounded-full border border-indigo-200 p-1.5 text-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-500/10"
+          >
+            {copied === correosComite.join(', ') ? (
+              <Check size={12} className="text-emerald-500" />
+            ) : (
+              <Copy size={12} />
+            )}
+          </button>
+        </span>
+      )}
+    </div>
+  )
+}
 
 export function ContactosExternosView({
   contactos,
@@ -98,6 +175,8 @@ export function ContactosExternosView({
           </button>
         )}
       </div>
+
+      {categoria === 'comites_genero' && <ComitesGeneroAcciones contactos={enCategoria} />}
 
       {filtrados.length === 0 ? (
         <EmptyState query={query} />
